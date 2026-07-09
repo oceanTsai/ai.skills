@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API 設計模式與最佳實踐 · 自學手冊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+TC:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#faf6ee;
+  --paper-alt:#f2ecdd;
+  --ink:#2b2620;
+  --ink-soft:#5c554a;
+  --line:#e1d8c3;
+  --accent:#8f2d2d;
+  --accent-soft:#c9a5a0;
+  --accent-bg:#f6e9e6;
+  --good:#2f6b4f;
+  --good-bg:#e9f3ec;
+  --bad:#8f2d2d;
+  --bad-bg:#f8ecec;
+  --tip:#7a5a12;
+  --tip-bg:#f7efdd;
+  --code-bg:#2b2620;
+  --code-ink:#f2ecdd;
+  --sidebar-w:280px;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Noto Serif TC','Source Serif 4',serif;
+  line-height:1.85;
+  font-size:16.5px;
+}
+a{color:var(--accent);text-decoration:none;}
+code, pre{font-family:'JetBrains Mono',monospace;}
+
+/* progress bar */
+#progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0%;z-index:999;transition:width .1s;}
+
+/* sidebar */
+#sidebar{
+  position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);
+  background:var(--paper-alt);border-right:1px solid var(--line);
+  overflow-y:auto;padding:28px 0 60px;z-index:50;
+}
+#sidebar .brand{padding:0 24px 20px;border-bottom:1px solid var(--line);margin-bottom:14px;}
+#sidebar .brand h1{font-size:18px;margin:0 0 4px;color:var(--accent);letter-spacing:.5px;}
+#sidebar .brand p{margin:0;font-size:12.5px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;}
+#sidebar .group-title{padding:14px 24px 6px;font-size:12px;color:var(--ink-soft);letter-spacing:1px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;}
+#sidebar nav a{
+  display:block;padding:8px 24px;font-size:14.5px;color:var(--ink);border-left:3px solid transparent;
+}
+#sidebar nav a:hover{background:var(--accent-bg);}
+#sidebar nav a.active{border-left-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:600;}
+#menu-toggle{display:none;position:fixed;top:14px;left:14px;z-index:100;background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;}
+
+main{margin-left:var(--sidebar-w);max-width:760px;padding:60px 48px 140px;}
+
+.cover{margin-bottom:64px;}
+.cover .eyebrow{font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:13px;letter-spacing:2px;text-transform:uppercase;}
+.cover h1{font-size:38px;margin:10px 0 14px;line-height:1.3;}
+.cover p.sub{color:var(--ink-soft);font-size:17px;}
+.cover .meta{margin-top:28px;padding-top:20px;border-top:1px solid var(--line);color:var(--ink-soft);font-size:14px;font-family:'JetBrains Mono',monospace;}
+
+section.chapter{padding-top:40px;margin-top:20px;border-top:1px dashed var(--line);}
+section.chapter:first-of-type{border-top:none;}
+.chapter .num{font-family:'JetBrains Mono',monospace;color:var(--accent-soft);font-size:14px;letter-spacing:2px;}
+.chapter h2{font-size:27px;margin:6px 0 8px;}
+.chapter .tagline{color:var(--ink-soft);font-style:italic;margin-bottom:24px;font-size:15px;}
+.chapter h3{font-size:19px;margin-top:36px;color:var(--accent);border-left:4px solid var(--accent);padding-left:10px;}
+
+/* concept card */
+.concept-card{border:1px solid var(--line);border-radius:6px;margin:20px 0;overflow:hidden;background:#fff;}
+.concept-card .head{background:var(--ink);color:var(--paper);padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.5px;}
+.concept-card .body{padding:16px 18px;}
+.concept-card .body p{margin:0 0 10px;}
+.concept-card .body p:last-child{margin-bottom:0;}
+
+.tag-line{margin:14px 0;padding:10px 14px;border-radius:5px;font-size:14.5px;border-left:3px solid;}
+.tag-line b{font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:.5px;display:block;margin-bottom:4px;}
+.tag-analogy{background:var(--tip-bg);border-color:var(--tip);color:#5c4a15;}
+.tag-why{background:var(--accent-bg);border-color:var(--accent);color:#6e2020;}
+.tag-model{background:#eaf0f5;border-color:#3a6d8f;color:#254a5e;}
+.tag-antipattern{background:var(--bad-bg);border-color:var(--bad);color:#6e2020;}
+
+/* frontend vs backend compare */
+.fe-be{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:20px 0;font-size:14.5px;}
+.fe-be > div{padding:14px 16px;}
+.fe-be .fe{background:#eef3ff;border-right:1px solid var(--line);}
+.fe-be .be{background:#fff4ea;}
+.fe-be .lbl{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--ink-soft);display:block;margin-bottom:6px;}
+
+/* code blocks */
+.code-block{margin:16px 0;border-radius:6px;overflow:hidden;border:1px solid var(--line);}
+.code-block .bar{padding:6px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.5px;color:#fff;}
+.code-block.bad .bar{background:var(--bad);}
+.code-block.good .bar{background:var(--good);}
+.code-block.neutral .bar{background:#444;}
+.code-block pre{margin:0;background:var(--code-bg);color:var(--code-ink);padding:16px 18px;overflow-x:auto;font-size:13.5px;line-height:1.6;}
+.code-block pre .c1{color:#8a8377;} /* comment */
+.code-block pre .k{color:#e29e5c;} /* keyword */
+.code-block pre .s{color:#a7c98f;} /* string */
+
+table.ref{width:100%;border-collapse:collapse;margin:18px 0;font-size:14.5px;}
+table.ref th, table.ref td{border:1px solid var(--line);padding:8px 12px;text-align:left;}
+table.ref th{background:var(--paper-alt);font-family:'JetBrains Mono',monospace;font-size:12.5px;}
+table.ref td code{background:var(--paper-alt);padding:1px 5px;border-radius:3px;}
+
+.checklist{background:#fff;border:1px solid var(--line);border-radius:6px;padding:18px 22px;margin:20px 0;}
+.checklist li{margin-bottom:8px;}
+
+.summary-box{margin-top:34px;background:var(--ink);color:var(--paper);padding:22px 24px;border-radius:6px;}
+.summary-box h4{margin:0 0 10px;color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:1px;}
+.summary-box ul{margin:0;padding-left:20px;}
+.summary-box li{margin-bottom:6px;}
+
+footer{margin-left:var(--sidebar-w);padding:40px 48px 80px;color:var(--ink-soft);font-size:13px;font-family:'JetBrains Mono',monospace;}
+
+@media (max-width: 1024px){
+  #sidebar{transform:translateX(-100%);transition:transform .25s;}
+  #sidebar.open{transform:translateX(0);}
+  main, footer{margin-left:0;padding:80px 24px 100px;}
+  #menu-toggle{display:block;}
+  .fe-be{grid-template-columns:1fr;}
+  .fe-be .fe{border-right:none;border-bottom:1px solid var(--line);}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<button id="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ 目錄</button>
+
+<aside id="sidebar">
+  <div class="brand">
+    <h1>API 設計手冊</h1>
+    <p>REST · 契約 · 前端視角</p>
+  </div>
+  <nav>
+    <div class="group-title">導引</div>
+    <a href="#cover">封面 / 使用說明</a>
+    <div class="group-title">基礎觀念</div>
+    <a href="#ch01">01 · 為何前端也要懂 API 設計</a>
+    <a href="#ch02">02 · 資源導向思維</a>
+    <a href="#ch03">03 · HTTP Method 的語意</a>
+    <a href="#ch04">04 · HTTP Status Code 全解析</a>
+    <a href="#ch05">05 · URL / Endpoint 設計慣例</a>
+    <div class="group-title">Request / Response</div>
+    <a href="#ch06">06 · 分頁、過濾、排序</a>
+    <a href="#ch07">07 · Response 統一格式</a>
+    <a href="#ch08">08 · 錯誤處理設計</a>
+    <div class="group-title">系統性議題</div>
+    <a href="#ch09">09 · 版本控制策略</a>
+    <a href="#ch10">10 · 認證與授權</a>
+    <a href="#ch11">11 · 冪等性與進階議題</a>
+    <div class="group-title">綜合應用</div>
+    <a href="#ch12">12 · 實戰：重新設計一個爛 API</a>
+  </nav>
+</aside>
+
+<main>
+
+  <section class="cover" id="cover">
+    <div class="eyebrow">Self-Study Handbook</div>
+    <h1>API 設計模式與最佳實踐</h1>
+    <p class="sub">給前端工程師的後端 API 設計觀念手冊 — 從「怎麼串」到「為什麼要這樣設計」</p>
+    <div class="meta">
+      12 章 · 自學導向 · 範例以 REST + JS/TS/fetch 為主 · Traditional Chinese
+    </div>
+  </section>
+
+  <!-- ===================== CH01 ===================== -->
+  <section class="chapter" id="ch01">
+    <div class="num">CHAPTER 01</div>
+    <h2>為何前端工程師也要懂 API 設計？</h2>
+    <p class="tagline">Why frontend engineers should care about API design</p>
+
+    <p>前端工程師每天都在「消費」API，卻很少被要求去「設計」API。但實務上，前端往往是第一個發現 API 設計問題的人：欄位命名不一致、錯誤格式每個 endpoint 都不同、分頁邏輯每個工程師寫法都不一樣。這些問題不會出現在後端的單元測試裡，卻會直接變成前端的維護負擔。</p>
+
+    <div class="tag-line tag-analogy">
+      <b>比喻</b>
+      API 設計就像餐廳的菜單設計。菜單設計得好，顧客（前端）點餐清楚、不會誤會；設計得差，顧客得反覆確認「這個套餐到底有沒有附湯」，廚房（後端）也得不斷被打斷去解釋菜單。API 文件不清楚時，前端工程師花的時間往往不是在「寫程式」，而是在「猜後端到底想表達什麼」。
+    </div>
+
+    <h3>API 是前後端之間的合約</h3>
+    <div class="concept-card">
+      <div class="head">CONCEPT · Contract</div>
+      <div class="body">
+        <p>把 API 想成前端與後端之間簽的一份「合約」：後端承諾「你打這個 endpoint、帶這些參數，我保證回傳這個結構」；前端則依賴這份承諾去寫程式。合約一旦不穩定（欄位今天叫 <code>userName</code>、明天變成 <code>user_name</code>），前端程式碼就會不斷崩壞。</p>
+        <p>學 API 設計，本質上不是要前端去寫後端程式，而是要學會「看懂並批判這份合約」——知道什麼是好的設計、什麼是地雷，才能在 code review、跨team溝通時提出有意義的意見，而不是照單全收。</p>
+      </div>
+    </div>
+
+    <h3>前端最常撞到的四種 API 痛點</h3>
+    <table class="ref">
+      <tr><th>痛點</th><th>典型症狀</th><th>根本原因</th></tr>
+      <tr><td>命名不一致</td><td>同一個「使用者ID」，有的叫 <code>id</code>、有的叫 <code>userId</code>、有的叫 <code>user_id</code></td><td>缺乏團隊層級的命名規範</td></tr>
+      <tr><td>狀態碼亂用</td><td>找不到資源回 200 但 body 塞 <code>{error: "not found"}</code></td><td>把 HTTP 語意當裝飾，不當合約</td></tr>
+      <tr><td>錯誤格式每次不同</td><td>有時候是字串、有時候是物件、有時候欄位叫 <code>msg</code> 有時叫 <code>message</code></td><td>沒有統一的錯誤設計規範</td></tr>
+      <tr><td>分頁邏輯各自為政</td><td>有的 API 用 <code>page/size</code>，有的用 <code>offset/limit</code>，有的用 cursor</td><td>缺乏團隊層級的 API 設計指南（這正是這份手冊要解決的）</td></tr>
+    </table>
+
+    <div class="summary-box">
+      <h4>本章結論</h4>
+      <ul>
+        <li>API 是前後端的合約，前端有資格、也有必要理解它的設計原則</li>
+        <li>大部分「串接痛苦」不是技術問題，是設計一致性問題</li>
+        <li>接下來的章節會從 REST 的核心思維開始，逐步建立一套可以拿來檢核任何 API 的心智模型</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== CH02 ===================== -->
+  <section class="chapter" id="ch02">
+    <div class="num">CHAPTER 02</div>
+    <h2>資源導向思維：REST 到底在講什麼</h2>
+    <p class="tagline">REST is a resource-oriented mindset, not just "using HTTP"</p>
+
+    <p>很多人以為「用 HTTP + JSON」就叫 RESTful，但 REST（Representational State Transfer）真正的核心是一種<b>建模方式</b>：把系統看成一群「資源（Resource）」，每個資源有自己的網址（URI），透過統一的一組動詞（HTTP Method）去操作它，而不是把每個「動作」都寫成一個專屬的 endpoint。</p>
+
+    <div class="tag-line tag-model">
+      <b>心智模型</b>
+      URL 是名詞，HTTP Method 是動詞。看到 URL 裡出現動詞（<code>/getUser</code>、<code>/deleteOrder</code>），幾乎都是 REST 設計上的警訊——那其實是 RPC（Remote Procedure Call）風格，只是套了 HTTP 的殼。
+    </div>
+
+    <h3>RPC 風格 vs REST 風格</h3>
+    <div class="code-block bad">
+      <div class="bar">✕ RPC 風格（動詞塞進 URL）</div>
+      <pre>GET  /api/getUserList
+POST /api/createUser
+POST /api/deleteUserById?id=42
+POST /api/updateUserEmail</pre>
+    </div>
+    <div class="code-block good">
+      <div class="bar">✓ REST 風格（資源為名詞，動詞交給 HTTP Method）</div>
+      <pre>GET    /api/users          <span class="c1">// 取得使用者列表</span>
+POST   /api/users          <span class="c1">// 建立使用者</span>
+DELETE /api/users/42       <span class="c1">// 刪除 id=42 的使用者</span>
+PATCH  /api/users/42       <span class="c1">// 更新 id=42 的使用者（部分欄位）</span></pre>
+    </div>
+
+    <p>RPC 風格不是「錯」，在某些場景（例如觸發一個沒有明確對應資源的動作，像「重新計算報表」）甚至更直覺。但問題在於：如果一個系統裡 REST 和 RPC 風格混雜、沒有規則，前端就無法「猜」出 API 的樣子，每個 endpoint 都要重新查文件。</p>
+
+    <h3>資源的巢狀關係</h3>
+    <div class="concept-card">
+      <div class="head">CONCEPT · Nested Resources</div>
+      <div class="body">
+        <p>資源之間常有「從屬關係」，例如「某個使用者的訂單」可以設計成 <code>/users/42/orders</code>，語意上代表「屬於 user 42 的 orders 集合」。</p>
+        <p>但巢狀不宜太深。<code>/users/42/orders/7/items/3/reviews</code> 這種四層巢狀，會讓 URL 難以閱讀、難以在前端做路由管理。實務上的經驗法則是<b>巢狀最多兩層</b>，更深的關係改用查詢參數或獨立 endpoint 表達，例如 <code>/reviews/9?orderId=7</code> 或直接 <code>/order-items/3/reviews</code>。</p>
+      </div>
+    </div>
+
+    <div class="tag-line tag-why">
+      <b>為什麼這樣設計</b>
+      REST 的統一介面（GET/POST/PUT/PATCH/DELETE 這固定幾個動詞）讓前端只需要學「一套規則」就能操作「所有資源」，不需要為每個資源記憶一套專屬的 API 命名方式。這正是 REST 相比純 RPC 的最大優勢：<b>可預測性（predictability）</b>。
+    </div>
+
+    <div class="summary-box">
+      <h4>本章結論</h4>
+      <ul>
+        <li>REST 的本質是「資源導向」：URL 代表名詞、HTTP Method 代表動詞</li>
+        <li>URL 裡出現動詞通常是設計警訊，代表退化成 RPC 風格</li>
+        <li>巢狀資源方便表達從屬關係，但深度建議控制在兩層以內</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== CH03 ===================== -->
+  <section class="chapter" id="ch03">
+    <div class="num">CHAPTER 03</div>
+    <h2>HTTP Method 的正確語意</h2>
+    <p class="tagline">GET / POST / PUT / PATCH / DELETE — safe? idempotent?</p>
+
+    <p>每個 HTTP Method 都帶有兩個關鍵性質：<b>安全性（Safe）</b>——呼叫它是否會改變伺服器狀態，以及<b>冪等性（Idempotent）</b>——呼叫一次和呼叫十次，結果是否相同。這兩個性質不是規範上的裝飾，瀏覽器、CDN、Proxy、瀏覽器的自動重試機制都依賴這些性質做決策。</p>
+
+    <table class="ref">
+      <tr><th>Method</th><th>用途</th><th>Safe（無副作用）</th><th>Idempotent（冪等）</th></tr>
+      <tr><td><code>GET</code></td><td>讀取資源</td><td>✓ 是</td><td>✓ 是</td></tr>
+      <tr><td><code>POST</code></td><td>建立資源 / 觸發動作</td><td>✕ 否</td><td>✕ 否</td></tr>
+      <tr><td><code>PUT</code></td><td>整體覆蓋資源</td><td>✕ 否</td><td>✓ 是</td></tr>
+      <tr><td><code>PATCH</code></td><td>部分更新資源</td><td>✕ 否</td><td>視實作而定，理想上是</td></tr>
+      <tr><td><code>DELETE</code></td><td>刪除資源</td><td>✕ 否</td><td>✓ 是</td></tr>
+    </table>
+
+    <div class="tag-line tag-antipattern">
+      <b>常見誤用</b>
+      用 <code>GET</code> 去觸發有副作用的動作（例如 <code>GET /api/users/42/send-reset-email</code>），是最危險的誤用之一。瀏覽器的預先載入（prefetch）、爬蟲、CDN 快取都可能「不小心」呼叫到 GET，如果背後有副作用，就會變成無法預期的災難——曾有真實案例是爬蟲把「刪除」的 GET 連結全部點過一輪，資料庫瞬間清空。
+    </div>
+
+    <h3>PUT 與 PATCH：整體覆蓋 vs 部分更新</h3>
+    <div class="code-block neutral">
+      <div class="bar">PUT — 語意上是「整份取代」</div>
+      <pre>PUT /api/users/42
+{
+  "name": "Ocean",
+  "email": "ocean@example.com",
+  "role": "lead"
+}
+<span class="c1">// 沒有帶到的欄位，理論上會被視為要清空或還原成預設值</span></pre>
+    </div>
+    <div class="code-block neutral">
+      <div class="bar">PATCH — 語意上是「只改我帶的欄位」</div>
+      <pre>PATCH /api/users/42
+{ "role": "lead" }
+<span class="c1">// 只更新 role，其他欄位維持原值</span></pre>
+    </div>
+
+    <div class="tag-line tag-why">
+      <b>為什麼前端要在意這個</b>
+      如果前端表單只想更新一個欄位（例如切換使用者角色），卻呼叫了語意是 <code>PUT</code> 的 endpoint 而只送一個欄位，很可能會把其他欄位「清空」——這不是前端的 bug，是雙方對 HTTP Method 語意沒有共識造成的資料損毀。串接新 API 前，先確認後端的 <code>PUT</code> 是真的整體覆蓋，還是其實實作成 <code>PATCH</code> 的行為。
+    </div>
+
+    <div class="summary-box">
+      <h4>本章結論</h4>
+      <ul>
+        <li>每個 HTTP Method 都有明確語意：Safe（有無副作用）與 Idempotent（是否可重複呼叫）</li>
+        <li>GET 絕對不能有副作用——這是瀏覽器與快取機制信任的基本假設</li>
+        <li>PUT 是整體覆蓋，PATCH 是部分更新，兩者混用會造成資料被意外清空</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== CH04 ===================== -->
+  <section class="chapter" id="ch04">
+    <div class="num">CHAPTER 04</div>
+    <h2>HTTP Status Code 全解析</h2>
+    <p class="tagline">狀態碼是合約的一部分，不是裝飾</p>
+
+    <p>狀態碼的作用是讓前端<b>不需要解析 body 內容</b>就能判斷這次請求的大方向結果。如果所有情況都回 <code>200</code>，再靠 body 裡的欄位判斷成功或失敗，就等於放棄了 HTTP 協定本來就提供的溝通機制，逼前端每個 API 都要寫一套客製化的「解析成功/失敗」邏輯。</p>
+
+    <div class="tag-line tag-antipattern">
+      <b>反模式 · "永遠 200"</b>
+      <code>HTTP 200</code> + <code>{ "success": false, "error": "user not found" }</code> 這種設計，讓瀏覽器的 devtools Network 面板、Sentry 之類的錯誤監控、API Gateway 的告警規則全部失效——它們都是依賴狀態碼在判斷「這次請求有沒有出錯」。
+    </div>
+
+    <h3>分類總覽</h3>
+    <table class="ref">
+      <tr><th>區間</th><th>意義</th><th>常用 code</th></tr>
+      <tr><td>2xx</td><td>成功</td><td><code>200</code> OK · <code>201</code> Created · <code>204</code> No Content</td></tr>
+      <tr><td>3xx</td><td>重新導向</td><td><code>301</code> 永久搬移 · <code>304</code> Not Modified（快取仍有效）</td></tr>
+      <tr><td>4xx</td><td>客戶端錯誤（前端該修的）</td><td><code>400</code> · <code>401</code> · <code>403</code> · <code>404</code> · <code>409</code> · <code>422</code> · <code>429</code></td></tr>
+      <tr><td>5xx</td><td>伺服端錯誤（後端該修的）</td><td><code>500</code> · <code>502</code> · <code>503</code></td></tr>
+    </table>
+
+    <h3>前端最容易混淆的四組</h3>
+    <div class="fe-be">
+      <div class="fe"><span class="lbl">401 UNAUTHORIZED</span>「你沒登入 / token 失效」→ 前端該導去登入頁</div>
+      <div class="be"><span class="lbl">403 FORBIDDEN</span>「你登入了，但沒權限做這件事」→ 前端該顯示無權限畫面，不是導去登入頁</div>
+    </div>
+    <div class="fe-be">
+      <div class="fe"><span class="lbl">200 OK</span>「請求成功，body 裡有內容」→ 適用於 GET、成功的 PATCH/PUT</div>
+      <div class="be"><span class="lbl">201 CREATED</span>「成功建立資源」→ 適用於成功的 POST，理想上會在 header 帶 <code>Location</code> 指向新資源網址</div>
+    </div>
+    <div class="fe-be">
+      <div class="fe"><span class="lbl">204 NO CONTENT</span>「成功，但沒有內容要回」→ 適用於成功的 DELETE，前端不該嘗試解析 body</div>
+      <div class="be"><span class="lbl">304 NOT MODIFIED</span>「資源沒變，用你手上的快取即可」→ 常搭配 <code>ETag</code>／<code>If-None-Match</code></div>
+    </div>
+    <div class="fe-be">
+      <div class="fe"><span class="lbl">400 BAD REQUEST</span>「你送來的格式本身就有問題」（缺欄位、型別錯誤）</div>
+      <div class="be"><span class="lbl">422 UNPROCESSABLE ENTITY</span>「格式沒問題，但語意上不合法」（例如 email 格式對，但這個 email 已被註冊）</div>
+    </div>
+
+    <h3>429 與重試機制</h3>
+    <div class="concept-card">
+      <div class="head">CONCEPT · Rate Limiting Response</div>
+      <div class="body">
+        <p><code>429 Too Many Requests</code> 代表你打太頻繁被限流了。好的 API 設計會在 response header 附上 <code>Retry-After</code>（秒數）或 <code>X-RateLimit-Reset</code>，讓前端知道該等多久再重試，而不是用固定的 <code>setTimeout</code> 亂猜。</p>
+      </div>
+    </div>
+
+    <div class="summary-box">
+      <h4>本章結論</h4>
+      <ul>
+        <li>狀態碼是給「機器」判斷用的，不是給人看的裝飾——不要用 200 包裝所有結果</li>
+        <li>401 =「沒登入」，403 =「登入了但沒權限」，前端的處理方式應該完全不同</li>
+        <li>429 應搭配 <code>Retry-After</code>，讓重試邏輯有依據，而不是憑感覺</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== CH05 ===================== -->
+  <section class="chapter" id="ch05">
+    <div class="num">CHAPTER 05</div>
+    <h2>URL / Endpoint 設計慣例</h2>
+    <p class="tagline">好的 URL 讓人不用查文件就能猜對一半</p>
+
+    <div class="concept-card">
+      <div class="head">CONCEPT · Predictable Naming</div>
+      <div class="body">
+        <p>一套好的 URL 設計規則，應該讓工程師看過三、五個 endpoint 之後，就能「猜」出其他 endpoint 長什麼樣子。這種可預測性省下的溝通成本，遠比多花十分鐘討論命名規則划算。</p>
+      </div>
+    </div>
+
+    <h3>常見慣例清單</h3>
+    <div class="checklist">
+      <ul>
+        <li><b>名詞用複數</b>：<code>/users</code> 而不是 <code>/user</code>，集合與單一資源共用同一個 base path（<code>GET /users</code> 取列表，<code>GET /users/42</code> 取單一筆）</li>
+        <li><b>全小寫、連字符分隔</b>：<code>/order-items</code> 而不是 <code>/orderItems</code> 或 <code>/Order_Items</code>（URL 對大小寫敏感，混用容易踩雷）</li>
+        <li><b>不要把動詞放進路徑</b>：<code>/users/42/activate</code> 這類「動作型」endpoint 是可接受的例外，但應該謹慎使用，優先考慮能不能建模成資源狀態的更新（<code>PATCH /users/42 { "status": "active" }</code>）</li>
+        <li><b>版本放在最前面</b>：<code>/v1/users</code>，讓版本切換一目了然（詳見第 09 章）</li>
+        <li><b>查詢參數用於「篩選」，不是用於「識別」</b>：識別特定資源要放在路徑上（<code>/users/42</code>），不要用 <code>/users?id=42</code></li>
+      </ul>
+    </div>
+
+    <div class="code-block bad">
+      <div class="bar">✕ 常見的命名反例</div>
+      <pre>GET /User/GetById?ID=42
+GET /orderItem/list
+POST /users/42/UPDATE_PROFILE
+GET /users?userId=42&amp;action=fetchOne</pre>
+    </div>
+    <div class="code-block good">
+      <div class="bar">✓ 對應的慣例寫法</div>
+      <pre>GET /v1/users/42
+GET /v1/order-items
+PATCH /v1/users/42
+GET /v1/users/42</pre>
+    </div>
+
+    <div class="tag-line tag-analogy">
+      <b>比喻</b>
+      URL 命名規則就像檔案系統的目錄結構。你不會在同一個專案裡一半資料夾用 camelCase、一半用 snake_case——URL 也是同樣的道理，一套系統裡不該有兩種命名風格並存。
+    </div>
+
+    <div class="summary-box">
+      <h4>本章結論</h4>
+      <ul>
+        <li>好的 URL 命名是「可猜測的」，看幾個範例就能推敲出其他 endpoint</li>
+        <li>資源用複數名詞、全小寫連字符，動詞盡量交給 HTTP Method 而不是塞進路徑</li>
+        <li>識別資源用路徑（<code>/users/42</code>），篩選資源用查詢參數（<code>/users?role=admin</code>）</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== CH06 ===================== -->
+  <section class="chapter" id="ch06">
+    <div class="num">CHAPTER 06</div>
+    <h2>Request 設計：分頁、過濾、排序</h2>
+    <p class="tagline">列表型 API 的三大標準配備</p>
+
+    <h3>分頁：Offset-based vs Cursor-based</h3>
+    <table class="ref">
+      <tr><th></th><th>Offset-based（page / limit）</th><th>Cursor-based（cursor / after）</th></tr>
+      <tr><td>範例</td><td><code>GET /posts?page=2&amp;limit=20</code></td><td><code>GET /posts?after=eyJpZCI6NDJ9&amp;limit=20</code></td></tr>
+      <tr><td>優點</td><td>直覺、可以直接跳到第 N 頁</td><td>資料在分頁過程中被新增/刪除也不會錯位或重複</td></tr>
+      <tr><td>缺點</td><td>資料同時被新增/刪除時，翻頁可能重複看到或漏看資料</td><td>不能直接跳頁（沒有「跳到第 50 頁」的概念）</td></tr>
+      <tr><td>適用場景</td><td>資料變動不頻繁的後台列表、報表</td><td>即時性高的 feed（動態消息、通知列表）</td></tr>
+    </table>
+
+    <div class="tag-line tag-why">
+      <b>為什麼 Cursor-based 比較穩</b>
+      Offset-based 分頁的本質是「跳過前面 N 筆」，如果使用者正在看第 2 頁時，第 1 頁被刪掉一筆資料，原本第 2 頁的第一筆就會往前移到第 1 頁，使用者翻頁時就會「漏看」一筆。Cursor 分頁記錄的是「上一筆看到的資料位置」，不受中間資料變動影響。
+    </div>
+
+    <h3>過濾與排序的慣例</h3>
+    <div class="code-block neutral">
+      <div class="bar">典型的列表 API 查詢參數組合</div>
+      <pre>GET /v1/orders?status=paid&amp;createdAfter=2026-01-01&amp;sort=-createdAt&amp;page=1&amp;limit=20
+
+<span class="c1">// status         → 過濾條件（精確匹配）
+// createdAfter   → 過濾條件（範圍）
+// sort=-createdAt→ 依 createdAt 遞減排序（負號慣例代表 DESC）
+// page / limit   → 分頁</span></pre>
+    </div>
+
+    <div class="concept-card">
+      <div class="head">CONCEPT · 排序方向的慣例</div>
+      <div class="body">
+        <p>業界常見的排序慣例是用「前綴符號」表示方向：<code>sort=name</code> 代表升冪，<code>sort=-name</code> 代表降冪，多欄位排序用逗號分隔：<code>sort=-priority,createdAt</code>。這比 <code>sortBy=name&amp;sortOrder=asc</code> 的寫法更精簡，但團隊要事先約定好，否則前端會猜錯方向。</p>
+      </div>
+    </div>
+
+    <h3>前端串接時該檢查的三件事</h3>
+    <div class="checklist">
+      <ul>
+        <li>分頁 meta 裡有沒有「總筆數」或「是否還有下一頁」（<code>hasMore</code> / <code>totalCount</code>），不然無法畫出正確的分頁 UI</li>
+        <li>過濾參數如果不合法（例如 <code>status=unknown_value</code>），API 是回 400 還是直接忽略該條件？兩種行為前端的錯誤處理完全不同</li>
+        <li>排序欄位是否有白名單限制？如果前端可以任意帶欄位排序，要注意這可能變成後端的效能或注入風險</li>
+      </ul>
+    </div>
+
+    <div class="summary-box">
+      <h4>本章結論</h4>
+      <ul>
+        <li>Offset 分頁直覺但在資料頻繁變動時會錯位，Cursor 分頁穩定但不能跳頁</li>
+        <li>排序方向常用 <code>-</code> 前綴表示 DESC，團隊需要統一慣例</li>
+        <li>分頁 API 一定要回傳「還有沒有下一頁」的資訊，否則前端無法畫分頁 UI</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== CH07 ===================== -->
+  <section class="chapter" id="ch07">
+    <div class="num">CHAPTER 07</div>
+    <h2>Response 設計：統一格式與命名規範</h2>
+    <p class="tagline">同一個系統裡，所有 API 的「形狀」應該長得一樣</p>
+
+    <h3>Envelope（包裝格式）vs 直接回傳</h3>
+    <div class="code-block neutral">
+      <div class="bar">方案 A · 直接回傳陣列/物件（精簡）</div>
+      <pre>GET /v1/users
+[
+  { "id": 1, "name": "Ocean" },
+  { "id": 2, "name": "Nick" }
+]</pre>
+    </div>
+    <div class="code-block neutral">
+      <div class="bar">方案 B · Envelope 包裝（可帶 meta）</div>
+      <pre>GET /v1/users
+{
+  "data": [
+    { "id": 1, "name": "Ocean" },
+    { "id": 2, "name": "Nick" }
+  ],
+  "meta": {
+    "totalCount": 42,
+    "page": 1,
+    "hasMore": true
+  }
+}</pre>
+    </div>
+
+    <div class="tag-line tag-why">
+      <b>為什麼多數團隊選 Envelope</b>
+      方案 A 看似精簡，但一旦需要加分頁資訊、排序狀態等 metadata，就沒有地方放，只能塞進 HTTP header（前端較難處理，且不同 gateway 對 header 大小/命名有限制）。方案 B 犧牲一點精簡度，換來「未來要加欄位」的擴充空間，且格式在所有 endpoint 之間保持一致，前端可以寫一個共用的 response parser。
+    </div>
+
+    <h3>命名規範：camelCase vs snake_case</h3>
+    <div class="concept-card">
+      <div class="head">CONCEPT · 前後端命名對齊</div>
+      <div class="body">
+        <p>JavaScript/TypeScript 生態的慣例是 <code>camelCase</code>，但許多後端語言（Python、Ruby）的慣例是 <code>snake_case</code>。如果後端直接把資料庫欄位（snake_case）原封不動吐給前端，前端就要在程式裡到處轉換命名，或忍受混用兩種風格。</p>
+        <p>務實的做法：在 API 這一層做一次轉換，讓 JSON response 的欄位統一用 <code>camelCase</code>，作為前後端的公約，資料庫內部要用什麼命名是後端自己的事，不該外露到 API 合約上。</p>
+      </div>
+    </div>
+
+    <h3>日期時間、金額、列舉值的格式一致性</h3>
+    <table class="ref">
+      <tr><th>資料類型</th><th>建議格式</th><th>原因</th></tr>
+      <tr><td>日期時間</td><td><code>ISO 8601</code>（<code>2026-07-07T10:30:00Z</code>）</td><td>跨時區明確、幾乎所有語言都有內建 parser</td></tr>
+      <tr><td>金額</td><td>整數（分為單位）或字串，避免浮點數</td><td>浮點數運算會有精度誤差，金額計算絕對不能用 float</td></tr>
+      <tr><td>列舉值（狀態）</td><td>固定字串常數（<code>"active"</code>），不要用數字 magic number</td><td>數字（<code>status: 2</code>）前端要對照表才知道意思，字串本身就有語意</td></tr>
+    </table>
+
+    <div class="summary-box">
+      <h4>本章結論</h4>
+      <ul>
+        <li>統一用 Envelope 格式（<code>data</code> + <code>meta</code>），為未來擴充留空間</li>
+        <li>API 回傳的 JSON 命名風格要統一（建議對前端友善的 camelCase），不該外露資料庫內部命名習慣</li>
+        <li>日期用 ISO 8601、金額避免浮點數、狀態用有語意的字串而非數字</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== CH08 ===================== -->
+  <section class="chapter" id="ch08">
+    <div class="num">CHAPTER 08</div>
+    <h2>錯誤處理設計</h2>
+    <p class="tagline">好的錯誤格式讓前端可以「依照錯誤類型做不同 UI 反應」，不是只能顯示一句籠統訊息</p>
+
+    <div class="tag-line tag-antipattern">
+      <b>反模式</b>
+      前端最痛苦的錯誤處理方式，是後端只回一句人類可讀的訊息字串（<code>"該 email 已被使用"</code>），前端還要用字串比對或正規表達式去判斷這是「email 重複」還是「其他驗證錯誤」，一旦後端改了措辭，前端的判斷邏輯就整個失效。
+    </div>
+
+    <h3>統一錯誤格式：機器可讀 + 人類可讀分離</h3>
+    <div class="code-block good">
+      <div class="bar">✓ 建議格式</div>
+      <pre>HTTP 422 Unprocessable Entity
+{
+  "error": {
+    "code": "EMAIL_ALREADY_EXISTS",
+    "message": "這個 email 已經被註冊過了",
+    "field": "email"
+  }
+}</pre>
+    </div>
+
+    <div class="concept-card">
+      <div class="head">CONCEPT · Error Code 是給程式看的，Message 是給人看的</div>
+      <div class="body">
+        <p><code>code</code> 是一個穩定不變的機器可讀識別碼，前端用它來決定「該做什麼」（例如把游標focus到 email 欄位、顯示特定的重新導向按鈕）；<code>message</code> 則是給使用者看的文字，後端可以隨時調整措辭、甚至做 i18n，而不會影響前端的判斷邏輯。</p>
+        <p>這就是「關注點分離」在 API 設計上的體現：邏輯判斷依賴穩定的 <code>code</code>，呈現內容依賴易變的 <code>message</code>。</p>
+      </div>
+    </div>
+
+    <h3>前端如何依賴 error.code 分流處理</h3>
+    <div class="code-block neutral">
+      <div class="bar">前端範例：依 error code 分流</div>
+      <pre><span class="k">try</span> {
+  <span class="k">await</span> api.post(<span class="s">'/v1/users'</span>, payload);
+} <span class="k">catch</span> (err) {
+  <span class="k">const</span> code = err.response?.data?.error?.code;
+
+  <span class="k">switch</span> (code) {
+    <span class="k">case</span> <span class="s">'EMAIL_ALREADY_EXISTS'</span>:
+      form.setFieldError(<span class="s">'email'</span>, <span class="s">'此 email 已被使用'</span>);
+      <span class="k">break</span>;
+    <span class="k">case</span> <span class="s">'RATE_LIMITED'</span>:
+      toast.show(<span class="s">'操作太頻繁，請稍後再試'</span>);
+      <span class="k">break</span>;
+    <span class="k">default</span>:
+      toast.show(<span class="s">'發生未知錯誤，請稍後再試'</span>);
+  }
+}</pre>
+    </div>
+
+    <h3>驗證錯誤（多欄位）的表達方式</h3>
+    <div class="code-block neutral">
+      <div class="bar">表單同時有多個欄位驗證失敗</div>
+      <pre>HTTP 400 Bad Request
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "輸入資料驗證失敗",
+    "details": [
+      { "field": "email", "code": "INVALID_FORMAT" },
+      { "field": "age", "code": "OUT_OF_RANGE" }
+    ]
+  }
+}</pre>
+    </div>
+
+    <div class="summary-box">
+      <h4>本章結論</h4>
+      <ul>
+        <li>錯誤格式要統一，且區分「機器可讀 code」與「人類可讀 message」</li>
+        <li>前端應該依賴 <code>error.code</code> 做邏輯判斷，不要對 <code>message</code> 字串做比對</li>
+        <li>多欄位驗證錯誤要用陣列結構表達，讓前端能一次性標示所有錯誤欄位</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== CH09 ===================== -->
+  <section class="chapter" id="ch09">
+    <div class="num">CHAPTER 09</div>
+    <h2>版本控制策略</h2>
+    <p class="tagline">API 一定會演進，問題只是「怎麼演進而不打破現有前端」</p>
+
+    <h3>三種常見版本控制方式</h3>
+    <table class="ref">
+      <tr><th>方式</th><th>範例</th><th>優點</th><th>缺點</th></tr>
+      <tr><td>URI Versioning</td><td><code>/v1/users</code></td><td>直觀、可在瀏覽器直接測試、快取友善</td><td>同一資源的不同版本要維護多份路由</td></tr>
+      <tr><td>Header Versioning</td><td><code>Accept: application/vnd.api+json;version=2</code></td><td>URL 保持乾淨，理論上更「RESTful」</td><td>不直覺，瀏覽器測試不方便，容易被忽略</td></tr>
+      <tr><td>Query Param</td><td><code>/users?version=2</code></td><td>實作簡單</td><td>容易被快取層忽略版本差異，語意上version不像是資源的一部分</td></tr>
+    </table>
+
+    <div class="tag-line tag-why">
+      <b>為什麼多數團隊選 URI Versioning</b>
+      URI Versioning 雖然「不夠優雅」，但實務上最容易溝通、除錯、寫文件——貼一個網址在 Slack 上，大家馬上知道是哪個版本。API 設計的優雅程度，永遠要讓步給團隊的實際維運成本。
+    </div>
+
+    <h3>什麼是 Breaking Change？</h3>
+    <div class="concept-card">
+      <div class="head">CONCEPT · Breaking vs Non-breaking</div>
+      <div class="body">
+        <p><b>非破壞性變更</b>（不需要升版）：新增一個回應欄位、新增一個可選的查詢參數、新增一個新的 endpoint。前端只要沒有寫死「只允許這些欄位」的嚴格解析邏輯，就不受影響。</p>
+        <p><b>破壞性變更</b>（需要升版或協調）：刪除或改名一個既有欄位、改變欄位的資料型別（字串變數字）、改變某個狀態碼的意義、把原本可選的欄位變成必填。這些變更一旦上線，會讓「還沒更新」的前端直接壞掉。</p>
+      </div>
+    </div>
+
+    <h3>前端視角：如何應對 API 升版</h3>
+    <div class="checklist">
+      <ul>
+        <li>解析 response 時養成「防禦性存取」習慣，用 <code>?.</code>、預設值，而不是假設欄位一定存在</li>
+        <li>對於列舉值（狀態字串），處理 <code>switch/case</code> 時一定要有 <code>default</code> 分支，避免後端新增一個新狀態值時前端整個壞掉</li>
+        <li>API 若標示 <code>Deprecated</code>（常見於 response header <code>Deprecation: true</code> 或文件標註），要主動排時程遷移，不要等到舊版被關閉才處理</li>
+      </ul>
+    </div>
+
+    <div class="summary-box">
+      <h4>本章結論</h4>
+      <ul>
+        <li>URI Versioning 雖不是最「純粹」的 REST 風格，但溝通與維運成本最低，是業界主流選擇</li>
+        <li>新增欄位通常是安全的，刪除/改名/改型別欄位幾乎一定是破壞性變更</li>
+        <li>前端寫防禦性解析程式碼，是應對 API 演進最實際的保險</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== CH10 ===================== -->
+  <section class="chapter" id="ch10">
+    <div class="num">CHAPTER 10</div>
+    <h2>認證與授權：前端視角看懂 Session / JWT / OAuth2</h2>
+    <p class="tagline">Authentication（你是誰）vs Authorization（你能做什麼）</p>
+
+    <div class="tag-line tag-model">
+      <b>心智模型</b>
+      Authentication 是「驗證身份」——你登入時證明「我是 Ocean」；Authorization 是「授權範圍」——系統決定「Ocean 可以看哪些資料、做哪些操作」。401 對應前者失敗，403 對應後者失敗（回顧第 04 章）。
+    </div>
+
+    <h3>三種主流機制對照</h3>
+    <table class="ref">
+      <tr><th></th><th>Session-based</th><th>JWT (Token-based)</th><th>OAuth2</th></tr>
+      <tr><td>狀態存在哪</td><td>伺服器端（session store）</td><td>Token 本身（自帶簽名資訊）</td><td>授權伺服器（Authorization Server）</td></tr>
+      <tr><td>前端要做什麼</td><td>瀏覽器自動帶 cookie，前端幾乎無感</td><td>手動把 token 放進 <code>Authorization</code> header</td><td>導去第三方登入頁，處理 redirect + callback</td></tr>
+      <tr><td>擴展性</td><td>多台伺服器需要共享 session store</td><td>天然適合多台伺服器（不需要共享狀態）</td><td>適合「用 Google/GitHub 登入」等第三方整合場景</td></tr>
+      <tr><td>登出即時性</td><td>伺服器可立即刪除 session，立刻失效</td><td>Token 發出後在到期前很難「強制」失效（除非額外做黑名單機制）</td><td>依託 Authorization Server 的機制</td></tr>
+    </table>
+
+    <h3>JWT 常見誤解：它不是「加密」的</h3>
+    <div class="tag-line tag-antipattern">
+      <b>常見誤解</b>
+      JWT（JSON Web Token）的中間那段 payload 只是 Base64 編碼，<b>不是加密</b>，任何人拿到 token 都能直接解碼看到裡面的內容（可以貼到 jwt.io 驗證）。JWT 的安全性來自「簽名（signature）」——確保內容沒被竄改，但完全不保密。因此絕對不要把密碼、身分證號碼等敏感資料塞進 JWT payload。
+    </div>
+
+    <h3>Access Token 與 Refresh Token</h3>
+    <div class="concept-card">
+      <div class="head">CONCEPT · 為何要兩個 Token</div>
+      <div class="body">
+        <p><b>Access Token</b> 存活時間短（例如 15 分鐘），用來打一般 API；<b>Refresh Token</b> 存活時間長（例如 30 天），只用來換發新的 Access Token。這樣設計的原因是：Access Token 短命，即使被竊取，攻擊者能用的時間窗口很短；Refresh Token 雖然長命，但只在「換發」這一個受限的動作上使用，且通常存放在更安全的地方（如 <code>HttpOnly</code> cookie，前端 JS 無法直接讀取，降低 XSS 竊取的風險）。</p>
+      </div>
+    </div>
+
+    <div class="code-block neutral">
+      <div class="bar">前端典型的 Token 刷新邏輯（攔截 401 自動重試）</div>
+      <pre>api.interceptors.response.use(
+  response => response,
+  <span class="k">async</span> (error) => {
+    <span class="k">if</span> (error.response?.status === <span class="s">401</span> &amp;&amp; !error.config._retried) {
+      error.config._retried = <span class="k">true</span>;
+      <span class="k">await</span> refreshAccessToken(); <span class="c1">// 用 refresh token 換新的 access token</span>
+      <span class="k">return</span> api(error.config);       <span class="c1">// 重打一次原本失敗的請求</span>
+    }
+    <span class="k">throw</span> error;
+  }
+);</pre>
+    </div>
+
+    <h3>前端最常撞到的坑：CORS</h3>
+    <div class="tag-line tag-why">
+      <b>為什麼會有 CORS</b>
+      瀏覽器基於安全考量，預設禁止網頁對「不同 origin」的伺服器發請求（除非目標伺服器明確允許）。這不是後端故意為難前端，而是瀏覽器內建的同源政策（Same-Origin Policy）。後端需要在 response header 加上 <code>Access-Control-Allow-Origin</code> 等設定，才能允許特定網域的前端呼叫。CORS 錯誤永遠是「後端該設定」的問題，前端能做的很有限（開發環境用 proxy 繞過是常見的權宜之計）。
+    </div>
+
+    <div class="summary-box">
+      <h4>本章結論</h4>
+      <ul>
+        <li>Authentication（驗證身份）與 Authorization（授權範圍）是兩個不同層次的問題，分別對應 401 / 403</li>
+        <li>JWT 只是「簽名」不是「加密」，絕不能塞敏感資料</li>
+        <li>Access Token 短命 + Refresh Token 長命，是業界標準的風險控管設計</li>
+        <li>CORS 是瀏覽器的同源政策，需要後端主動開放，前端無法單方面解決</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== CH11 ===================== -->
+  <section class="chapter" id="ch11">
+    <div class="num">CHAPTER 11</div>
+    <h2>冪等性與進階議題</h2>
+    <p class="tagline">Idempotency Key · Rate Limiting · Webhook · OpenAPI</p>
+
+    <h3>為什麼 POST 需要 Idempotency Key</h3>
+    <p>回顧第 03 章，<code>POST</code> 天生不是冪等的——呼叫兩次「建立訂單」，理論上會建立兩筆訂單。但現實中，網路不穩、使用者手滑連點兩次「送出」按鈕、前端重試邏輯自動重打，都可能造成「非預期的重複建立」。</p>
+
+    <div class="concept-card">
+      <div class="head">CONCEPT · Idempotency Key</div>
+      <div class="body">
+        <p>解法是前端在發送請求時，自己產生一個唯一識別碼（通常是 UUID），放進 <code>Idempotency-Key</code> header。後端收到後先檢查這個 key 是否已經處理過：如果是，直接回傳上次處理的結果，不會重複建立；如果不是，才真正執行建立動作並記錄這個 key。</p>
+      </div>
+    </div>
+
+    <div class="code-block neutral">
+      <div class="bar">前端使用範例</div>
+      <pre><span class="k">const</span> idempotencyKey = crypto.randomUUID();
+
+<span class="k">await</span> api.post(<span class="s">'/v1/orders'</span>, payload, {
+  headers: { <span class="s">'Idempotency-Key'</span>: idempotencyKey }
+});
+
+<span class="c1">// 即使因網路問題重試同一個請求，只要 header 帶同一個 key，
+// 後端保證不會建立第二筆訂單</span></pre>
+    </div>
+
+    <div class="tag-line tag-why">
+      <b>為什麼這對「送出訂單」「扣款」這類 API 特別重要</b>
+      這類操作一旦重複執行，代價是真實的金錢損失或業務錯誤，不像「重複建立一則留言」那樣可以事後刪除補救。凡是牽涉金流、庫存扣減的 <code>POST</code> API，都應該優先考慮加上 Idempotency Key 機制。
+    </div>
+
+    <h3>Rate Limiting：保護伺服器，也保護前端的重試邏輯</h3>
+    <div class="code-block neutral">
+      <div class="bar">典型的 Rate Limit Header</div>
+      <pre>X-RateLimit-Limit: 100        <span class="c1">// 每個時間窗口允許的次數</span>
+X-RateLimit-Remaining: 42    <span class="c1">// 目前剩餘次數</span>
+X-RateLimit-Reset: 1720000000 <span class="c1">// 重置時間（unix timestamp）</span></pre>
+    </div>
+    <p>好的 Rate Limit 設計會把這些資訊放在 header 讓前端可以「提前」得知快被限流了（例如剩餘次數低於 5 時，前端可以自動節流請求），而不是等到 <code>429</code> 才知道。</p>
+
+    <h3>Webhook：反過來由後端主動通知前端／第三方系統</h3>
+    <div class="tag-line tag-analogy">
+      <b>比喻</b>
+      一般 API 呼叫像「打電話問對方」——你主動發出請求，等待對方回應。Webhook 則像「訂閱後由對方主動打給你」——你先登記一個網址（callback URL），事情發生時對方會主動發請求通知你，不用一直輪詢（polling）問「好了嗎？好了嗎？」。常見場景：金流服務的付款結果通知、CI/CD 系統的建置完成通知。
+    </div>
+
+    <h3>OpenAPI（Swagger）：契約先行</h3>
+    <div class="concept-card">
+      <div class="head">CONCEPT · Contract-First Development</div>
+      <div class="body">
+        <p>OpenAPI 是一份用 YAML/JSON 描述 API 的規格（endpoint、參數、response 結構、錯誤碼都寫在裡面），可以自動產生互動式文件（Swagger UI）、自動產生前端的 TypeScript 型別、甚至自動產生 Mock Server。</p>
+        <p>「契約先行」的意思是：前後端在開始寫程式碼之前，先一起討論並定案這份 OpenAPI 規格。前端可以拿著規格直接用 Mock Server 開發，不需要等後端真的把 API 寫完；後端則按規格實作，最後對接時大部分的落差已經在設計階段被抓出來，而不是等到串接才發現「怎麼欄位名字不一樣」。</p>
+      </div>
+    </div>
+
+    <div class="summary-box">
+      <h4>本章結論</h4>
+      <ul>
+        <li>會產生實際業務後果（金流、庫存）的 POST API，應該用 Idempotency Key 防止重複執行</li>
+        <li>Rate Limit 資訊放在 response header，讓前端可以提前節流，而不是等 429 才反應</li>
+        <li>Webhook 是「反向」的 API 呼叫，適合事件通知場景，可以避免高頻率 polling</li>
+        <li>OpenAPI 契約先行能讓前後端在開發初期就對齊介面，大幅減少串接期的落差</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== CH12 ===================== -->
+  <section class="chapter" id="ch12">
+    <div class="num">CHAPTER 12</div>
+    <h2>實戰：重新設計一個爛 API</h2>
+    <p class="tagline">綜合應用前十一章的所有原則</p>
+
+    <p>假設你收到一份現有的、設計不佳的 API 規格，要負責提出改善建議。這種情境下，最有效率的做法是逐一對照前面章節建立的檢核清單。</p>
+
+    <h3>爛 API 範例</h3>
+    <div class="code-block bad">
+      <div class="bar">✕ 原始設計</div>
+      <pre>POST /api/getOrderList
+Request: { "userId": 42, "pageNum": 1 }
+
+Response: <span class="s">HTTP 200</span>
+{
+  "success": <span class="k">true</span>,
+  "result": [
+    { "OrderID": 1, "order_status": 2, "total": "199.00" }
+  ],
+  "msg": ""
+}
+
+<span class="c1">// 若查無資料或發生錯誤：</span>
+Response: <span class="s">HTTP 200</span>
+{ "success": <span class="k">false</span>, "msg": "user not found" }</pre>
+    </div>
+
+    <h3>逐項檢核（對照前面章節）</h3>
+    <table class="ref">
+      <tr><th>問題</th><th>對應章節</th><th>根本原因</th></tr>
+      <tr><td>用 <code>POST /api/getOrderList</code> 查詢資料</td><td>Ch02 · Ch03</td><td>RPC 風格，且查詢動作該用 GET（safe、可快取）卻用了 POST</td></tr>
+      <tr><td>錯誤時仍回 <code>HTTP 200</code></td><td>Ch04</td><td>狀態碼被當裝飾，前端無法依賴 HTTP 協定判斷成敗</td></tr>
+      <tr><td>欄位命名混用 <code>OrderID</code> / <code>order_status</code> / <code>userId</code></td><td>Ch07</td><td>缺乏統一的命名規範（PascalCase / snake_case / camelCase 混雜）</td></tr>
+      <tr><td><code>total</code> 是字串 <code>"199.00"</code></td><td>Ch07</td><td>金額型別不一致，前端無法直接做數值運算</td></tr>
+      <tr><td><code>order_status: 2</code> 是數字</td><td>Ch07</td><td>Magic number，前端需要額外對照表才知道 2 代表什麼</td></tr>
+      <tr><td>錯誤訊息是字串 <code>"user not found"</code></td><td>Ch08</td><td>沒有機器可讀的 error code，前端只能字串比對</td></tr>
+      <tr><td>沒有分頁 meta（有沒有下一頁？總筆數？）</td><td>Ch06</td><td>分頁資訊不完整，前端無法畫正確的分頁 UI</td></tr>
+    </table>
+
+    <h3>重新設計後</h3>
+    <div class="code-block good">
+      <div class="bar">✓ 改善後設計</div>
+      <pre>GET /v1/users/42/orders?page=1&amp;limit=20&amp;sort=-createdAt
+
+Response: <span class="s">HTTP 200</span>
+{
+  "data": [
+    {
+      "id": 1,
+      "status": "paid",
+      "totalCents": 19900,
+      "createdAt": "2026-06-01T09:00:00Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "totalCount": 137,
+    "hasMore": <span class="k">true</span>
+  }
+}
+
+<span class="c1">// 找不到使用者時：</span>
+Response: <span class="s">HTTP 404 Not Found</span>
+{
+  "error": {
+    "code": "USER_NOT_FOUND",
+    "message": "找不到此使用者"
+  }
+}</pre>
+    </div>
+
+    <h3>提出改善建議時的溝通技巧</h3>
+    <div class="checklist">
+      <ul>
+        <li>不要只說「這個設計不好」，具體指出違反了哪個原則、會造成前端什麼實際的維護成本</li>
+        <li>用「小步改善」取代「全部重寫」——如果 API 已經上線且有其他系統依賴，優先討論「新增 <code>v2</code>」而不是直接改壞現有合約</li>
+        <li>把這份手冊的檢核表變成團隊共用的 API Review Checklist，讓「好壞」的判斷不是靠個人經驗，而是有共同標準</li>
+      </ul>
+    </div>
+
+    <div class="summary-box">
+      <h4>全書總結</h4>
+      <ul>
+        <li>API 設計的核心是「一致性」與「可預測性」——好的設計讓人看幾個範例就能猜對其他部分</li>
+        <li>HTTP 協定本身（Method、Status Code）已經提供了豐富的語意，善用它比自己發明一套規則更划算</li>
+        <li>前端不需要會寫後端，但看懂這些設計原則，能大幅提升跨團隊溝通的品質與效率</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>API 設計模式與最佳實踐 · 自學手冊 · 12 Chapters</footer>
+
+<script>
+const progress = document.getElementById('progress');
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+  progress.style.width = pct + '%';
+});
+
+const menuItems = document.querySelectorAll('#sidebar nav a');
+const sections = document.querySelectorAll('main .chapter, main .cover');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.getAttribute('id');
+      menuItems.forEach(a => a.classList.remove('active'));
+      const active = document.querySelector(`#sidebar nav a[href="#${id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
+
+sections.forEach(s => observer.observe(s));
+if (menuItems.length > 0) menuItems[0].classList.add('active');
+
+menuItems.forEach(a => {
+  a.addEventListener('click', () => {
+    if (window.innerWidth <= 1024) document.getElementById('sidebar').classList.remove('open');
+  });
+});
+</script>
+
+</body>
+</html>

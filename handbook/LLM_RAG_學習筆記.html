@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM 原理到 RAG 實務運用 — 學習筆記</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #1c2330;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #56d364;
+    --accent3: #f78166;
+    --accent4: #d2a8ff;
+    --accent5: #ffa657;
+    --tag-bg: rgba(88,166,255,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a1f35 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 40px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(88,166,255,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .header-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    background: rgba(86,211,100,0.1);
+    border: 1px solid rgba(86,211,100,0.3);
+    padding: 3px 10px;
+    border-radius: 4px;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+  header h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1.3;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  header h1 span { color: var(--accent); }
+  header p {
+    color: var(--text2);
+    font-size: 13px;
+  }
+
+  /* NAV TABS */
+  nav {
+    display: flex;
+    gap: 2px;
+    padding: 0 40px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  nav button {
+    background: none;
+    border: none;
+    color: var(--text2);
+    padding: 14px 20px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  nav button:hover { color: var(--text); }
+  nav button.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* MAIN */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 40px 80px;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: rgba(88,166,255,0.4); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .card-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .card-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* CONCEPT BOX */
+  .concept {
+    background: var(--bg3);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  .concept.green { border-left-color: var(--accent2); }
+  .concept.purple { border-left-color: var(--accent4); }
+  .concept.orange { border-left-color: var(--accent5); }
+  .concept.red { border-left-color: var(--accent3); }
+
+  .concept strong {
+    display: block;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .concept.green strong { color: var(--accent2); }
+  .concept.purple strong { color: var(--accent4); }
+  .concept.orange strong { color: var(--accent5); }
+  .concept.red strong { color: var(--accent3); }
+
+  /* TABLE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 16px 0;
+  }
+  th {
+    background: var(--bg3);
+    color: var(--text2);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(48,54,61,0.5);
+    vertical-align: top;
+    line-height: 1.6;
+  }
+  tr:hover td { background: rgba(88,166,255,0.03); }
+
+  /* STEPS */
+  .steps { counter-reset: step; }
+  .step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    counter-increment: step;
+  }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-content strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .step-content p { color: var(--text2); font-size: 13px; }
+
+  /* TAGS */
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: var(--tag-bg);
+    color: var(--accent);
+    border: 1px solid rgba(88,166,255,0.2);
+  }
+  .tag.green { background: rgba(86,211,100,0.1); color: var(--accent2); border-color: rgba(86,211,100,0.2); }
+  .tag.purple { background: rgba(210,168,255,0.1); color: var(--accent4); border-color: rgba(210,168,255,0.2); }
+  .tag.orange { background: rgba(255,166,87,0.1); color: var(--accent5); border-color: rgba(255,166,87,0.2); }
+  .tag.red { background: rgba(247,129,102,0.1); color: var(--accent3); border-color: rgba(247,129,102,0.2); }
+
+  /* GRID */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .mini-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .mini-card h4 { font-size: 13px; color: var(--accent); margin-bottom: 8px; }
+  .mini-card p { font-size: 13px; color: var(--text2); }
+
+  /* FLOW */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  .flow-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    text-align: center;
+  }
+  .flow-box.highlight {
+    background: rgba(88,166,255,0.1);
+    border-color: rgba(88,166,255,0.4);
+    color: var(--accent);
+  }
+  .flow-arrow { color: var(--text2); font-size: 18px; }
+
+  /* COMPARISON */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 16px 0;
+  }
+  @media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
+  .compare-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+  }
+  .compare-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+  .compare-card .stars { font-size: 18px; margin-bottom: 6px; }
+  .compare-card p { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--text);
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title span { color: var(--accent); }
+
+  /* QUIZ */
+  .quiz-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin-bottom: 16px;
+  }
+  .quiz-q { font-weight: 600; margin-bottom: 14px; font-size: 15px; }
+  .quiz-q span {
+    display: inline-block;
+    background: rgba(88,166,255,0.15);
+    color: var(--accent);
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    text-align: center; line-height: 24px;
+    font-size: 12px;
+    margin-right: 8px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-opt {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .quiz-opt:hover { border-color: var(--accent); color: var(--accent); }
+  .quiz-opt.correct { background: rgba(86,211,100,0.1); border-color: var(--accent2); color: var(--accent2); }
+  .quiz-opt.wrong { background: rgba(247,129,102,0.1); border-color: var(--accent3); color: var(--accent3); }
+  .quiz-opt .opt-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    width: 20px; height: 20px;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .quiz-result {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    display: none;
+  }
+  .quiz-result.show { display: block; }
+  .quiz-result.ok { background: rgba(86,211,100,0.1); color: var(--accent2); }
+  .quiz-result.bad { background: rgba(247,129,102,0.1); color: var(--accent3); }
+
+  /* ROADMAP */
+  .roadmap {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin: 16px 0;
+  }
+  @media (max-width: 800px) { .roadmap { grid-template-columns: 1fr 1fr; } }
+  .rm-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .rm-card h4 {
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  .rm-card ul { list-style: none; padding: 0; }
+  .rm-card ul li {
+    font-size: 12px;
+    color: var(--text2);
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(48,54,61,0.4);
+  }
+  .rm-card ul li:last-child { border-bottom: none; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--accent4);
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+
+  ul.list { padding-left: 20px; }
+  ul.list li { margin-bottom: 6px; font-size: 14px; color: var(--text2); }
+  ul.list li strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-tag">STUDY NOTES</div>
+  <h1>LLM 原理到 <span>RAG</span> 實務運用</h1>
+  <p>研發處 / Jason Chang ｜ 共 2 堂課 · 53 張投影片整理</p>
+</header>
+
+<nav>
+  <button class="active" onclick="switchTab('overview', this)">📋 課程總覽</button>
+  <button onclick="switchTab('llm', this)">🧠 LLM 基礎原理</button>
+  <button onclick="switchTab('rag', this)">🔍 RAG 架構</button>
+  <button onclick="switchTab('training', this)">⚙️ 模型訓練</button>
+  <button onclick="switchTab('workshop', this)">🛠️ Workshop 實作</button>
+  <button onclick="switchTab('quiz', this)">🎯 自我測驗</button>
+</nav>
+
+<main>
+
+<!-- ===== OVERVIEW ===== -->
+<div id="overview" class="section active">
+  <h2 class="section-title">課程<span>總覽</span></h2>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(88,166,255,0.1)">📚</div>
+      <div>
+        <div class="card-title">課程架構</div>
+        <div class="card-subtitle">Part 01 + Part 02</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="mini-card">
+        <h4>Part 01 — 原理篇</h4>
+        <ul class="list">
+          <li>LLM 學習地圖</li>
+          <li>Token 與 Embedding</li>
+          <li>Transformer 架構</li>
+          <li>RAG 簡介</li>
+          <li>模型蒸餾</li>
+          <li>模型訓練 (pretrain/post-train)</li>
+          <li>金融業案例</li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <h4>Part 02 — 實務篇</h4>
+        <ul class="list">
+          <li>Token & Embedding 計算原理</li>
+          <li>Agentic AI 與 RAG</li>
+          <li>Vector Database</li>
+          <li>Workshop 1: RAG n8n 實作</li>
+          <li>Workshop 2: 本地 LLM</li>
+          <li>模型微調 (Unsloth + Gemma3)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(86,211,100,0.1)">🗺️</div>
+      <div>
+        <div class="card-title">LLM 學習地圖</div>
+        <div class="card-subtitle">五大學習領域</div>
+      </div>
+    </div>
+    <div class="roadmap">
+      <div class="rm-card">
+        <h4>一、基礎知識</h4>
+        <ul>
+          <li>線性代數</li>
+          <li>機率統計</li>
+          <li>機器學習原理</li>
+          <li>深度學習基礎</li>
+        </ul>
+      </div>
+      <div class="rm-card">
+        <h4>二、核心架構</h4>
+        <ul>
+          <li>Transformer</li>
+          <li>注意力機制</li>
+          <li>編碼器-解碼器</li>
+          <li>BERT/GPT</li>
+        </ul>
+      </div>
+      <div class="rm-card">
+        <h4>三、預訓練微調</h4>
+        <ul>
+          <li>MLM / CLM</li>
+          <li>LoRA / QLoRA</li>
+          <li>Prompt Tuning</li>
+          <li>RLHF</li>
+        </ul>
+      </div>
+      <div class="rm-card">
+        <h4>四、應用佈署</h4>
+        <ul>
+          <li>RAG / 向量庫</li>
+          <li>LangChain</li>
+          <li>Prompt Engineering</li>
+          <li>模型量化</li>
+        </ul>
+      </div>
+      <div class="rm-card">
+        <h4>五、前沿倫理</h4>
+        <ul>
+          <li>多模態模型</li>
+          <li>Autonomous Agents</li>
+          <li>安全與倫理</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(255,166,87,0.1)">⚡</div>
+      <div>
+        <div class="card-title">AI 應用策略比較總覽</div>
+        <div class="card-subtitle">三種核心方法的優劣對比</div>
+      </div>
+    </div>
+    <div class="compare-grid">
+      <div class="compare-card">
+        <h4 style="color:var(--accent2)">💬 Prompt Engineering</h4>
+        <div class="stars">💰💰💰 &nbsp; ⚡⚡⚡ &nbsp; 🎯🎯</div>
+        <p>成本低、上手快，適合 PoC 與一次性任務。但受 Token 限制、易幻覺、穩定性較低。</p>
+      </div>
+      <div class="compare-card">
+        <h4 style="color:var(--accent)">🔍 RAG</h4>
+        <div class="stars">💰💰💰💰 &nbsp; ⚡⚡ &nbsp; 🎯🎯🎯🎯</div>
+        <p>大幅降低幻覺、知識可即時更新。適合企業知識庫、問答系統。需管理向量檢索品質。</p>
+      </div>
+      <div class="compare-card">
+        <h4 style="color:var(--accent4)">🏋️ 微調 Fine-Tuning</h4>
+        <div class="stars">💰 &nbsp; ⚡⚡⚡⚡⚡ &nbsp; 🎯🎯🎯🎯</div>
+        <p>前期成本高，但推論快、穩定。適合金融/醫療等垂直領域的大規模服務。</p>
+      </div>
+    </div>
+    <div class="concept orange">
+      <strong>💡 最佳實踐</strong>
+      RAG + Fine-Tuning (RAFT) — 以微調建立專業語感，以 RAG 確保知識精準與即時
+    </div>
+  </div>
+</div>
+
+<!-- ===== LLM 基礎原理 ===== -->
+<div id="llm" class="section">
+  <h2 class="section-title">LLM <span>基礎原理</span></h2>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(88,166,255,0.1)">🔤</div>
+      <div>
+        <div class="card-title">Token（詞塊）</div>
+        <div class="card-subtitle">語言的最小單位</div>
+      </div>
+    </div>
+    <div class="concept">
+      <strong>定義</strong>
+      Token 是 AI 字典裡的「專屬 ID」。文字被切割成碎片，單一數字本身毫無意義，僅作為索引。例如：<code>'Python' → ID: 492</code>
+    </div>
+    <div class="concept green">
+      <strong>BPE（Byte Pair Encoding）— OpenAI/Anthropic 採用</strong>
+      透過「頻繁子字串」進行合併。例如「我正在104人力銀行搜尋前端工程師職缺」原本 17 個字，BPE 後變成 5 個 Token（我正在 / 104人力銀行 / 搜尋 / 前端工程師 / 職缺），大幅壓縮。
+    </div>
+    <div class="tags">
+      <span class="tag">OpenAI/Anthropic: BPE</span>
+      <span class="tag green">Google: Unigram</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(210,168,255,0.1)">📐</div>
+      <div>
+        <div class="card-title">Embedding（向量）</div>
+        <div class="card-subtitle">意義的數字化身</div>
+      </div>
+    </div>
+    <div class="concept purple">
+      <strong>定義</strong>
+      將文字轉化為保留語意與關聯性的數字陣列（高達數千維度，如 OpenAI 的 1536 維）。範例：<code>Python → [0.13, -0.27, 0.89, ...]</code>
+    </div>
+    <div class="concept">
+      <strong>語意距離 — 餘弦相似度（Cosine Similarity）</strong>
+      電腦不懂「履歷」或「職缺」，但懂幾何數學。意義相近的詞在向量空間中距離極近。
+      例如搜尋「想找寫程式的工作」→ 系統找到：軟體工程師（高）、程式設計師（高）、行政助理（低）
+    </div>
+    <div class="grid2">
+      <div class="mini-card">
+        <h4>Token vs Embedding</h4>
+        <table>
+          <tr><th>特性</th><th>Token</th><th>Embedding</th></tr>
+          <tr><td>本質</td><td>整數 ID</td><td>浮點數陣列</td></tr>
+          <tr><td>語意</td><td>無</td><td>有</td></tr>
+          <tr><td>維度</td><td>1</td><td>數百到數千</td></tr>
+          <tr><td>用途</td><td>索引/字典</td><td>相似度計算</td></tr>
+        </table>
+      </div>
+      <div class="mini-card">
+        <h4>Embedding 應用</h4>
+        <ul class="list">
+          <li>跨關鍵字的語意搜尋</li>
+          <li>職缺與履歷智慧媒合</li>
+          <li>向量資料庫儲存與查詢</li>
+          <li>RAG 的核心檢索機制</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(86,211,100,0.1)">🏗️</div>
+      <div>
+        <div class="card-title">Transformer 架構</div>
+        <div class="card-subtitle">現代 LLM 的核心基礎</div>
+      </div>
+    </div>
+    <div class="flow">
+      <div class="flow-box">輸入文字</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box highlight">Encoder（編碼器）<br><small>理解語意</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box highlight">Decoder（解碼器）<br><small>生成文字</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">輸出結果</div>
+    </div>
+    <table>
+      <tr>
+        <th>面向</th>
+        <th>Encoder Transformer (BERT)</th>
+        <th>LLM / Decoder (GPT)</th>
+      </tr>
+      <tr><td>預訓練任務</td><td>MLM（掩碼語言模型）</td><td>CLM（因果語言模型）</td></tr>
+      <tr><td>Attention</td><td>雙向（bidirectional）</td><td>單向（causal）</td></tr>
+      <tr><td>輸出</td><td>向量 / label</td><td>文字</td></tr>
+      <tr><td>擅長生成</td><td>❌</td><td>✅</td></tr>
+      <tr><td>擅長分類</td><td>✅</td><td>⚠️ 需 prompt</td></tr>
+      <tr><td>應用場景</td><td>文本分類、情感分析</td><td>生成文本、翻譯、對話</td></tr>
+    </table>
+    <hr class="divider">
+    <div class="card-subtitle" style="margin-bottom:8px">GPT 發展歷程</div>
+    <table>
+      <tr><th>模型</th><th>發佈時間</th><th>參數量</th><th>預訓練量</th></tr>
+      <tr><td>GPT-1</td><td>2018/06</td><td>1.17 億</td><td>5 GB</td></tr>
+      <tr><td>GPT-2</td><td>2019/02</td><td>15 億</td><td>40 GB</td></tr>
+      <tr><td>GPT-3</td><td>2020/05</td><td>1750 億</td><td>45 TB</td></tr>
+      <tr><td>ChatGPT</td><td>2022/11</td><td>千億級？</td><td>百 TB 級？</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(255,166,87,0.1)">🔬</div>
+      <div>
+        <div class="card-title">模型蒸餾（Knowledge Distillation）</div>
+        <div class="card-subtitle">把大模型的能力壓縮到小模型</div>
+      </div>
+    </div>
+    <div class="concept orange">
+      <strong>核心概念</strong>
+      不是複製參數，不是單純縮小體積，而是讓小模型學會大模型「如何思考和判斷」（模仿）。
+    </div>
+    <div class="grid2">
+      <div>
+        <table>
+          <tr><th>方法</th><th>類型</th><th>適用場景</th></tr>
+          <tr><td>輸出蒸餾</td><td>模仿最終答案 (Q+A)</td><td>分類、FAQ、意圖識別</td></tr>
+          <tr><td>標籤蒸餾</td><td>學習機率分布</td><td>搜索、推薦、風控</td></tr>
+          <tr><td>過程蒸餾</td><td>學習思考過程 (CoT)</td><td>數學推理、代碼生成</td></tr>
+        </table>
+      </div>
+      <div class="mini-card">
+        <h4>DeepSeek R1 蒸餾案例</h4>
+        <p style="font-size:12px;color:var(--text2)">從 671B 大模型蒸餾至：</p>
+        <ul class="list" style="margin-top:8px">
+          <li>Qwen-1.5B / 7B / 14B / 32B</li>
+          <li>LLaMA-8B / 70B</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RAG ===== -->
+<div id="rag" class="section">
+  <h2 class="section-title">RAG <span>架構詳解</span></h2>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(247,129,102,0.1)">⚠️</div>
+      <div>
+        <div class="card-title">LLM 的兩大痛點</div>
+        <div class="card-subtitle">RAG 要解決的問題</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="concept red">
+        <strong>痛點一：AI 幻覺（Hallucination）</strong>
+        LLM 本質是「機率生成模型」。當缺乏特定知識時，會「一本正經地胡說八道」，產生看似合理卻錯誤的答案。
+      </div>
+      <div class="concept red">
+        <strong>痛點二：企業資料斷層</strong>
+        資安壁壘：企業機密無法上傳公有雲訓練。時效性滯後：預訓練模型知識有截止日期，無法即時獲取最新資料。
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(88,166,255,0.1)">🔍</div>
+      <div>
+        <div class="card-title">RAG 核心概念</div>
+        <div class="card-subtitle">Retrieval-Augmented Generation — 以「開卷考試」重塑 AI</div>
+      </div>
+    </div>
+    <div class="flow" style="justify-content:center">
+      <div class="flow-box highlight" style="border-color:var(--accent3);color:var(--accent3);background:rgba(247,129,102,0.1)">傳統 LLM<br><small>閉卷考</small></div>
+      <div class="flow-arrow" style="font-size:24px">→</div>
+      <div class="flow-box highlight">RAG<br><small>開卷考</small></div>
+    </div>
+    <div class="steps" style="margin-top:16px">
+      <div class="step">
+        <div class="step-num">R</div>
+        <div class="step-content">
+          <strong>Retrieval（檢索）</strong>
+          <p>翻閱龐大的知識庫、職缺描述、薪資報告與產業趨勢分析</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">A</div>
+        <div class="step-content">
+          <strong>Augmented（增強）</strong>
+          <p>將檢索出的相關段落與使用者原始問題，打包成富含背景知識的 Prompt</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">G</div>
+        <div class="step-content">
+          <strong>Generation（生成）</strong>
+          <p>LLM 基於提供的正確資料，生成精準解答並附上引用標籤</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(86,211,100,0.1)">🗄️</div>
+      <div>
+        <div class="card-title">Vector Database（向量資料庫）</div>
+        <div class="card-subtitle">RAG 的核心基礎建設</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="concept red">
+        <strong>關聯式資料庫（SQL）— 傳統方法的問題</strong>
+        依賴精確字面比對。搜尋「前端工程師」找不到「Web Developer」或「React 開發者」。面對職稱多樣性極度脆弱。
+      </div>
+      <div class="concept green">
+        <strong>向量資料庫 — 語意近似度搜尋</strong>
+        依賴 ANN（近似最近鄰）搜尋。能將「前端工程師」與「Web Developer」、「React 開發者」等語意關聯起來，實現精準跨職稱媒合。
+      </div>
+    </div>
+    <div class="tags">
+      <span class="tag">Pinecone</span>
+      <span class="tag">Milvus</span>
+      <span class="tag">Qdrant</span>
+      <span class="tag">Elasticsearch</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(210,168,255,0.1)">📑</div>
+      <div>
+        <div class="card-title">RAG 系統建立流程</div>
+        <div class="card-subtitle">Indexing（索引建立）四步驟</div>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <strong>資料提取（Data Parsing）</strong>
+          <p>將非結構化資料（履歷、職缺描述）及結構化資料（薪資範圍、地區）萃取為純文本，保留 Metadata（職務類別、工作年資）</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <strong>語意分塊（Chunking）</strong>
+          <p>將長文切分為適當大小的片段（Chunks）。必須設定重疊區（Overlap）避免語意斷裂</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <strong>向量化（Embedding）</strong>
+          <p>呼叫 Embedding 模型將 Chunk 轉為高維度矩陣</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <strong>儲存（Vector Storage）</strong>
+          <p>將向量與原始文本存入 Vector DB，建立 ANN 索引以支援快速語意搜尋</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(255,166,87,0.1)">📊</div>
+      <div>
+        <div class="card-title">RAG 評估三元組（RAG Triad）</div>
+        <div class="card-subtitle">如何衡量 RAG 系統成效</div>
+      </div>
+    </div>
+    <table>
+      <tr><th>指標</th><th>評估重點</th><th>反例</th></tr>
+      <tr>
+        <td><strong style="color:var(--accent)">上下文關連性</strong><br><small>Context Relevance</small></td>
+        <td>檢索的資料是否真的相關？</td>
+        <td>搜尋「Java 資深工程師」卻回傳大量「行政助理」履歷</td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--accent2)">事實一致性</strong><br><small>Groundedness</small></td>
+        <td>回答是否完全基於 context？</td>
+        <td>資料顯示月薪 4 萬，LLM 卻生成「保證年薪 14 個月」</td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--accent4)">答案相關性</strong><br><small>Answer Relevance</small></td>
+        <td>是否精準解決用戶提問？</td>
+        <td>問「中年轉職建議」，系統回傳「新鮮人面試技巧」</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(247,129,102,0.1)">🚨</div>
+      <div>
+        <div class="card-title">RAG 常見失敗節點</div>
+        <div class="card-subtitle">四大問題點</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="concept red">
+        <strong>1. 知識庫缺失（Missing Content）</strong>
+        企業文件本無答案時，系統可能產生錯誤。需建立「優雅拒答」機制。
+      </div>
+      <div class="concept red">
+        <strong>2. 檢索遺漏（Missed Top Ranked）</strong>
+        演算法門檻或 Chunking 切割導致語意破碎，遺漏相關文件。
+      </div>
+      <div class="concept red">
+        <strong>3. 上下文迷失（Not in Context）</strong>
+        塞入太多 Context 超過 Token 限制，LLM 在大量雜訊中迷失重點。
+      </div>
+      <div class="concept red">
+        <strong>4. 格式錯誤（Format Error）</strong>
+        LLM 沒有依指令生成特定格式（如 JSON），導致後端系統錯誤。
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(86,211,100,0.1)">🤖</div>
+      <div>
+        <div class="card-title">AI Agent（智慧代理）</div>
+        <div class="card-subtitle">從被動知識庫到主動思考</div>
+      </div>
+    </div>
+    <div class="concept green">
+      <strong>RAG 只是起點</strong>
+      未來企業應用不再只是「你問我答」，AI Agent 能主動規劃與執行任務。
+    </div>
+    <div class="grid2">
+      <div>
+        <div class="concept">
+          <strong>🧠 大腦（LLM）</strong>
+          負責邏輯推理與任務拆解，分析複雜職缺描述與求職者資料
+        </div>
+        <div class="concept purple">
+          <strong>💾 記憶（RAG）</strong>
+          透過向量庫精準提取歷史知識，檢索面試題庫、薪資數據、公司評論
+        </div>
+        <div class="concept orange">
+          <strong>🦾 手與腳（Tools/API）</strong>
+          呼叫內部系統執行動作：自動安排面試、發送通知、更新應徵狀態
+        </div>
+      </div>
+      <div class="mini-card" style="display:flex;flex-direction:column;justify-content:center">
+        <h4>Agentic Workflow</h4>
+        <p>規劃（Planning）→ 執行（Action）→ 觀察（Observation）→ 反思（Reflection）→ 循環</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 模型訓練 ===== -->
+<div id="training" class="section">
+  <h2 class="section-title">模型<span>訓練流程</span></h2>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(88,166,255,0.1)">🔄</div>
+      <div>
+        <div class="card-title">預訓練到後訓練的三階段</div>
+        <div class="card-subtitle">從基礎模型到聰明的 AI</div>
+      </div>
+    </div>
+    <div class="flow" style="flex-direction:column;align-items:flex-start;gap:16px">
+      <div style="display:flex;align-items:center;gap:16px;width:100%">
+        <div class="flow-box" style="min-width:160px;text-align:center">
+          <strong>預訓練（Pretrain）</strong><br>
+          <small>大量無標註文本</small>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="concept" style="flex:1;margin:0">
+          <strong>基礎模型（Base Model）</strong>
+          能說話但亂說（打基礎）。學習通用知識，使用自監督學習，基於 Transformer 架構。
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;width:100%">
+        <div class="flow-box" style="min-width:160px;text-align:center">
+          <strong>後訓練 SFT</strong><br>
+          <small>人工標註數據</small>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="concept green" style="flex:1;margin:0">
+          <strong>SFT Model（能用的 AI）</strong>
+          能對話但不聰明（學專業）。監督微調，強化特定任務表現。
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;width:100%">
+        <div class="flow-box" style="min-width:160px;text-align:center">
+          <strong>後訓練 RLHF</strong><br>
+          <small>少量人工輸入</small>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="concept purple" style="flex:1;margin:0">
+          <strong>RLHF Model（聰明的 AI）</strong>
+          能思考會推理（懂行業）。強化學習，基於人類回饋優化。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(210,168,255,0.1)">📊</div>
+      <div>
+        <div class="card-title">三種方法深度比較</div>
+        <div class="card-subtitle">Pretrain vs Fine-tuning vs Distillation</div>
+      </div>
+    </div>
+    <table>
+      <tr>
+        <th>方法</th>
+        <th>成本</th>
+        <th>延遲</th>
+        <th>準確率</th>
+        <th>優點</th>
+        <th>缺點</th>
+        <th>適用場景</th>
+      </tr>
+      <tr>
+        <td><strong>Pre-training</strong></td>
+        <td>⭐</td>
+        <td>⭐⭐⭐</td>
+        <td>⭐⭐⭐⭐⭐</td>
+        <td>能力最完整，泛化強</td>
+        <td>成本極高，不可頻繁</td>
+        <td>基礎模型開發（GPT類）</td>
+      </tr>
+      <tr>
+        <td><strong>Fine-tuning</strong></td>
+        <td>⭐⭐</td>
+        <td>⭐⭐⭐⭐</td>
+        <td>⭐⭐⭐⭐½</td>
+        <td>穩定性高，可控輸出</td>
+        <td>需高品質標註資料</td>
+        <td>金融/醫療垂直領域</td>
+      </tr>
+      <tr>
+        <td><strong>Distillation</strong></td>
+        <td>⭐⭐⭐</td>
+        <td>⭐⭐⭐⭐⭐</td>
+        <td>⭐⭐⭐⭐</td>
+        <td>最快、成本低（長期）</td>
+        <td>依賴 Teacher 品質</td>
+        <td>邊緣設備、高併發</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(86,211,100,0.1)">🏦</div>
+      <div>
+        <div class="card-title">金融業 LLM 訓練案例</div>
+        <div class="card-subtitle">國泰金控金融 LLM 模型訓練框架</div>
+      </div>
+    </div>
+    <div class="concept green">
+      <strong>成果</strong>
+      進階金融授信知識正確率近九成；繁體中文理解與原始模型相近。模型參數量約在 7B 至 8B。
+    </div>
+    <div class="tags">
+      <span class="tag">Nvidia Nemotron 模型</span>
+      <span class="tag green">國科會 TAIDE 模型</span>
+      <span class="tag purple">Project TAME 模型</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Workshop ===== -->
+<div id="workshop" class="section">
+  <h2 class="section-title">Workshop <span>實作指南</span></h2>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(88,166,255,0.1)">🔧</div>
+      <div>
+        <div class="card-title">Workshop 1：RAG n8n 實作</div>
+        <div class="card-subtitle">胡適向量庫 + n8n + VIP 小妞</div>
+      </div>
+    </div>
+    <div class="concept">
+      <strong>學習目標</strong>
+      在胡適向量庫建立 FAQ Embedding → 檢索相似問答 → n8n 整合 RAG → 驗證 VIP 小妞對新知識的理解能力
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <strong>Hushih（胡適）Vector Service</strong>
+          <p>設定 site（如 <code>vipbot_web</code>）和 did，上傳 FAQ 文本進行 Embedding 儲存</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <strong>建立 n8n Workflow</strong>
+          <p>建立 AOAI credential → 匯入 JSON 備份 → 啟用測試模式 → 啟用正式模式</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <strong>驗證 RAG 效果</strong>
+          <p>測試 VIP 小妞是否能正確回應新增的「徵才首購優惠」FAQ 知識</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(210,168,255,0.1)">💻</div>
+      <div>
+        <div class="card-title">Workshop 2：本地 LLM（LM Studio）</div>
+        <div class="card-subtitle">安裝 + 測試 + 多模態</div>
+      </div>
+    </div>
+    <div class="concept purple">
+      <strong>學習目標</strong>
+      使用 LM Studio 建立本地環境 → 下載運行 LLM → 測試對話與多模態能力 → 了解幻覺與 MCP 工具調用
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <strong>安裝 LM Studio</strong>
+          <p>從 <code>lmstudio.ai</code> 下載安裝，下載 <code>google/gemma-3-4b</code> 模型</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <strong>基礎測試</strong>
+          <p>模型版本查詢、能力測試、是否能搜尋網路、上傳文件讀取</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <strong>多模態與幻覺測試</strong>
+          <p>上傳圖片，測試圖像理解能力；觀察模型可能產生的幻覺現象</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <strong>MCP 工具調用</strong>
+          <p>切換 gemma-3-12B，安裝 filesystem MCP 和 playwright MCP，測試工具呼叫能力</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(86,211,100,0.1)">🏋️</div>
+      <div>
+        <div class="card-title">Workshop 3：模型微調（Fine-Tuning）</div>
+        <div class="card-subtitle">Unsloth + Gemma3 + LoRA</div>
+      </div>
+    </div>
+    <div class="concept green">
+      <strong>學習目標</strong>
+      了解微調環境與技術 → Unsloth 配置 → 微調 Gemma3 → 輸出 GGUF → LM Studio 驗證
+    </div>
+    <div class="grid2">
+      <div>
+        <h4 style="font-size:13px;color:var(--text2);margin-bottom:8px">必要套件</h4>
+        <table>
+          <tr><th>套件</th><th>用途</th></tr>
+          <tr><td><code>unsloth</code></td><td>高效 LoRA/QLoRA 微調</td></tr>
+          <tr><td><code>transformers</code></td><td>模型核心框架</td></tr>
+          <tr><td><code>trl</code></td><td>SFT / RLHF / DPO</td></tr>
+          <tr><td><code>peft</code></td><td>LoRA / QLoRA 微調</td></tr>
+          <tr><td><code>bitsandbytes</code></td><td>4-bit 量化</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="concept">
+          <strong>訓練成果</strong>
+          訓練 14,066 樣本，600 steps<br>
+          耗時 1:12:09<br>
+          Training Loss: 0.024200
+        </div>
+        <div class="flow" style="margin-top:8px">
+          <div class="flow-box" style="font-size:11px">Gemma3</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box" style="font-size:11px">LoRA 微調</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box" style="font-size:11px">Merge</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box highlight" style="font-size:11px">GGUF</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== QUIZ ===== -->
+<div id="quiz" class="section">
+  <h2 class="section-title">自我<span>測驗</span></h2>
+  <p style="color:var(--text2);margin-bottom:24px;font-size:13px">點選答案來驗證你的理解 ✨</p>
+
+  <div class="quiz-card">
+    <div class="quiz-q"><span>1</span>Token 與 Embedding 的主要差別是什麼？</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">A</div>Token 有語意，Embedding 只是索引</div>
+      <div class="quiz-opt" onclick="answer(this, true)"><div class="opt-label">B</div>Token 是整數 ID（無語意），Embedding 是高維浮點數向量（有語意）</div>
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">C</div>兩者是完全相同的概念</div>
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">D</div>Embedding 是 Token 的子集合</div>
+    </div>
+    <div class="quiz-result ok">✅ 正確！Token 是語言的最小單位（索引），Embedding 是將 Token 轉為保留語意的高維向量。</div>
+    <div class="quiz-result bad">❌ 再想想！Token = 整數 ID（如 Python → 492），Embedding = 語意向量（如 [0.13, -0.27, ...]）。</div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q"><span>2</span>RAG 的三個字母分別代表什麼？</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">A</div>Reasoning, Analysis, Generation</div>
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">B</div>Retrieval, Automation, Generation</div>
+      <div class="quiz-opt" onclick="answer(this, true)"><div class="opt-label">C</div>Retrieval（檢索）, Augmented（增強）, Generation（生成）</div>
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">D</div>Ranking, Aggregation, Generation</div>
+    </div>
+    <div class="quiz-result ok">✅ 正確！RAG = 檢索增強生成，先從知識庫檢索相關內容，再增強 Prompt，最後讓 LLM 生成回答。</div>
+    <div class="quiz-result bad">❌ RAG 是 Retrieval-Augmented Generation（檢索增強生成）！</div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q"><span>3</span>BPE（Byte Pair Encoding）的主要作用是？</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">A</div>將文字轉為向量空間</div>
+      <div class="quiz-opt" onclick="answer(this, true)"><div class="opt-label">B</div>透過合併頻繁子字串來壓縮 Token 數量</div>
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">C</div>計算兩個向量的餘弦相似度</div>
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">D</div>訓練語言模型的損失函數</div>
+    </div>
+    <div class="quiz-result ok">✅ 正確！BPE 透過頻繁子字串合併來壓縮，讓「我正在104人力銀行搜尋前端工程師職缺」(17字) 變成 5 個 Token。</div>
+    <div class="quiz-result bad">❌ BPE 是 Tokenizer 方法，透過合併頻繁的子字串（如「前端工程師」→ 1 個 Token），大幅壓縮 Token 數量。</div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q"><span>4</span>下列哪個選項正確描述了「模型蒸餾」？</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">A</div>直接複製大模型的參數到小模型</div>
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">B</div>將模型的精度從 32-bit 降低到 8-bit</div>
+      <div class="quiz-opt" onclick="answer(this, true)"><div class="opt-label">C</div>讓小模型學習大模型的思考方式與輸出分布（模仿）</div>
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">D</div>用人工標註資料微調現有模型</div>
+    </div>
+    <div class="quiz-result ok">✅ 正確！蒸餾是讓 Student 模型模仿 Teacher 模型的思維與機率分布，而非複製參數。</div>
+    <div class="quiz-result bad">❌ 蒸餾不是複製參數，而是讓小模型（Student）學會大模型（Teacher）如何思考和判斷！</div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q"><span>5</span>RAG 評估三元組（RAG Triad）包含哪三個指標？</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">A</div>精確率、召回率、F1 分數</div>
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">B</div>速度、成本、準確率</div>
+      <div class="quiz-opt" onclick="answer(this, true)"><div class="opt-label">C</div>上下文關連性、事實一致性、答案相關性</div>
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">D</div>索引品質、向量維度、模型大小</div>
+    </div>
+    <div class="quiz-result ok">✅ 正確！Context Relevance（檢索的對嗎？）+ Groundedness（有沒有幻覺？）+ Answer Relevance（解決問題了嗎？）</div>
+    <div class="quiz-result bad">❌ RAG Triad = 上下文關連性 + 事實一致性（Groundedness）+ 答案相關性，用來全面評估 RAG 系統品質。</div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q"><span>6</span>為什麼向量資料庫優於傳統 SQL 資料庫用於語意搜尋？</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">A</div>向量資料庫速度更快</div>
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">B</div>向量資料庫存儲成本更低</div>
+      <div class="quiz-opt" onclick="answer(this, true)"><div class="opt-label">C</div>向量資料庫支援語意近似度搜尋（ANN），而非只是字面比對</div>
+      <div class="quiz-opt" onclick="answer(this, false)"><div class="opt-label">D</div>向量資料庫相容 SQL 語法</div>
+    </div>
+    <div class="quiz-result ok">✅ 正確！SQL 只能精確比對關鍵字，向量資料庫可以理解「前端工程師」與「Web Developer」語意上是相近的。</div>
+    <div class="quiz-result bad">❌ 關鍵差異是語意搜尋！SQL 找不到「Web Developer」，向量資料庫透過 ANN 可以找到語意相近的詞。</div>
+  </div>
+</div>
+
+</main>
+
+<script>
+function switchTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function answer(opt, correct) {
+  const card = opt.closest('.quiz-card');
+  if (card.querySelector('.quiz-opt.correct') || card.querySelector('.quiz-opt.wrong')) return;
+  
+  opt.classList.add(correct ? 'correct' : 'wrong');
+  
+  if (!correct) {
+    card.querySelectorAll('.quiz-opt').forEach(o => {
+      if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+    });
+  }
+  
+  const results = card.querySelectorAll('.quiz-result');
+  results[correct ? 0 : 1].classList.add('show');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>控制反轉與依賴注入 IoC/DI 自學手冊</title>
+<style>
+  :root {
+    --bg: #F4F1EA;
+    --ink: #2B2420;
+    --deep-red: #8B2635;
+    --deep-red-dark: #6B1D28;
+    --line: #D9D2C3;
+    --code-bg: #2B2420;
+    --code-ink: #F4F1EA;
+    --accent-soft: #EFE3D8;
+    --sidebar-w: 280px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Serif TC", "PMingLiU", serif;
+    line-height: 1.85;
+    font-size: 17px;
+  }
+
+  code, pre, .mono {
+    font-family: "Fira Code", "Consolas", monospace;
+  }
+
+  a { color: var(--deep-red); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---------- Sidebar ---------- */
+  #sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--sidebar-w);
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--accent-soft);
+    border-right: 1px solid var(--line);
+    padding: 32px 20px;
+  }
+  #sidebar .brand {
+    font-size: 14px;
+    letter-spacing: 0.15em;
+    color: var(--deep-red);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  #sidebar h1 {
+    font-size: 20px;
+    margin: 0 0 24px 0;
+    line-height: 1.4;
+    color: var(--deep-red-dark);
+  }
+  #sidebar nav a {
+    display: block;
+    padding: 7px 10px;
+    border-radius: 4px;
+    font-size: 14.5px;
+    color: var(--ink);
+    border-left: 3px solid transparent;
+    transition: all 0.15s ease;
+  }
+  #sidebar nav a:hover {
+    background: rgba(139,38,53,0.08);
+    text-decoration: none;
+  }
+  #sidebar nav a.active {
+    border-left-color: var(--deep-red);
+    background: rgba(139,38,53,0.1);
+    color: var(--deep-red-dark);
+    font-weight: 600;
+  }
+  #sidebar .group-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #9A8F7D;
+    margin: 18px 0 6px 10px;
+  }
+
+  /* ---------- Main ---------- */
+  #main {
+    margin-left: var(--sidebar-w);
+    max-width: 760px;
+    padding: 56px 64px 120px 64px;
+  }
+
+  .eyebrow {
+    color: var(--deep-red);
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1.title {
+    font-size: 40px;
+    line-height: 1.3;
+    color: var(--deep-red-dark);
+    margin: 0 0 14px 0;
+  }
+
+  .subtitle {
+    font-size: 17px;
+    color: #5A5142;
+    margin-bottom: 48px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 32px;
+  }
+
+  section.chapter {
+    margin-bottom: 72px;
+    padding-top: 24px;
+    scroll-margin-top: 24px;
+  }
+
+  section.chapter h2 {
+    font-size: 28px;
+    color: var(--deep-red-dark);
+    border-bottom: 2px solid var(--deep-red);
+    padding-bottom: 10px;
+    margin-bottom: 24px;
+  }
+
+  section.chapter h3 {
+    font-size: 20px;
+    color: var(--deep-red);
+    margin-top: 36px;
+  }
+
+  p { margin: 16px 0; }
+
+  .callout {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--deep-red);
+    padding: 16px 20px;
+    margin: 24px 0;
+    font-size: 15.5px;
+    border-radius: 2px;
+  }
+  .callout .label {
+    font-weight: 700;
+    color: var(--deep-red-dark);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .analogy {
+    background: #FBF8F2;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 18px 22px;
+    margin: 24px 0;
+    font-size: 15.5px;
+  }
+  .analogy .label {
+    font-weight: 700;
+    color: var(--deep-red);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  pre {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 20px 22px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.6;
+    margin: 20px 0;
+  }
+  code.inline {
+    background: var(--accent-soft);
+    color: var(--deep-red-dark);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 15px;
+  }
+  th, td {
+    border: 1px solid var(--line);
+    padding: 10px 14px;
+    text-align: left;
+  }
+  th {
+    background: var(--accent-soft);
+    color: var(--deep-red-dark);
+  }
+
+  ul, ol { padding-left: 22px; }
+  li { margin: 6px 0; }
+
+  .divider {
+    text-align: center;
+    color: var(--line);
+    margin: 48px 0;
+    font-size: 20px;
+    letter-spacing: 12px;
+  }
+
+  /* Quiz */
+  .quiz-item {
+    background: #FBF8F2;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 18px 22px;
+    margin: 18px 0;
+  }
+  .quiz-item .q {
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .quiz-item details {
+    margin-top: 10px;
+    font-size: 14.5px;
+    color: #5A5142;
+  }
+  .quiz-item summary {
+    cursor: pointer;
+    color: var(--deep-red);
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: #9A8F7D;
+  }
+
+  @media (max-width: 900px) {
+    #sidebar { display: none; }
+    #main { margin-left: 0; padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="brand">B TEAM 自學手冊</div>
+  <h1>IoC 與 DI<br>物件導向設計</h1>
+  <nav id="nav">
+    <div class="group-label">開場</div>
+    <a href="#preface">前言：為什麼要學這個</a>
+
+    <div class="group-label">核心概念</div>
+    <a href="#ch1">Ch1．耦合的痛</a>
+    <a href="#ch2">Ch2．控制反轉是什麼</a>
+    <a href="#ch3">Ch3．依賴注入是什麼</a>
+    <a href="#ch4">Ch4．三種注入方式</a>
+
+    <div class="group-label">動手實作</div>
+    <a href="#ch5">Ch5．手寫一個迷你 DI 容器</a>
+    <a href="#ch6">Ch6．從 Spring 到 NestJS</a>
+
+    <div class="group-label">深化與應用</div>
+    <a href="#ch7">Ch7．DI 與 SOLID 的關係</a>
+    <a href="#ch8">Ch8．常見誤區與最佳實踐</a>
+
+    <div class="group-label">收尾</div>
+    <a href="#quiz">自我測驗</a>
+  </nav>
+</div>
+
+<div id="main">
+
+  <div class="eyebrow">物件導向設計自學系列 · Handbook</div>
+  <h1 class="title">控制反轉（IoC）與<br>依賴注入（DI）</h1>
+  <div class="subtitle">
+    這份手冊延續 SOLID 課程與 FP 手冊的編排方式，用你熟悉的前端與 Spring Boot 背景作為橋樑，帶你理解 IoC / DI 這對經常被一起提及、卻常被混為一談的概念。全文以 TypeScript 為主要示範語言。
+  </div>
+
+  <section class="chapter" id="preface">
+    <h2>前言：為什麼要學這個</h2>
+    <p>
+      如果你寫過 Spring Boot，一定寫過 <code class="inline">@Autowired</code>；如果你寫過 NestJS，一定寫過 <code class="inline">@Injectable()</code>。這兩個裝飾器背後，其實是同一套設計思想：<strong>控制反轉（Inversion of Control, IoC）</strong>，而依賴注入（Dependency Injection, DI）是實現它最常見的手法。
+    </p>
+    <p>
+      這份手冊不是要你背誦定義，而是要讓你在讀完之後能自己回答一個問題：<strong>「這段程式碼的『控制權』，原本在誰手上，現在被反轉到誰手上了？」</strong>能穩定回答這個問題，你就真正理解 IoC 了。
+    </p>
+    <div class="callout">
+      <span class="label">你將會學到</span>
+      IoC 的本質、DI 作為 IoC 的一種實現方式、三種注入手法、一個手寫的迷你 DI Container、以及 DI 與 SOLID 中依賴反轉原則（DIP）之間常被搞混的關係。
+    </div>
+  </section>
+
+  <section class="chapter" id="ch1">
+    <h2>Ch1．耦合的痛 — 沒有 DI 時的世界</h2>
+    <p>先看一段「看起來沒問題」的程式碼：</p>
+    <pre><code>class MySQLUserRepository {
+  findById(id: string) {
+    // 直接連線查詢資料庫
+    return { id, name: "Ocean" };
+  }
+}
+
+class UserService {
+  private repo = new MySQLUserRepository(); // 問題在這裡
+
+  getUser(id: string) {
+    return this.repo.findById(id);
+  }
+}
+
+const service = new UserService();
+</code></pre>
+    <p>
+      問題出在 <code class="inline">UserService</code> 內部用 <code class="inline">new MySQLUserRepository()</code> 直接建立了它的依賴。這代表：
+    </p>
+    <ul>
+      <li>要幫 <code class="inline">UserService</code> 寫單元測試，就一定會連到真的資料庫（或者你得改動它的原始碼才能換成假的）。</li>
+      <li>將來想從 MySQL 換成 MongoDB，得回去改 <code class="inline">UserService</code> 的內部程式碼。</li>
+      <li><code class="inline">UserService</code> 同時扛了「怎麼取得資料」跟「怎麼組裝自己」兩個責任。</li>
+    </ul>
+    <div class="analogy">
+      <span class="label">前端視角的類比</span>
+      這就像一個 React 元件在內部寫死 <code class="inline">fetch("https://prod-api.example.com")</code>，而不是透過 props 或 context 把 API client 傳進來。畫面沒壞，但你永遠沒辦法在測試環境或 Storybook 裡替換掉它。
+    </div>
+    <p>
+      這種「自己主動去找/建立依賴」的寫法，責任在<strong>使用者自己身上</strong>——這正是下一章要反轉的「控制權」。
+    </p>
+  </section>
+
+  <section class="chapter" id="ch2">
+    <h2>Ch2．控制反轉（IoC）是什麼</h2>
+    <p>
+      IoC 是一個<strong>原則</strong>，不是一個具體的技術。它的主張很簡單：
+    </p>
+    <div class="callout">
+      <span class="label">IoC 的核心主張</span>
+      把「決定要用哪個實作、何時建立它」的控制權，從物件自己手上，轉移到外部（一個框架、容器，或呼叫者）。
+    </div>
+    <p>
+      注意，IoC 反轉的「控制」不只限於依賴的建立，還包含更廣義的「流程控制」。你熟悉的例子其實到處都是：
+    </p>
+    <table>
+      <tr><th>情境</th><th>傳統做法（自己控制）</th><th>IoC 之後（框架控制）</th></tr>
+      <tr>
+        <td>UI 事件</td>
+        <td>你的程式主動 while 迴圈輪詢滑鼠狀態</td>
+        <td>瀏覽器決定何時呼叫你的 <code class="inline">onClick</code></td>
+      </tr>
+      <tr>
+        <td>Spring Bean</td>
+        <td><code class="inline">new UserService()</code> 自己 new 依賴</td>
+        <td>Spring Container 決定何時建立、注入什麼實作</td>
+      </tr>
+      <tr>
+        <td>NestJS Module</td>
+        <td>Service 內部 import 並 new Repository</td>
+        <td>Nest IoC Container 依 Module 設定注入</td>
+      </tr>
+      <tr>
+        <td>React Hook</td>
+        <td>元件自己管理生命週期時序</td>
+        <td>React 決定何時呼叫 <code class="inline">useEffect</code></td>
+      </tr>
+    </table>
+    <p>
+      所以「事件驅動」「模板方法模式」「框架的生命週期 hook」都是 IoC 的表現形式。<strong>依賴注入（DI）只是 IoC 家族裡，專門處理「依賴要怎麼給到物件手上」這個子問題的其中一種手法。</strong>其他手法還包括 Service Locator、事件/觀察者模式等，但 DI 是目前業界最主流、最容易測試的一種。
+    </p>
+    <div class="divider">· · ·</div>
+    <h3>一句話釐清常見混淆</h3>
+    <p>
+      <strong>IoC 是目標（誰該掌握控制權），DI 是手段（怎麼把依賴送過去）。</strong>就像「解耦」是目標、「介面」是達成解耦的手段之一，兩者是不同層次的詞，不是同義詞。
+    </p>
+  </section>
+
+  <section class="chapter" id="ch3">
+    <h2>Ch3．依賴注入（DI）是什麼</h2>
+    <p>把 Ch1 的例子用 DI 改寫：</p>
+    <pre><code>interface UserRepository {
+  findById(id: string): { id: string; name: string };
+}
+
+class MySQLUserRepository implements UserRepository {
+  findById(id: string) {
+    return { id, name: "Ocean" };
+  }
+}
+
+class UserService {
+  // 依賴透過建構子「被傳進來」，而不是自己 new
+  constructor(private repo: UserRepository) {}
+
+  getUser(id: string) {
+    return this.repo.findById(id);
+  }
+}
+
+// 組裝的責任被移到外部
+const repo = new MySQLUserRepository();
+const service = new UserService(repo);
+</code></pre>
+    <p>
+      差異看起來很小，但意義重大：<code class="inline">UserService</code> 現在只依賴<strong>介面</strong> <code class="inline">UserRepository</code>，完全不知道也不在乎背後是 MySQL、還是測試用的假物件。「組裝」這件事被抽到外部，由呼叫者（或之後會提到的容器）決定。
+    </p>
+    <p>寫單元測試時，你可以自由替換掉真正的實作：</p>
+    <pre><code>class FakeUserRepository implements UserRepository {
+  findById(id: string) {
+    return { id, name: "測試用假資料" };
+  }
+}
+
+const service = new UserService(new FakeUserRepository());
+// 完全不用連資料庫，測試秒級完成
+</code></pre>
+    <div class="callout">
+      <span class="label">DI 的正式定義</span>
+      一個類別不自行建立它所依賴的物件，而是由外部將依賴「注入」進來。類別只透過抽象（介面/型別）與依賴互動，不知道具體實作是誰。
+    </div>
+  </section>
+
+  <section class="chapter" id="ch4">
+    <h2>Ch4．三種注入方式</h2>
+    <p>DI 的「注入」實際上有三種常見手法，各有取捨：</p>
+
+    <h3>1. 建構子注入（Constructor Injection）— 最常用</h3>
+    <pre><code>class UserService {
+  constructor(private repo: UserRepository) {}
+}</code></pre>
+    <p>依賴在物件建立的那一刻就必須給齊，物件不會處於「半初始化」的狀態。這是 Spring、NestJS、Angular 的預設慣例，也是你應該優先選擇的方式。</p>
+
+    <h3>2. Setter 注入（Property/Setter Injection）</h3>
+    <pre><code>class UserService {
+  private repo!: UserRepository;
+  setRepo(repo: UserRepository) {
+    this.repo = repo;
+  }
+}</code></pre>
+    <p>適合「依賴是選填的」或「依賴要在建立後動態替換」的情境，但代價是物件建立後、<code class="inline">setRepo</code> 呼叫前，是一個不完整的狀態，容易造成「忘記設定就用」的執行期錯誤。</p>
+
+    <h3>3. 介面注入（Interface Injection）</h3>
+    <pre><code>interface RepositoryAware {
+  setRepository(repo: UserRepository): void;
+}
+
+class UserService implements RepositoryAware {
+  private repo!: UserRepository;
+  setRepository(repo: UserRepository) {
+    this.repo = repo;
+  }
+}</code></pre>
+    <p>強制要求「需要某依賴的類別」實作對應的注入介面，由容器統一呼叫該方法完成注入。這種方式現在較少見（比較常在較舊的 Java 框架，如早期的 Avalon、PicoContainer 中看到），因為它會讓類別多背負一個跟業務邏輯無關的介面。</p>
+
+    <div class="callout">
+      <span class="label">實務建議</span>
+      預設一律用建構子注入。只有在依賴是「可選、可能不存在」或者需要在物件生命週期中動態切換時，才考慮 Setter 注入。介面注入在現代 TypeScript/JavaScript 生態中幾乎不會用到，知道它存在即可。
+    </div>
+  </section>
+
+  <section class="chapter" id="ch5">
+    <h2>Ch5．手寫一個迷你 DI 容器</h2>
+    <p>
+      讀懂 DI 最快的方式，是自己動手寫一個簡化版的容器（IoC Container）。它要解決的核心問題是：<strong>「當有人要拿 A，而 A 依賴 B、B 又依賴 C 時，容器要能自動把整條依賴鏈組裝起來。」</strong>
+    </p>
+    <pre><code>// 一個極簡的 DI Container：用 Map 儲存「型別」到「建立方式」的對應
+type Factory&lt;T&gt; = (container: MiniContainer) =&gt; T;
+
+class MiniContainer {
+  private factories = new Map&lt;string, Factory&lt;any&gt;&gt;();
+  private singletons = new Map&lt;string, any&gt;();
+
+  // 註冊一個依賴的建立方式
+  register&lt;T&gt;(token: string, factory: Factory&lt;T&gt;, singleton = true) {
+    this.factories.set(token, factory);
+    if (singleton) this.singletons.set(token, undefined);
+  }
+
+  // 解析（resolve）出實例，自動處理依賴鏈
+  resolve&lt;T&gt;(token: string): T {
+    if (this.singletons.has(token) &amp;&amp; this.singletons.get(token) !== undefined) {
+      return this.singletons.get(token);
+    }
+    const factory = this.factories.get(token);
+    if (!factory) throw new Error(`Token "${token}" 尚未註冊`);
+
+    const instance = factory(this); // 把 container 傳入，讓 factory 自己 resolve 它的依賴
+    if (this.singletons.has(token)) {
+      this.singletons.set(token, instance);
+    }
+    return instance;
+  }
+}
+</code></pre>
+    <p>接著用它組裝 Ch3 的例子：</p>
+    <pre><code>const container = new MiniContainer();
+
+container.register&lt;UserRepository&gt;("UserRepository", () =&gt; new MySQLUserRepository());
+
+container.register&lt;UserService&gt;("UserService", (c) =&gt;
+  new UserService(c.resolve&lt;UserRepository&gt;("UserRepository"))
+);
+
+const service = container.resolve&lt;UserService&gt;("UserService");
+</code></pre>
+    <p>
+      這就是 Spring Container、NestJS IoC Container 在做的事情的核心骨架：<strong>維護一張「token → 建立方式」的對應表，並在 resolve 時遞迴地把整條依賴鏈組裝出來</strong>。真正的框架還會加上：
+    </p>
+    <ul>
+      <li><strong>生命週期管理</strong>：singleton / transient / request-scoped。</li>
+      <li><strong>裝飾器 + Metadata Reflection</strong>：自動從 <code class="inline">@Injectable()</code> 的建構子參數型別推斷要注入什麼，不用手動 <code class="inline">register</code>。</li>
+      <li><strong>循環依賴偵測</strong>：A 依賴 B、B 又依賴 A 時要能報錯而不是無限遞迴。</li>
+    </ul>
+    <div class="analogy">
+      <span class="label">類比：GAS 的觀點</span>
+      你在 B Team 自動化系統中用過 Strategy Pattern 做通知策略切換，其實思路是相通的——<code class="inline">NotifyLib</code> 內部「決定要用哪個通知策略」的邏輯，也可以進一步抽成「外部注入策略物件」，而不是在類別內部 if/else 判斷該用哪個策略。這正是 DI 在解決的問題的一種延伸。
+    </div>
+  </section>
+
+  <section class="chapter" id="ch6">
+    <h2>Ch6．從 Spring 到 NestJS — 裝飾器背後的真相</h2>
+    <p>你寫過的 Spring 與 NestJS 程式碼，其實對應著幾乎一樣的心智模型：</p>
+    <table>
+      <tr><th>概念</th><th>Spring Boot（Java）</th><th>NestJS（TypeScript）</th></tr>
+      <tr>
+        <td>標記「這是可被注入的服務」</td>
+        <td><code class="inline">@Service</code> / <code class="inline">@Component</code></td>
+        <td><code class="inline">@Injectable()</code></td>
+      </tr>
+      <tr>
+        <td>宣告要注入什麼依賴</td>
+        <td><code class="inline">@Autowired</code>（或建構子注入）</td>
+        <td>建構子參數 + TypeScript 型別</td>
+      </tr>
+      <tr>
+        <td>分組管理 Bean/Provider</td>
+        <td><code class="inline">@Configuration</code></td>
+        <td><code class="inline">@Module()</code></td>
+      </tr>
+      <tr>
+        <td>容器本體</td>
+        <td>ApplicationContext</td>
+        <td>Nest IoC Container</td>
+      </tr>
+    </table>
+    <pre><code>// NestJS 範例
+@Injectable()
+class MySQLUserRepository implements UserRepository {
+  findById(id: string) { /* ... */ }
+}
+
+@Injectable()
+class UserService {
+  // Nest 容器在啟動時會「讀取這個建構子參數的型別」，
+  // 自動去容器裡找對應的 Provider 注入進來——
+  // 這就是 Ch5 那個 resolve() 遞迴過程的自動化版本
+  constructor(private repo: MySQLUserRepository) {}
+}
+
+@Module({
+  providers: [MySQLUserRepository, UserService],
+})
+class AppModule {}
+</code></pre>
+    <p>
+      關鍵差異在於：Nest 能透過 <code class="inline">reflect-metadata</code> 在編譯期把 TypeScript 的型別資訊保留到執行期，所以它「看得到」建構子參數的型別，自動幫你 resolve，不需要像 Ch5 的迷你容器一樣手動註冊每一條 token。這也是為什麼 NestJS 的 <code class="inline">tsconfig.json</code> 必須開啟 <code class="inline">emitDecoratorMetadata</code>。
+    </p>
+  </section>
+
+  <section class="chapter" id="ch7">
+    <h2>Ch7．DI 與 SOLID 的關係——一個常被搞混的地方</h2>
+    <p>
+      你上過 SOLID 課程，應該對依賴反轉原則（Dependency Inversion Principle, DIP）有印象。這裡要特別釐清一個常見誤解：
+    </p>
+    <div class="callout">
+      <span class="label">常見誤解</span>
+      「DIP 跟 DI 是同一件事，名字幾乎一樣。」——這是錯的。
+    </div>
+    <p>DIP 是一個<strong>設計原則</strong>，主張：</p>
+    <ol>
+      <li>高層模組不應該依賴低層模組，兩者都應該依賴抽象。</li>
+      <li>抽象不應該依賴細節，細節應該依賴抽象。</li>
+    </ol>
+    <p>
+      回頭看 Ch3 的例子：<code class="inline">UserService</code>（高層）依賴 <code class="inline">UserRepository</code> 介面（抽象），而不是直接依賴 <code class="inline">MySQLUserRepository</code>（低層細節）——這件事本身就是 DIP。
+    </p>
+    <p>
+      而 <strong>DI（依賴注入）是「怎麼把這個抽象的具體實作，實際送到高層模組手上」的技術手段</strong>。你完全可以做到 DIP（依賴介面而非實作），卻不用 DI（比如用 Service Locator，或工廠函式手動傳遞）；反過來，你也可能用了 DI 框架，卻沒有做到 DIP（例如建構子參數直接寫具體類別 <code class="inline">MySQLUserRepository</code>，而不是介面）。
+    </p>
+    <table>
+      <tr><th></th><th>DIP</th><th>DI</th></tr>
+      <tr><td>層次</td><td>設計原則（要依賴什麼）</td><td>實現技術（怎麼給依賴）</td></tr>
+      <tr><td>回答的問題</td><td>「這個類別應該依賴誰？」</td><td>「這個依賴要怎麼送進來？」</td></tr>
+      <tr><td>沒有它會怎樣</td><td>高層邏輯被低層細節綁死</td><td>依賴仍需手動 new/組裝</td></tr>
+    </table>
+    <p>
+      實務上兩者幾乎總是一起出現：先用 DIP 決定「依賴介面而非實作」，再用 DI 把介面的具體實作注入進去。這也是為什麼兩個詞常被混用——但理解它們是「原則」與「手段」的關係，能幫你在做架構決策時想得更清楚。
+    </p>
+  </section>
+
+  <section class="chapter" id="ch8">
+    <h2>Ch8．常見誤區與最佳實踐</h2>
+
+    <h3>誤區一：把 DI 容器當成萬能的全域變數包</h3>
+    <p>
+      如果到處都用 <code class="inline">container.resolve("XXX")</code> 隨手取東西（這其實是 Service Locator 模式，不是 DI），類別看起來輕巧，實際上偷偷依賴了整個容器，反而失去了「依賴清單一看建構子就懂」的優點。<strong>優先用建構子注入，讓依賴顯性化。</strong>
+    </p>
+
+    <h3>誤區二：注入介面卻讓介面長得跟實作一模一樣</h3>
+    <p>
+      如果你的 <code class="inline">interface UserRepository</code> 完全照抄 <code class="inline">MySQLUserRepository</code> 的每個方法簽章，介面就只是形式上的包裝，沒有真正解耦（例如換成 MongoDB 版本時，介面可能需要完全不同的查詢方式）。介面應該站在「使用者需要什麼能力」的角度設計，而不是「現有實作有什麼方法」。
+    </p>
+
+    <h3>誤區三：過度注入，任何東西都做成 Provider</h3>
+    <p>
+      不是所有依賴都需要走 DI。像 <code class="inline">Date</code>、<code class="inline">Math</code> 這類穩定、無副作用、幾乎不會替換的工具，直接使用即可；只有「會變化、需要替換、需要在測試中 mock」的依賴，才值得注入。過度使用 DI 會讓程式碼淹沒在一堆 <code class="inline">@Injectable()</code> 與 token 字串裡，反而降低可讀性。
+    </p>
+
+    <h3>誤區四：循環依賴</h3>
+    <p>
+      A 的建構子需要 B，B 的建構子又需要 A，這在建構子注入下是無法解的（誰先造？）。這通常是設計上的警訊，代表 A 跟 B 職責劃分不清，該考慮拆出第三個模組，或改用 Setter 注入延後其中一方的依賴設定。
+    </p>
+
+    <div class="callout">
+      <span class="label">最佳實踐總結</span>
+      預設用建構子注入 → 依賴永遠指向介面/抽象 → 介面依「使用者需求」設計而非「照抄實作」→ 只對「真的會變化」的依賴做 DI → 出現循環依賴時，先檢討職責劃分，而不是急著換注入方式解套。
+    </div>
+  </section>
+
+  <section class="chapter" id="quiz">
+    <h2>自我測驗</h2>
+
+    <div class="quiz-item">
+      <div class="q">Q1. 「IoC」跟「DI」的關係，下列哪個說法最準確？</div>
+      <p>A. 兩者是同義詞，可以互換使用<br>
+      B. DI 是 IoC 的一種具體實現手法，IoC 是更廣義的設計原則<br>
+      C. IoC 是 DI 的其中一個步驟<br>
+      D. DI 只存在於 Java，IoC 只存在於前端框架</p>
+      <details>
+        <summary>看解答</summary>
+        答案是 B。IoC 是「把控制權交出去」這個廣義原則，DI 是其中一種常見的實現手法（其他還有 Service Locator、事件驅動等）。
+      </details>
+    </div>
+
+    <div class="quiz-item">
+      <div class="q">Q2. 下列哪一段程式碼<strong>沒有</strong>做到依賴注入？</div>
+      <p>A. <code class="inline">constructor(private repo: UserRepository) {}</code><br>
+      B. <code class="inline">this.repo = new MySQLUserRepository();</code>（寫在建構子內部）<br>
+      C. <code class="inline">setRepo(repo: UserRepository) { this.repo = repo; }</code><br>
+      D. 由 NestJS 容器自動注入的建構子參數</p>
+      <details>
+        <summary>看解答</summary>
+        答案是 B。只要依賴是類別「自己在內部 new 出來」，無論寫在哪個方法裡，都不是依賴注入——關鍵是依賴的建立責任有沒有被移到外部。
+      </details>
+    </div>
+
+    <div class="quiz-item">
+      <div class="q">Q3. DIP（依賴反轉原則）跟 DI（依賴注入）為什麼常被搞混，但其實不是同一件事？</div>
+      <details>
+        <summary>看解答</summary>
+        因為名字非常相似，且實務上幾乎總是一起出現。但 DIP 是「設計原則」，回答「應該依賴誰（抽象 vs 細節）」；DI 是「實現技術」，回答「依賴要怎麼被送進來」。你可以只做到其中一個，而沒做到另一個。
+      </details>
+    </div>
+
+    <div class="quiz-item">
+      <div class="q">Q4. 為什麼「到處呼叫 container.resolve() 拿依賴」不算是好的 DI 實踐？</div>
+      <details>
+        <summary>看解答</summary>
+        因為那其實是 Service Locator 模式：類別表面上「沒有 new 依賴」，但實際上偷偷依賴了整個容器物件，建構子也看不出它真正需要哪些依賴，反而喪失了 DI 想要的「依賴顯性化、易於測試替換」的好處。
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    B Team 自學系列 · 控制反轉與依賴注入 · 與 SOLID 原則課程、Functional Programming 手冊為同一系列教材
+  </footer>
+
+</div>
+
+<script>
+  // Scroll-spy：捲動時自動標亮 sidebar 對應項目
+  const sections = document.querySelectorAll('section.chapter, #preface');
+  const navLinks = document.querySelectorAll('#nav a');
+
+  function onScroll() {
+    let currentId = '';
+    const scrollPos = window.scrollY + 120;
+    sections.forEach(sec => {
+      if (sec.offsetTop <= scrollPos) {
+        currentId = sec.id;
+      }
+    });
+    navLinks.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + currentId);
+    });
+  }
+
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+
+</body>
+</html>

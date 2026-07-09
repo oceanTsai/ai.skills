@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GIF 動畫幀結構與後端驗證手冊</title>
+<style>
+  :root {
+    --cream: #F4F1EA;
+    --paper: #FBF9F4;
+    --ink: #2B2420;
+    --deep-red: #7A2E27;
+    --deep-red-soft: #9A4038;
+    --line: #DDD5C7;
+    --mono-bg: #2B2420;
+    --mono-text: #F4F1EA;
+    --accent-tag: #B8542F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: "Noto Serif TC", "Songti TC", serif;
+    line-height: 1.75;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 48px 24px 48px 0;
+    border-right: 1px solid var(--line);
+  }
+
+  .sidebar .brand {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: var(--deep-red);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+  }
+
+  .sidebar h1 {
+    font-size: 1.25rem;
+    margin: 0 0 32px 0;
+    line-height: 1.4;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .sidebar nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .sidebar nav li {
+    margin-bottom: 4px;
+  }
+
+  .sidebar nav a {
+    display: block;
+    padding: 8px 12px;
+    font-size: 0.92rem;
+    color: var(--ink);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    transition: all 0.15s ease;
+  }
+
+  .sidebar nav a .num {
+    color: var(--deep-red-soft);
+    margin-right: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sidebar nav a:hover {
+    background: rgba(122, 46, 39, 0.06);
+  }
+
+  .sidebar nav a.active {
+    border-left-color: var(--deep-red);
+    color: var(--deep-red);
+    background: rgba(122, 46, 39, 0.06);
+    font-weight: 600;
+  }
+
+  /* Main content */
+  main {
+    padding: 56px 56px 120px 56px;
+  }
+
+  .hero-eyebrow {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--deep-red);
+    margin-bottom: 14px;
+  }
+
+  .hero-title {
+    font-size: 2.4rem;
+    line-height: 1.3;
+    margin: 0 0 18px 0;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .hero-sub {
+    font-size: 1.05rem;
+    color: #5A5147;
+    max-width: 640px;
+    margin-bottom: 48px;
+    border-left: 3px solid var(--deep-red);
+    padding-left: 18px;
+  }
+
+  section {
+    margin-bottom: 72px;
+    scroll-margin-top: 32px;
+  }
+
+  section h2 {
+    font-size: 1.5rem;
+    color: var(--deep-red);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 14px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  section h2 .idx {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.85rem;
+    color: var(--accent-tag);
+    font-weight: 600;
+  }
+
+  section h3 {
+    font-size: 1.1rem;
+    color: var(--ink);
+    margin: 32px 0 14px 0;
+  }
+
+  p { margin: 0 0 16px 0; }
+
+  .callout {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--deep-red);
+    padding: 18px 22px;
+    border-radius: 2px;
+    margin: 20px 0;
+    font-size: 0.95rem;
+  }
+
+  .callout strong { color: var(--deep-red); }
+
+  /* comparison cards */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 24px 0;
+  }
+
+  .compare-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 20px 22px;
+    border-radius: 2px;
+  }
+
+  .compare-card .label {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-tag);
+    margin-bottom: 10px;
+  }
+
+  .compare-card p { font-size: 0.92rem; margin-bottom: 0; }
+
+  /* tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.85rem;
+    margin: 20px 0;
+  }
+
+  th, td {
+    border-bottom: 1px solid var(--line);
+    padding: 8px 12px;
+    text-align: left;
+  }
+
+  th {
+    background: var(--ink);
+    color: var(--cream);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    position: sticky;
+    top: 0;
+  }
+
+  .table-scroll {
+    max-height: 480px;
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+  }
+
+  .table-scroll table { margin: 0; }
+
+  tr:nth-child(even) td { background: rgba(122,46,39,0.025); }
+
+  .search-box {
+    margin: 16px 0 8px 0;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+  }
+
+  .search-box input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    font-size: 0.9rem;
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .search-box input:focus {
+    outline: 2px solid var(--deep-red-soft);
+    outline-offset: 1px;
+  }
+
+  .search-count {
+    font-size: 0.8rem;
+    color: #8A8071;
+    white-space: nowrap;
+  }
+
+  /* code */
+  pre {
+    background: var(--mono-bg);
+    color: var(--mono-text);
+    padding: 22px 24px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin: 18px 0;
+  }
+
+  code {
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    background: rgba(122,46,39,0.08);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    color: var(--deep-red);
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  .file-tag {
+    display: inline-block;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.72rem;
+    background: var(--deep-red);
+    color: var(--cream);
+    padding: 3px 10px;
+    border-radius: 2px 2px 0 0;
+    margin-bottom: -1px;
+    letter-spacing: 0.04em;
+  }
+
+  .checklist {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+  }
+
+  .checklist li {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.95rem;
+  }
+
+  .checklist li:last-child { border-bottom: none; }
+
+  .checklist .mark {
+    color: var(--deep-red);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .checklist .no-mark {
+    color: #B8542F;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .diagram {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 32px 20px;
+    margin: 24px 0;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+  }
+
+  .diagram .box {
+    text-align: center;
+  }
+
+  .diagram .canvas-box {
+    width: 140px;
+    height: 90px;
+    border: 2px solid var(--deep-red);
+    position: relative;
+    margin: 0 auto 10px auto;
+  }
+
+  .diagram .frame-box {
+    position: absolute;
+    background: rgba(122,46,39,0.35);
+    border: 1px dashed var(--deep-red-soft);
+  }
+
+  .diagram .arrow {
+    font-size: 1.6rem;
+    color: var(--accent-tag);
+  }
+
+  .diagram .caption {
+    font-size: 0.8rem;
+    color: #5A5147;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
+    font-size: 0.82rem;
+    color: #8A8071;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+  }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--line); }
+    main { padding: 32px 24px; }
+    .compare-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">104corp · B Team 技術筆記</div>
+    <h1>GIF 動畫幀結構與後端驗證手冊</h1>
+    <nav>
+      <ul>
+        <li><a href="#background"><span class="num">01</span>問題背景</a></li>
+        <li><a href="#canvas-vs-frame"><span class="num">02</span>畫布 vs. 幀</a></li>
+        <li><a href="#frame-table"><span class="num">03</span>逐幀明細（227 幀）</a></li>
+        <li><a href="#verify-what"><span class="num">04</span>後端該驗證什麼</a></li>
+        <li><a href="#php-canvas"><span class="num">05</span>PHP：畫布尺寸驗證</a></li>
+        <li><a href="#php-laravel"><span class="num">06</span>PHP：Laravel 上傳驗證</a></li>
+        <li><a href="#php-animation"><span class="num">07</span>PHP：幀數／動畫長度</a></li>
+        <li><a href="#checklist"><span class="num">08</span>驗證檢查清單</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="hero-eyebrow">技術筆記 · 檔案格式與後端驗證</div>
+    <h1 class="hero-title">一張 928×322 的 banner，<br>為什麼每一幀都不一樣大？</h1>
+    <p class="hero-sub">
+      本文整理 104banner_上傳版.gif 的逐幀結構分析過程，釐清「畫布尺寸」與「每幀 local image 尺寸」的差異，
+      並給出前後端在驗證 GIF 規格時應該分別檢查的項目，附完整 PHP 實作。
+    </p>
+
+    <section id="background">
+      <h2><span class="idx">01</span>問題背景</h2>
+      <p>
+        起初用 Pillow 檢查這支 GIF 時，回報「所有幀的 size 都是 928×322」——這個結論表面上沒有語法錯誤，
+        但其實毫無意義：如果每一幀真的都跟畫布一樣大且完全沒有變動範圍的資訊，動畫根本不會動。
+      </p>
+      <div class="callout">
+        <strong>問題根源：</strong>Pillow 的 <code>im.size</code> 讀到的永遠是 GIF 的「邏輯畫布尺寸」（Logical Screen Descriptor），
+        不是每一幀實際寫入檔案的原始子矩形尺寸。用同一個 API 查 227 次，只是重複讀了 227 次畫布大小。
+      </div>
+      <p>
+        後來用 ImageMagick 的 <code>identify</code> 直接讀取每一幀的 Image Descriptor block，
+        才拿到跟同事一致的「原始 local image 尺寸＋offset」，逐行核對 227 幀 <strong>零誤差</strong>。
+      </p>
+    </section>
+
+    <section id="canvas-vs-frame">
+      <h2><span class="idx">02</span>畫布尺寸 vs. 每幀尺寸</h2>
+      <p>
+        GIF 為了節省檔案大小，只會把「相對上一幀有變動的區域」存成一個小矩形（local image），
+        沒有變動的部分不會重複寫入。播放時，播放器依照每幀的 offset X / offset Y 把這個小矩形疊加回完整畫布，
+        再依 disposal method 決定是否清除殘影。
+      </p>
+
+      <div class="diagram">
+        <div class="box">
+          <div class="canvas-box">
+            <div class="frame-box" style="width:40px;height:26px;top:34px;left:70px;"></div>
+          </div>
+          <div class="caption">畫布 928×322（固定）<br>灰底矩形＝單一幀的 local image</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="box">
+          <div class="canvas-box" style="background: rgba(122,46,39,0.12);"></div>
+          <div class="caption">疊加 offset 後合成畫面<br>（實際顯示給使用者看到的樣子）</div>
+        </div>
+      </div>
+
+      <div class="compare-grid">
+        <div class="compare-card">
+          <div class="label">畫布尺寸 · Canvas Size</div>
+          <p>整支動畫固定不變，決定 banner 版位規格（本例為 928×322）。後端驗證規格時應該看這個數字。</p>
+        </div>
+        <div class="compare-card">
+          <div class="label">每幀 Local Size</div>
+          <p>純粹是編碼優化的副產物，同樣視覺效果用不同工具轉檔，幀數與每幀大小可能完全不同，不適合當驗證條件。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="frame-table">
+      <h2><span class="idx">03</span>逐幀明細（共 227 幀）</h2>
+      <p>以下資料已用 ImageMagick <code>identify</code> 對原始檔案重新解析，並與同事提供的表格逐行比對，完全吻合。</p>
+
+      <div class="search-box">
+        <input type="text" id="frameSearch" placeholder="輸入幀號或數值篩選，例如：14 或 928">
+        <span class="search-count" id="searchCount">共 227 幀</span>
+      </div>
+
+      <div class="table-scroll">
+        <table id="frameTable">
+          <thead>
+            <tr><th>幀 #</th><th>寬 (px)</th><th>高 (px)</th><th>offset X</th><th>offset Y</th></tr>
+          </thead>
+          <tbody>
+<tr><td>0</td><td>928</td><td>322</td><td>0</td><td>0</td></tr>
+<tr><td>1</td><td>168</td><td>93</td><td>154</td><td>220</td></tr>
+<tr><td>2</td><td>83</td><td>47</td><td>155</td><td>266</td></tr>
+<tr><td>3</td><td>125</td><td>71</td><td>154</td><td>242</td></tr>
+<tr><td>4</td><td>159</td><td>90</td><td>164</td><td>218</td></tr>
+<tr><td>5</td><td>208</td><td>117</td><td>158</td><td>194</td></tr>
+<tr><td>6</td><td>246</td><td>140</td><td>163</td><td>170</td></tr>
+<tr><td>7</td><td>287</td><td>161</td><td>165</td><td>145</td></tr>
+<tr><td>8</td><td>333</td><td>188</td><td>162</td><td>122</td></tr>
+<tr><td>9</td><td>227</td><td>130</td><td>258</td><td>126</td></tr>
+<tr><td>10</td><td>180</td><td>105</td><td>307</td><td>124</td></tr>
+<tr><td>11</td><td>137</td><td>80</td><td>353</td><td>123</td></tr>
+<tr><td>12</td><td>129</td><td>88</td><td>399</td><td>89</td></tr>
+<tr><td>13</td><td>106</td><td>102</td><td>445</td><td>65</td></tr>
+<tr><td>14</td><td>3</td><td>3</td><td>540</td><td>193</td></tr>
+<tr><td>15</td><td>102</td><td>103</td><td>449</td><td>65</td></tr>
+<tr><td>16</td><td>128</td><td>125</td><td>423</td><td>69</td></tr>
+<tr><td>17</td><td>142</td><td>115</td><td>396</td><td>79</td></tr>
+<tr><td>18</td><td>651</td><td>263</td><td>152</td><td>57</td></tr>
+<tr><td>19</td><td>197</td><td>125</td><td>366</td><td>88</td></tr>
+<tr><td>20</td><td>706</td><td>235</td><td>60</td><td>71</td></tr>
+<tr><td>21</td><td>404</td><td>222</td><td>152</td><td>92</td></tr>
+<tr><td>22</td><td>503</td><td>283</td><td>60</td><td>3</td></tr>
+<tr><td>23</td><td>176</td><td>189</td><td>376</td><td>97</td></tr>
+<tr><td>24</td><td>180</td><td>190</td><td>372</td><td>96</td></tr>
+<tr><td>25</td><td>177</td><td>178</td><td>376</td><td>108</td></tr>
+<tr><td>26</td><td>177</td><td>177</td><td>376</td><td>109</td></tr>
+<tr><td>27</td><td>176</td><td>79</td><td>376</td><td>208</td></tr>
+<tr><td>28</td><td>176</td><td>74</td><td>376</td><td>212</td></tr>
+<tr><td>29</td><td>177</td><td>74</td><td>376</td><td>212</td></tr>
+<tr><td>30</td><td>176</td><td>74</td><td>376</td><td>212</td></tr>
+<tr><td>31</td><td>114</td><td>82</td><td>407</td><td>160</td></tr>
+<tr><td>32</td><td>139</td><td>8</td><td>396</td><td>160</td></tr>
+<tr><td>33</td><td>158</td><td>8</td><td>385</td><td>160</td></tr>
+<tr><td>34</td><td>171</td><td>94</td><td>378</td><td>160</td></tr>
+<tr><td>35</td><td>182</td><td>186</td><td>373</td><td>100</td></tr>
+<tr><td>36</td><td>207</td><td>88</td><td>361</td><td>160</td></tr>
+<tr><td>37</td><td>221</td><td>95</td><td>355</td><td>159</td></tr>
+<tr><td>38</td><td>249</td><td>95</td><td>341</td><td>159</td></tr>
+<tr><td>39</td><td>251</td><td>93</td><td>339</td><td>159</td></tr>
+<tr><td>40</td><td>288</td><td>93</td><td>320</td><td>156</td></tr>
+<tr><td>41</td><td>299</td><td>110</td><td>315</td><td>146</td></tr>
+<tr><td>42</td><td>320</td><td>119</td><td>304</td><td>137</td></tr>
+<tr><td>43</td><td>334</td><td>128</td><td>297</td><td>128</td></tr>
+<tr><td>44</td><td>364</td><td>134</td><td>291</td><td>122</td></tr>
+<tr><td>45</td><td>370</td><td>149</td><td>279</td><td>105</td></tr>
+<tr><td>46</td><td>382</td><td>151</td><td>274</td><td>105</td></tr>
+<tr><td>47</td><td>413</td><td>167</td><td>259</td><td>89</td></tr>
+<tr><td>48</td><td>445</td><td>181</td><td>243</td><td>75</td></tr>
+<tr><td>49</td><td>463</td><td>189</td><td>233</td><td>64</td></tr>
+<tr><td>50</td><td>477</td><td>199</td><td>226</td><td>57</td></tr>
+<tr><td>51</td><td>591</td><td>257</td><td>113</td><td>47</td></tr>
+<tr><td>52</td><td>616</td><td>209</td><td>88</td><td>45</td></tr>
+<tr><td>53</td><td>770</td><td>285</td><td>96</td><td>37</td></tr>
+<tr><td>54</td><td>867</td><td>304</td><td>28</td><td>18</td></tr>
+<tr><td>55</td><td>867</td><td>305</td><td>28</td><td>17</td></tr>
+<tr><td>56</td><td>865</td><td>305</td><td>28</td><td>17</td></tr>
+<tr><td>57</td><td>814</td><td>305</td><td>32</td><td>17</td></tr>
+<tr><td>58</td><td>868</td><td>299</td><td>28</td><td>23</td></tr>
+<tr><td>59</td><td>869</td><td>309</td><td>27</td><td>13</td></tr>
+<tr><td>60</td><td>865</td><td>307</td><td>27</td><td>14</td></tr>
+<tr><td>61</td><td>867</td><td>306</td><td>28</td><td>16</td></tr>
+<tr><td>62</td><td>866</td><td>293</td><td>28</td><td>29</td></tr>
+<tr><td>63</td><td>868</td><td>305</td><td>27</td><td>17</td></tr>
+<tr><td>64</td><td>869</td><td>309</td><td>27</td><td>13</td></tr>
+<tr><td>65</td><td>866</td><td>306</td><td>28</td><td>16</td></tr>
+<tr><td>66</td><td>807</td><td>288</td><td>86</td><td>33</td></tr>
+<tr><td>67</td><td>866</td><td>305</td><td>27</td><td>17</td></tr>
+<tr><td>68</td><td>869</td><td>308</td><td>27</td><td>14</td></tr>
+<tr><td>69</td><td>859</td><td>304</td><td>32</td><td>18</td></tr>
+<tr><td>70</td><td>862</td><td>301</td><td>32</td><td>21</td></tr>
+<tr><td>71</td><td>860</td><td>309</td><td>28</td><td>13</td></tr>
+<tr><td>72</td><td>868</td><td>309</td><td>28</td><td>13</td></tr>
+<tr><td>73</td><td>866</td><td>302</td><td>28</td><td>20</td></tr>
+<tr><td>74</td><td>863</td><td>309</td><td>27</td><td>13</td></tr>
+<tr><td>75</td><td>867</td><td>309</td><td>27</td><td>13</td></tr>
+<tr><td>76</td><td>863</td><td>306</td><td>29</td><td>16</td></tr>
+<tr><td>77</td><td>862</td><td>294</td><td>30</td><td>28</td></tr>
+<tr><td>78</td><td>866</td><td>309</td><td>28</td><td>13</td></tr>
+<tr><td>79</td><td>867</td><td>309</td><td>28</td><td>13</td></tr>
+<tr><td>80</td><td>866</td><td>306</td><td>27</td><td>16</td></tr>
+<tr><td>81</td><td>863</td><td>305</td><td>32</td><td>16</td></tr>
+<tr><td>82</td><td>862</td><td>309</td><td>27</td><td>13</td></tr>
+<tr><td>83</td><td>867</td><td>307</td><td>28</td><td>15</td></tr>
+<tr><td>84</td><td>753</td><td>266</td><td>95</td><td>49</td></tr>
+<tr><td>85</td><td>668</td><td>237</td><td>180</td><td>79</td></tr>
+<tr><td>86</td><td>669</td><td>245</td><td>179</td><td>73</td></tr>
+<tr><td>87</td><td>666</td><td>266</td><td>180</td><td>49</td></tr>
+<tr><td>88</td><td>667</td><td>243</td><td>179</td><td>77</td></tr>
+<tr><td>89</td><td>665</td><td>238</td><td>181</td><td>76</td></tr>
+<tr><td>90</td><td>668</td><td>244</td><td>179</td><td>76</td></tr>
+<tr><td>91</td><td>667</td><td>239</td><td>180</td><td>77</td></tr>
+<tr><td>92</td><td>669</td><td>247</td><td>179</td><td>73</td></tr>
+<tr><td>93</td><td>669</td><td>244</td><td>179</td><td>76</td></tr>
+<tr><td>94</td><td>673</td><td>244</td><td>175</td><td>76</td></tr>
+<tr><td>95</td><td>670</td><td>243</td><td>179</td><td>77</td></tr>
+<tr><td>96</td><td>670</td><td>244</td><td>179</td><td>76</td></tr>
+<tr><td>97</td><td>564</td><td>228</td><td>180</td><td>76</td></tr>
+<tr><td>98</td><td>638</td><td>233</td><td>179</td><td>77</td></tr>
+<tr><td>99</td><td>667</td><td>225</td><td>181</td><td>73</td></tr>
+<tr><td>100</td><td>565</td><td>224</td><td>179</td><td>76</td></tr>
+<tr><td>101</td><td>567</td><td>223</td><td>177</td><td>76</td></tr>
+<tr><td>102</td><td>669</td><td>220</td><td>179</td><td>77</td></tr>
+<tr><td>103</td><td>565</td><td>223</td><td>179</td><td>73</td></tr>
+<tr><td>104</td><td>568</td><td>223</td><td>175</td><td>73</td></tr>
+<tr><td>105</td><td>565</td><td>221</td><td>179</td><td>76</td></tr>
+<tr><td>106</td><td>564</td><td>226</td><td>180</td><td>78</td></tr>
+<tr><td>107</td><td>669</td><td>271</td><td>179</td><td>49</td></tr>
+<tr><td>108</td><td>566</td><td>223</td><td>178</td><td>73</td></tr>
+<tr><td>109</td><td>566</td><td>223</td><td>178</td><td>73</td></tr>
+<tr><td>110</td><td>563</td><td>224</td><td>181</td><td>72</td></tr>
+<tr><td>111</td><td>564</td><td>219</td><td>179</td><td>77</td></tr>
+<tr><td>112</td><td>567</td><td>223</td><td>177</td><td>73</td></tr>
+<tr><td>113</td><td>568</td><td>231</td><td>176</td><td>73</td></tr>
+<tr><td>114</td><td>568</td><td>228</td><td>176</td><td>76</td></tr>
+<tr><td>115</td><td>564</td><td>219</td><td>180</td><td>77</td></tr>
+<tr><td>116</td><td>565</td><td>223</td><td>179</td><td>73</td></tr>
+<tr><td>117</td><td>567</td><td>225</td><td>177</td><td>76</td></tr>
+<tr><td>118</td><td>565</td><td>220</td><td>178</td><td>76</td></tr>
+<tr><td>119</td><td>566</td><td>226</td><td>178</td><td>77</td></tr>
+<tr><td>120</td><td>566</td><td>222</td><td>178</td><td>75</td></tr>
+<tr><td>121</td><td>565</td><td>228</td><td>179</td><td>76</td></tr>
+<tr><td>122</td><td>566</td><td>232</td><td>178</td><td>72</td></tr>
+<tr><td>123</td><td>564</td><td>220</td><td>180</td><td>76</td></tr>
+<tr><td>124</td><td>568</td><td>225</td><td>176</td><td>73</td></tr>
+<tr><td>125</td><td>567</td><td>224</td><td>177</td><td>72</td></tr>
+<tr><td>126</td><td>565</td><td>224</td><td>179</td><td>72</td></tr>
+<tr><td>127</td><td>564</td><td>220</td><td>180</td><td>76</td></tr>
+<tr><td>128</td><td>565</td><td>229</td><td>179</td><td>75</td></tr>
+<tr><td>129</td><td>568</td><td>229</td><td>176</td><td>75</td></tr>
+<tr><td>130</td><td>564</td><td>223</td><td>179</td><td>76</td></tr>
+<tr><td>131</td><td>568</td><td>226</td><td>176</td><td>73</td></tr>
+<tr><td>132</td><td>564</td><td>223</td><td>179</td><td>73</td></tr>
+<tr><td>133</td><td>567</td><td>227</td><td>177</td><td>73</td></tr>
+<tr><td>134</td><td>563</td><td>220</td><td>180</td><td>76</td></tr>
+<tr><td>135</td><td>567</td><td>219</td><td>177</td><td>77</td></tr>
+<tr><td>136</td><td>568</td><td>219</td><td>176</td><td>77</td></tr>
+<tr><td>137</td><td>568</td><td>224</td><td>176</td><td>72</td></tr>
+<tr><td>138</td><td>568</td><td>224</td><td>176</td><td>72</td></tr>
+<tr><td>139</td><td>567</td><td>223</td><td>176</td><td>73</td></tr>
+<tr><td>140</td><td>567</td><td>223</td><td>177</td><td>73</td></tr>
+<tr><td>141</td><td>565</td><td>223</td><td>178</td><td>73</td></tr>
+<tr><td>142</td><td>568</td><td>223</td><td>176</td><td>73</td></tr>
+<tr><td>143</td><td>564</td><td>222</td><td>179</td><td>73</td></tr>
+<tr><td>144</td><td>564</td><td>231</td><td>179</td><td>73</td></tr>
+<tr><td>145</td><td>567</td><td>223</td><td>176</td><td>73</td></tr>
+<tr><td>146</td><td>564</td><td>228</td><td>180</td><td>76</td></tr>
+<tr><td>147</td><td>566</td><td>223</td><td>177</td><td>73</td></tr>
+<tr><td>148</td><td>567</td><td>226</td><td>177</td><td>76</td></tr>
+<tr><td>149</td><td>565</td><td>227</td><td>178</td><td>73</td></tr>
+<tr><td>150</td><td>568</td><td>231</td><td>176</td><td>73</td></tr>
+<tr><td>151</td><td>565</td><td>223</td><td>178</td><td>73</td></tr>
+<tr><td>152</td><td>569</td><td>225</td><td>175</td><td>73</td></tr>
+<tr><td>153</td><td>567</td><td>220</td><td>176</td><td>76</td></tr>
+<tr><td>154</td><td>568</td><td>227</td><td>176</td><td>73</td></tr>
+<tr><td>155</td><td>568</td><td>223</td><td>176</td><td>76</td></tr>
+<tr><td>156</td><td>568</td><td>220</td><td>176</td><td>76</td></tr>
+<tr><td>157</td><td>568</td><td>223</td><td>176</td><td>73</td></tr>
+<tr><td>158</td><td>565</td><td>228</td><td>179</td><td>76</td></tr>
+<tr><td>159</td><td>564</td><td>218</td><td>180</td><td>78</td></tr>
+<tr><td>160</td><td>568</td><td>223</td><td>176</td><td>72</td></tr>
+<tr><td>161</td><td>568</td><td>220</td><td>176</td><td>76</td></tr>
+<tr><td>162</td><td>567</td><td>229</td><td>176</td><td>75</td></tr>
+<tr><td>163</td><td>568</td><td>221</td><td>176</td><td>75</td></tr>
+<tr><td>164</td><td>567</td><td>223</td><td>177</td><td>73</td></tr>
+<tr><td>165</td><td>567</td><td>221</td><td>177</td><td>75</td></tr>
+<tr><td>166</td><td>564</td><td>223</td><td>179</td><td>73</td></tr>
+<tr><td>167</td><td>567</td><td>223</td><td>177</td><td>73</td></tr>
+<tr><td>168</td><td>564</td><td>220</td><td>180</td><td>76</td></tr>
+<tr><td>169</td><td>566</td><td>223</td><td>178</td><td>73</td></tr>
+<tr><td>170</td><td>566</td><td>223</td><td>178</td><td>73</td></tr>
+<tr><td>171</td><td>564</td><td>220</td><td>180</td><td>76</td></tr>
+<tr><td>172</td><td>568</td><td>220</td><td>176</td><td>76</td></tr>
+<tr><td>173</td><td>569</td><td>223</td><td>175</td><td>73</td></tr>
+<tr><td>174</td><td>567</td><td>224</td><td>176</td><td>73</td></tr>
+<tr><td>175</td><td>570</td><td>231</td><td>180</td><td>73</td></tr>
+<tr><td>176</td><td>567</td><td>229</td><td>177</td><td>75</td></tr>
+<tr><td>177</td><td>568</td><td>219</td><td>176</td><td>77</td></tr>
+<tr><td>178</td><td>567</td><td>227</td><td>176</td><td>77</td></tr>
+<tr><td>179</td><td>565</td><td>218</td><td>179</td><td>76</td></tr>
+<tr><td>180</td><td>564</td><td>217</td><td>180</td><td>79</td></tr>
+<tr><td>181</td><td>566</td><td>225</td><td>176</td><td>76</td></tr>
+<tr><td>182</td><td>568</td><td>218</td><td>176</td><td>76</td></tr>
+<tr><td>183</td><td>565</td><td>224</td><td>179</td><td>76</td></tr>
+<tr><td>184</td><td>568</td><td>229</td><td>176</td><td>75</td></tr>
+<tr><td>185</td><td>565</td><td>224</td><td>179</td><td>73</td></tr>
+<tr><td>186</td><td>564</td><td>220</td><td>180</td><td>76</td></tr>
+<tr><td>187</td><td>565</td><td>219</td><td>179</td><td>77</td></tr>
+<tr><td>188</td><td>565</td><td>220</td><td>179</td><td>76</td></tr>
+<tr><td>189</td><td>567</td><td>220</td><td>176</td><td>76</td></tr>
+<tr><td>190</td><td>565</td><td>220</td><td>179</td><td>76</td></tr>
+<tr><td>191</td><td>568</td><td>217</td><td>176</td><td>79</td></tr>
+<tr><td>192</td><td>568</td><td>221</td><td>176</td><td>75</td></tr>
+<tr><td>193</td><td>568</td><td>219</td><td>176</td><td>77</td></tr>
+<tr><td>194</td><td>564</td><td>218</td><td>180</td><td>78</td></tr>
+<tr><td>195</td><td>565</td><td>221</td><td>179</td><td>76</td></tr>
+<tr><td>196</td><td>568</td><td>220</td><td>176</td><td>76</td></tr>
+<tr><td>197</td><td>563</td><td>220</td><td>180</td><td>76</td></tr>
+<tr><td>198</td><td>568</td><td>220</td><td>176</td><td>76</td></tr>
+<tr><td>199</td><td>565</td><td>220</td><td>179</td><td>76</td></tr>
+<tr><td>200</td><td>567</td><td>223</td><td>177</td><td>73</td></tr>
+<tr><td>201</td><td>564</td><td>224</td><td>180</td><td>72</td></tr>
+<tr><td>202</td><td>564</td><td>224</td><td>179</td><td>73</td></tr>
+<tr><td>203</td><td>564</td><td>224</td><td>180</td><td>73</td></tr>
+<tr><td>204</td><td>565</td><td>224</td><td>178</td><td>73</td></tr>
+<tr><td>205</td><td>566</td><td>226</td><td>178</td><td>78</td></tr>
+<tr><td>206</td><td>567</td><td>228</td><td>176</td><td>76</td></tr>
+<tr><td>207</td><td>567</td><td>223</td><td>176</td><td>77</td></tr>
+<tr><td>208</td><td>567</td><td>221</td><td>177</td><td>76</td></tr>
+<tr><td>209</td><td>564</td><td>231</td><td>180</td><td>73</td></tr>
+<tr><td>210</td><td>567</td><td>227</td><td>177</td><td>77</td></tr>
+<tr><td>211</td><td>568</td><td>231</td><td>176</td><td>73</td></tr>
+<tr><td>212</td><td>568</td><td>219</td><td>176</td><td>77</td></tr>
+<tr><td>213</td><td>568</td><td>227</td><td>176</td><td>73</td></tr>
+<tr><td>214</td><td>568</td><td>225</td><td>176</td><td>72</td></tr>
+<tr><td>215</td><td>566</td><td>224</td><td>178</td><td>76</td></tr>
+<tr><td>216</td><td>568</td><td>227</td><td>176</td><td>73</td></tr>
+<tr><td>217</td><td>568</td><td>220</td><td>176</td><td>76</td></tr>
+<tr><td>218</td><td>567</td><td>219</td><td>177</td><td>77</td></tr>
+<tr><td>219</td><td>566</td><td>222</td><td>178</td><td>75</td></tr>
+<tr><td>220</td><td>564</td><td>220</td><td>180</td><td>76</td></tr>
+<tr><td>221</td><td>566</td><td>220</td><td>178</td><td>76</td></tr>
+<tr><td>222</td><td>565</td><td>217</td><td>179</td><td>79</td></tr>
+<tr><td>223</td><td>568</td><td>218</td><td>176</td><td>77</td></tr>
+<tr><td>224</td><td>564</td><td>223</td><td>180</td><td>73</td></tr>
+<tr><td>225</td><td>565</td><td>217</td><td>178</td><td>77</td></tr>
+<tr><td>226</td><td>568</td><td>222</td><td>176</td><td>73</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="verify-what">
+      <h2><span class="idx">04</span>後端該驗證什麼</h2>
+      <p>
+        後端驗證的重點要跟「每一幀 size」脫鉤——每幀 local size 只是編碼細節，不穩定也不該當作規格條件。
+        真正該驗證的是畫布尺寸與檔案大小。
+      </p>
+      <table>
+        <thead><tr><th>驗證項目</th><th>對應資料</th><th>為什麼要驗</th></tr></thead>
+        <tbody>
+          <tr><td>畫布尺寸</td><td>Logical Screen Descriptor（檔頭固定 byte）</td><td>確保 banner 版位符合規格</td></tr>
+          <tr><td>檔案大小</td><td>檔案 byte 數</td><td>控制 CDN 流量與載入速度</td></tr>
+          <tr><td>幀數／總播放時長（可選）</td><td>逐幀 duration 加總</td><td>避免動畫過長影響效能</td></tr>
+          <tr><td>每幀 local size（不建議）</td><td>Image Descriptor block</td><td>純編碼細節，跟畫面規格無關</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <strong>重點：</strong>GIF 檔頭的寬高存在固定位置（第 6~9 byte，小端序），不需要完整解碼就能讀到，
+        速度快，適合上傳當下即時驗證。
+      </div>
+    </section>
+
+    <section id="php-canvas">
+      <h2><span class="idx">05</span>PHP：畫布尺寸驗證（<code>getimagesize()</code>）</h2>
+      <p>PHP 內建函式，只讀檔頭 metadata，不會解碼整張圖，適合上傳時即時驗證。</p>
+      <span class="file-tag">validate-gif-canvas.php</span>
+      <pre><code>&lt;?php
+function validateGifCanvasSize(string $filePath, int $expectedWidth, int $expectedHeight, int $maxBytes): array
+{
+    if (!file_exists($filePath)) {
+        throw new RuntimeException("檔案不存在: {$filePath}");
+    }
+
+    $info = getimagesize($filePath);
+    if ($info === false || $info[2] !== IMAGETYPE_GIF) {
+        throw new RuntimeException("不是有效的 GIF 檔案");
+    }
+
+    [$width, $height] = $info;
+    $fileSize = filesize($filePath);
+
+    $errors = [];
+    if ($width !== $expectedWidth || $height !== $expectedHeight) {
+        $errors[] = "尺寸不符,預期 {$expectedWidth}x{$expectedHeight},實際 {$width}x{$height}";
+    }
+    if ($fileSize > $maxBytes) {
+        $errors[] = "檔案過大: {$fileSize} bytes,上限 {$maxBytes} bytes";
+    }
+
+    return [
+        'valid' =&gt; empty($errors),
+        'width' =&gt; $width,
+        'height' =&gt; $height,
+        'file_size' =&gt; $fileSize,
+        'errors' =&gt; $errors,
+    ];
+}
+
+// 使用範例
+$result = validateGifCanvasSize(
+    '/path/to/104banner.gif',
+    928,
+    322,
+    2 * 1024 * 1024 // 2MB
+);
+
+if (!$result['valid']) {
+    foreach ($result['errors'] as $err) {
+        echo "驗證失敗: {$err}\n";
+    }
+}</code></pre>
+    </section>
+
+    <section id="php-laravel">
+      <h2><span class="idx">06</span>PHP：Laravel 上傳驗證</h2>
+      <p>如果在 Laravel 專案裡做上傳驗證，可以直接用內建的 <code>dimensions</code> rule。</p>
+      <span class="file-tag">StoreBannerRequest.php</span>
+      <pre><code>$request-&gt;validate([
+    'banner' =&gt; [
+        'required',
+        'file',
+        'mimes:gif',
+        'max:2048', // KB
+        Rule::dimensions()-&gt;width(928)-&gt;height(322),
+    ],
+]);</code></pre>
+    </section>
+
+    <section id="php-animation">
+      <h2><span class="idx">07</span>PHP：幀數／動畫總長度驗證（需要 Imagick）</h2>
+      <p><code>getimagesize()</code> 拿不到幀數跟 duration，這部分要靠 Imagick 擴充套件逐幀讀取。</p>
+      <span class="file-tag">validate-gif-animation.php</span>
+      <pre><code>&lt;?php
+function validateGifAnimation(string $filePath, int $maxTotalMs): array
+{
+    if (!extension_loaded('imagick')) {
+        throw new RuntimeException("需要安裝 Imagick 擴充套件");
+    }
+
+    $imagick = new Imagick($filePath);
+    $frameCount = $imagick-&gt;getNumberImages();
+
+    $totalMs = 0;
+    foreach ($imagick as $frame) {
+        // getImageDelay() 回傳單位是 1/100 秒
+        $totalMs += $frame-&gt;getImageDelay() * 10;
+    }
+    $imagick-&gt;clear();
+
+    $errors = [];
+    if ($totalMs &gt; $maxTotalMs) {
+        $errors[] = "動畫總長 {$totalMs}ms 超過上限 {$maxTotalMs}ms";
+    }
+
+    return [
+        'valid' =&gt; empty($errors),
+        'frame_count' =&gt; $frameCount,
+        'total_duration_ms' =&gt; $totalMs,
+        'errors' =&gt; $errors,
+    ];
+}</code></pre>
+      <div class="callout">
+        沒裝 <code>ext-imagick</code> 的話，先確認 <code>php -m</code> 有沒有列出來，
+        沒有就依部署環境安裝，例如 <code>apt install php-imagick</code>。
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2><span class="idx">08</span>驗證檢查清單</h2>
+      <ul class="checklist">
+        <li><span class="mark">✓</span>用 <code>getimagesize()</code> 驗證畫布尺寸是否符合規格（928×322）</li>
+        <li><span class="mark">✓</span>用 <code>filesize()</code> 驗證檔案大小是否超過上限</li>
+        <li><span class="mark">✓</span>如需控管動畫節奏，用 Imagick 加總 duration 驗證總長度</li>
+        <li><span class="no-mark">✗</span>不要拿「每一幀的 local image size」當驗證條件——那是編碼優化的副產物，不代表畫面規格</li>
+        <li><span class="mark">✓</span>如需做視覺比對，先用 <code>convert input.gif -coalesce frame_%03d.png</code> 攤平成完整畫面再比對</li>
+      </ul>
+    </section>
+
+    <footer>
+      104banner_上傳版.gif · 928×322 · 227 frames · 逐幀資料以 ImageMagick identify 交叉驗證
+    </footer>
+  </main>
+</div>
+
+<script>
+  // Scroll-spy
+  const sections = document.querySelectorAll('section');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const id = entry.target.getAttribute('id');
+      const link = document.querySelector(`.sidebar nav a[href="#${id}"]`);
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Frame table search
+  const searchInput = document.getElementById('frameSearch');
+  const searchCount = document.getElementById('searchCount');
+  const tableRows = document.querySelectorAll('#frameTable tbody tr');
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    let visible = 0;
+    tableRows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      const match = q === '' || text.includes(q);
+      row.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    searchCount.textContent = q === '' ? `共 227 幀` : `符合 ${visible} 筆`;
+  });
+</script>
+</body>
+</html>

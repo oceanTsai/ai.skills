@@ -1,0 +1,2314 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>函數式編程工作坊 · Functional Programming Workshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+TC:wght@400;500;600;700;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #fbfaf7;
+  --paper-deep: #f3f0e8;
+  --ink: #1a1d23;
+  --ink-soft: #3a3f48;
+  --ink-mute: #6a7282;
+  --ink-dim: #9aa3b0;
+  --rule: #d8d4c8;
+  --rule-soft: #e8e4d6;
+  --accent: #b03828;
+  --accent-deep: #7a2418;
+  --accent-soft: #f4e8e2;
+  --gold: #b8902a;
+  --gold-soft: #faf2dc;
+  --green: #3a6b3a;
+  --green-soft: #e8efe2;
+  --blue: #2a5a8a;
+  --blue-soft: #e2ebf5;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', 'Noto Serif TC', Georgia, serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.75;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+/* ====================================================== */
+/* Layout: Side Menu + Main                                */
+/* ====================================================== */
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+.sidemenu {
+  background: var(--paper-deep);
+  border-right: 1px solid var(--rule);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 32px 24px;
+  z-index: 10;
+}
+
+.sidemenu::-webkit-scrollbar { width: 6px; }
+.sidemenu::-webkit-scrollbar-track { background: transparent; }
+.sidemenu::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+
+.menu-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.menu-brand-title {
+  font-family: 'Source Serif 4', serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.menu-brand-subtitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.menu-section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin: 20px 0 8px;
+  padding-left: 12px;
+}
+
+.menu-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.menu-item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--ink-soft);
+  transition: all 0.18s ease;
+  align-items: center;
+  border: 1px solid transparent;
+}
+
+.menu-item:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.menu-item.active {
+  background: var(--paper);
+  border-color: var(--rule);
+  color: var(--accent);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.menu-item.active .menu-num {
+  background: var(--accent);
+  color: var(--paper);
+}
+
+.menu-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  padding: 3px 6px;
+  text-align: center;
+  border-radius: 3px;
+  color: var(--ink-mute);
+  transition: all 0.18s ease;
+}
+
+.menu-text {
+  font-family: 'Noto Serif TC', 'Source Serif 4', serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.menu-text .en {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--ink-dim);
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+}
+
+.menu-foot {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-dim);
+  letter-spacing: 0.1em;
+}
+
+.main {
+  min-width: 0;
+  position: relative;
+}
+
+/* Mobile toggle */
+.menu-toggle {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 100;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidemenu {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+  }
+  .sidemenu.open { transform: translateX(0); }
+  .menu-toggle { display: block; }
+}
+
+/* ====================================================== */
+/* Content                                                  */
+/* ====================================================== */
+.content {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+
+@media (max-width: 768px) {
+  .content { padding: 0 24px; }
+}
+
+/* ====================================================== */
+/* Hero / Cover                                             */
+/* ====================================================== */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px 0;
+  position: relative;
+  border-bottom: 1px solid var(--rule);
+}
+
+.hero-mark {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 48px;
+}
+
+.hero-mark::before {
+  content: '';
+  width: 40px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.hero-title {
+  font-family: 'Source Serif 4', 'Noto Serif TC', serif;
+  font-weight: 700;
+  font-size: clamp(56px, 9vw, 120px);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  margin-bottom: 32px;
+  color: var(--ink);
+}
+
+.hero-title em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.hero-lede {
+  font-family: 'Source Serif 4', serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.5;
+  max-width: 640px;
+  color: var(--ink-soft);
+  margin-bottom: 56px;
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+}
+
+.stat {
+  padding: 16px 16px 16px 0;
+  border-right: 1px solid var(--rule);
+}
+.stat:last-child { border-right: none; padding-right: 0; }
+.stat:not(:first-child) { padding-left: 16px; }
+
+.stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-family: 'Source Serif 4', serif;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .hero-stats { grid-template-columns: repeat(2, 1fr); }
+  .stat:nth-child(2) { border-right: none; }
+  .stat:nth-child(3), .stat:nth-child(4) { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: -1px; }
+}
+
+/* ====================================================== */
+/* Chapter                                                  */
+/* ====================================================== */
+.chapter {
+  padding: 100px 0 80px;
+  border-bottom: 1px solid var(--rule);
+  scroll-margin-top: 0;
+}
+
+.chapter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 24px;
+}
+
+.chapter-tag .num {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 4px 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.chapter-title {
+  font-family: 'Source Serif 4', serif;
+  font-weight: 700;
+  font-size: clamp(40px, 5.5vw, 68px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  margin-bottom: 16px;
+  color: var(--ink);
+}
+
+.chapter-title em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.chapter-en {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--ink-mute);
+  margin-bottom: 40px;
+}
+
+.lead {
+  font-family: 'Source Serif 4', serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 760px;
+  margin-bottom: 48px;
+}
+
+.lead::first-letter {
+  font-family: 'Source Serif 4', serif;
+  font-weight: 700;
+  font-size: 3.2em;
+  float: left;
+  line-height: 0.85;
+  margin: 8px 12px 0 -2px;
+  color: var(--accent);
+}
+
+.lead em { font-style: italic; color: var(--accent); }
+
+/* Section Headings */
+h3.h3 {
+  font-family: 'Source Serif 4', serif;
+  font-weight: 700;
+  font-size: 30px;
+  margin: 60px 0 20px;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  scroll-margin-top: 24px;
+}
+
+h3.h3::before {
+  content: '§';
+  font-family: 'Source Serif 4', serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent);
+}
+
+h4.h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin: 32px 0 12px;
+  color: var(--accent-deep);
+}
+
+p {
+  margin-bottom: 18px;
+  max-width: 760px;
+  color: var(--ink);
+}
+
+ul, ol {
+  margin: 16px 0 24px;
+  padding-left: 26px;
+  max-width: 760px;
+}
+
+li { margin-bottom: 8px; color: var(--ink); }
+li::marker { color: var(--accent); }
+
+strong { color: var(--accent-deep); font-weight: 700; }
+em { font-style: italic; }
+
+code:not(pre code) {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.87em;
+  background: var(--paper-deep);
+  padding: 2px 7px;
+  border-radius: 3px;
+  color: var(--accent-deep);
+  border: 1px solid var(--rule);
+}
+
+/* ====================================================== */
+/* "Concept" — 概念講解卡（這是這版的新核心元件）            */
+/* ====================================================== */
+.concept-explain {
+  margin: 40px 0;
+  background: var(--paper-deep);
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+
+.concept-explain-head {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.concept-explain-head .ic {
+  width: 22px;
+  height: 22px;
+  background: var(--accent);
+  color: var(--paper);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Source Serif 4', serif;
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 50%;
+}
+
+.concept-explain-body {
+  padding: 28px 32px;
+  font-family: 'Source Serif 4', 'Noto Serif TC', serif;
+}
+
+.concept-explain-body h5 {
+  font-family: 'Source Serif 4', serif;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--ink);
+}
+
+.concept-explain-body h5:not(:first-child) { margin-top: 24px; }
+
+.concept-explain-body p {
+  margin-bottom: 12px;
+  max-width: 100%;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.concept-explain-body p:last-child { margin-bottom: 0; }
+
+.metaphor {
+  border-left: 3px solid var(--accent);
+  padding: 8px 0 8px 20px;
+  margin: 16px 0;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.metaphor::before {
+  content: '比喻 ▸ ';
+  font-style: normal;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+}
+
+/* ====================================================== */
+/* Code Block                                               */
+/* ====================================================== */
+.code {
+  background: #1a1d23;
+  color: #e8e4d6;
+  margin: 24px 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.code-bar {
+  background: #14171c;
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #2a2d34;
+}
+
+.code-bar .lang { color: #b8a868; }
+.code-bar .desc { color: #6a7080; }
+
+.code pre {
+  margin: 0;
+  padding: 22px 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13.5px;
+  line-height: 1.75;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.tk-c { color: #7a8090; font-style: italic; }
+.tk-k { color: #e89878; }
+.tk-s { color: #b8d878; }
+.tk-f { color: #78c8d8; }
+.tk-n { color: #d8b878; }
+.tk-p { color: #d2a8ff; }
+
+/* ====================================================== */
+/* Compare                                                  */
+/* ====================================================== */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 32px 0;
+}
+
+.compare-cell {
+  padding: 22px 24px;
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+.compare-cell.bad {
+  background: #fcf2ef;
+  border-color: #e8c4ba;
+}
+
+.compare-cell.good {
+  background: var(--green-soft);
+  border-color: #b8cea2;
+}
+
+.compare-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid currentColor;
+  display: inline-block;
+  font-weight: 700;
+}
+
+.bad .compare-label { color: var(--accent-deep); }
+.good .compare-label { color: var(--green); }
+
+.compare-cell p { margin: 0; font-size: 15px; line-height: 1.65; }
+
+@media (max-width: 768px) {
+  .compare { grid-template-columns: 1fr; }
+}
+
+/* ====================================================== */
+/* Callout                                                  */
+/* ====================================================== */
+.callout {
+  margin: 32px 0;
+  padding: 20px 26px;
+  border-left: 4px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 4px 4px 0;
+}
+
+.callout.warn {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+}
+
+.callout.info {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.callout-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.callout.warn .callout-tag { color: #8b6f1f; }
+.callout.info .callout-tag { color: var(--blue); }
+
+.callout p { margin: 0; font-size: 15px; line-height: 1.65; }
+.callout p + p { margin-top: 8px; }
+
+/* ====================================================== */
+/* Concept Grid                                             */
+/* ====================================================== */
+.concept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 32px 0;
+}
+
+.cg-cell {
+  background: var(--paper);
+  padding: 20px 22px;
+}
+
+.cg-cell .ic {
+  font-family: 'Source Serif 4', serif;
+  font-style: italic;
+  font-size: 24px;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.cg-cell .ti {
+  font-family: 'Source Serif 4', serif;
+  font-weight: 600;
+  font-size: 19px;
+  color: var(--ink);
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+.cg-cell .de {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* ====================================================== */
+/* Exercise                                                 */
+/* ====================================================== */
+.exercise {
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  padding: 28px 32px;
+  margin: 40px 0;
+  border-radius: 6px;
+  position: relative;
+}
+
+.exercise::before {
+  content: '練習';
+  position: absolute;
+  top: -12px;
+  left: 24px;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 3px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+
+.exercise h4 {
+  font-family: 'Source Serif 4', serif;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+
+/* ====================================================== */
+/* Schedule                                                 */
+/* ====================================================== */
+.schedule {
+  margin: 32px 0;
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+}
+
+.sched-row {
+  display: grid;
+  grid-template-columns: 90px 50px 1fr 100px;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule-soft);
+  align-items: baseline;
+  font-size: 14px;
+}
+
+.sched-row:last-child { border-bottom: none; }
+
+.sched-row.brk { background: var(--gold-soft); padding: 14px 12px; }
+
+.s-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.s-dur {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-mute);
+}
+
+.s-title {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.s-title .sub {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-mute);
+  margin-top: 2px;
+}
+
+.s-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-align: right;
+  color: var(--ink-mute);
+}
+
+@media (max-width: 768px) {
+  .sched-row { grid-template-columns: 1fr; gap: 2px; padding: 14px 0; }
+}
+
+/* ====================================================== */
+/* Formula / Quote                                          */
+/* ====================================================== */
+.formula {
+  font-family: 'Source Serif 4', serif;
+  font-style: italic;
+  font-size: 26px;
+  text-align: center;
+  margin: 32px auto;
+  padding: 24px;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  color: var(--accent-deep);
+  max-width: 700px;
+  letter-spacing: 0.01em;
+}
+
+.formula code {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+}
+
+.quote {
+  font-family: 'Source Serif 4', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.4;
+  color: var(--ink);
+  max-width: 720px;
+  margin: 64px auto;
+  text-align: center;
+  padding: 32px 0;
+  border-top: 1px solid var(--accent);
+  border-bottom: 1px solid var(--accent);
+  letter-spacing: -0.01em;
+}
+
+.quote-attr {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-top: 16px;
+}
+
+/* ====================================================== */
+/* Footer                                                   */
+/* ====================================================== */
+.footer {
+  padding: 80px 0;
+  text-align: center;
+  border-top: 2px solid var(--ink);
+}
+
+.footer-mark {
+  font-family: 'Source Serif 4', serif;
+  font-style: italic;
+  font-size: 56px;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.footer-text {
+  font-family: 'Source Serif 4', serif;
+  font-style: italic;
+  font-size: 19px;
+  color: var(--ink-soft);
+  max-width: 600px;
+  margin: 0 auto 24px;
+  line-height: 1.5;
+}
+
+.footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* ====================================================== */
+/* Diagram-ish boxes                                        */
+/* ====================================================== */
+.flow-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 24px 0;
+  flex-wrap: wrap;
+  padding: 24px;
+  background: var(--paper-deep);
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+}
+
+.flow-node {
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  padding: 10px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.flow-node.accent {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.flow-arrow {
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+/* Tweak first-letter on smaller leads */
+@media (max-width: 600px) {
+  .lead { font-size: 19px; }
+  .lead::first-letter { font-size: 2.6em; }
+  .hero-lede { font-size: 18px; }
+}
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" onclick="document.querySelector('.sidemenu').classList.toggle('open')">☰ 目錄</button>
+
+<div class="layout">
+
+  <!-- ============================================== -->
+  <!-- Side Menu                                       -->
+  <!-- ============================================== -->
+  <aside class="sidemenu" id="sidemenu">
+    <div class="menu-brand">
+      <div class="menu-brand-title">函數式編程</div>
+      <div class="menu-brand-subtitle">FP Workshop · v3</div>
+    </div>
+
+    <div class="menu-section-label">封面 / 時程</div>
+    <ul class="menu-list">
+      <li><a class="menu-item" href="#cover" data-section="cover"><span class="menu-num">○</span><span class="menu-text">封面<span class="en">cover</span></span></a></li>
+      <li><a class="menu-item" href="#schedule" data-section="schedule"><span class="menu-num">⌖</span><span class="menu-text">時程表<span class="en">schedule</span></span></a></li>
+    </ul>
+
+    <div class="menu-section-label">課程內容</div>
+    <ul class="menu-list">
+      <li><a class="menu-item" href="#ch1" data-section="ch1"><span class="menu-num">01</span><span class="menu-text">為何需要 FP<span class="en">why functional</span></span></a></li>
+      <li><a class="menu-item" href="#ch2" data-section="ch2"><span class="menu-num">02</span><span class="menu-text">純函數與副作用<span class="en">pure & side effects</span></span></a></li>
+      <li><a class="menu-item" href="#ch3" data-section="ch3"><span class="menu-num">03</span><span class="menu-text">引用透明<span class="en">referential transparency</span></span></a></li>
+      <li><a class="menu-item" href="#ch4" data-section="ch4"><span class="menu-num">04</span><span class="menu-text">不可變性<span class="en">immutability</span></span></a></li>
+      <li><a class="menu-item" href="#ch5" data-section="ch5"><span class="menu-num">05</span><span class="menu-text">為何用箭頭函數<span class="en">arrow functions</span></span></a></li>
+      <li><a class="menu-item" href="#ch6" data-section="ch6"><span class="menu-num">06</span><span class="menu-text">高階函數<span class="en">higher-order fns</span></span></a></li>
+      <li><a class="menu-item" href="#ch7" data-section="ch7"><span class="menu-num">07</span><span class="menu-text">函數組合<span class="en">composition</span></span></a></li>
+      <li><a class="menu-item" href="#ch8" data-section="ch8"><span class="menu-num">08</span><span class="menu-text">柯里化<span class="en">currying</span></span></a></li>
+      <li><a class="menu-item" href="#ch9" data-section="ch9"><span class="menu-num">09</span><span class="menu-text">Functor<span class="en">the mappable box</span></span></a></li>
+      <li><a class="menu-item" href="#ch10" data-section="ch10"><span class="menu-num">10</span><span class="menu-text">Monad<span class="en">maybe / either</span></span></a></li>
+      <li><a class="menu-item" href="#ch11" data-section="ch11"><span class="menu-num">11</span><span class="menu-text">實戰重構<span class="en">workshop</span></span></a></li>
+    </ul>
+
+    <div class="menu-foot">
+      // 3.5 hrs · 11 sections<br>
+      // pure JS / TS
+    </div>
+  </aside>
+
+  <!-- ============================================== -->
+  <!-- Main Content                                    -->
+  <!-- ============================================== -->
+  <main class="main">
+
+    <!-- ============ Cover ============ -->
+    <section class="hero" id="cover">
+      <div class="content">
+        <div class="hero-mark">半天工作坊 · 純 JS / TS · 前端團隊</div>
+        <h1 class="hero-title">函數式<br><em>編程</em></h1>
+        <p class="hero-lede">不是新語法，而是一種思維方式——
+          從「<em>修改狀態</em>」走向「<em>描述資料的流動</em>」。
+          這份教材從觀念背後的「為什麼」開始，
+          一直帶到 Functor、Monad 與真實重構場景。</p>
+
+        <div class="hero-stats">
+          <div class="stat">
+            <div class="stat-label">總時長</div>
+            <div class="stat-value">3.5 小時</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">章節</div>
+            <div class="stat-value">11 章</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">難度</div>
+            <div class="stat-value">入門 → 進階</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">對象</div>
+            <div class="stat-value">前端團隊</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Schedule ============ -->
+    <section class="chapter" id="schedule">
+      <div class="content">
+        <div class="chapter-tag"><span class="num">附錄</span>建議時程</div>
+        <h2 class="chapter-title">半天工作坊<br><em>時程表</em></h2>
+        <div class="chapter-en">// 14:00 → 18:30 · 含休息 15 分鐘</div>
+
+        <p class="lead">這個時程設計強調「觀念優先、實作緊隨」。每個觀念章節都會有 5–10 分鐘練習與討論，最後一章是綜合實戰。</p>
+
+        <div class="schedule">
+          <div class="sched-row"><span class="s-time">14:00</span><span class="s-dur">15'</span><span class="s-title">為何需要 FP<span class="sub">從可變性的痛點切入</span></span><span class="s-tag">講授</span></div>
+          <div class="sched-row"><span class="s-time">14:15</span><span class="s-dur">25'</span><span class="s-title">純函數與副作用<span class="sub">辨識練習</span></span><span class="s-tag">講授+練習</span></div>
+          <div class="sched-row"><span class="s-time">14:40</span><span class="s-dur">15'</span><span class="s-title">引用透明<span class="sub">為何能用「等號替換」思考</span></span><span class="s-tag">講授</span></div>
+          <div class="sched-row"><span class="s-time">14:55</span><span class="s-dur">25'</span><span class="s-title">不可變性<span class="sub">spread / structuredClone / Immer</span></span><span class="s-tag">講授+練習</span></div>
+          <div class="sched-row"><span class="s-time">15:20</span><span class="s-dur">10'</span><span class="s-title">為何 FP 慣用箭頭函數<span class="sub">綁定 this / 簡潔性的真正原因</span></span><span class="s-tag">講授</span></div>
+          <div class="sched-row brk"><span class="s-time">15:30</span><span class="s-dur">15'</span><span class="s-title">休息<span class="sub">coffee break</span></span><span class="s-tag">break</span></div>
+          <div class="sched-row"><span class="s-time">15:45</span><span class="s-dur">25'</span><span class="s-title">高階函數<span class="sub">map / filter / reduce 深入</span></span><span class="s-tag">講授+練習</span></div>
+          <div class="sched-row"><span class="s-time">16:10</span><span class="s-dur">25'</span><span class="s-title">函數組合<span class="sub">pipe / compose</span></span><span class="s-tag">講授+練習</span></div>
+          <div class="sched-row"><span class="s-time">16:35</span><span class="s-dur">25'</span><span class="s-title">柯里化<span class="sub">為何函數要拆成單參數</span></span><span class="s-tag">講授+練習</span></div>
+          <div class="sched-row"><span class="s-time">17:00</span><span class="s-dur">25'</span><span class="s-title">Functor<span class="sub">自己寫一個 Box</span></span><span class="s-tag">講授+演練</span></div>
+          <div class="sched-row"><span class="s-time">17:25</span><span class="s-dur">30'</span><span class="s-title">Monad<span class="sub">Maybe / Either</span></span><span class="s-tag">講授+演練</span></div>
+          <div class="sched-row"><span class="s-time">17:55</span><span class="s-dur">25'</span><span class="s-title">實戰：API 模組重構<span class="sub">綜合應用</span></span><span class="s-tag">實作</span></div>
+          <div class="sched-row"><span class="s-time">18:20</span><span class="s-dur">10'</span><span class="s-title">Q & A · 學習路徑<span class="sub">收尾</span></span><span class="s-tag">討論</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Ch 1 · 為何需要 FP ============ -->
+    <section class="chapter" id="ch1">
+      <div class="content">
+        <div class="chapter-tag"><span class="num">01</span>15 分鐘 · 觀念導入</div>
+        <h2 class="chapter-title">為何需要<br><em>函數式編程</em>？</h2>
+        <div class="chapter-en">// why functional programming · the motivation</div>
+
+        <p class="lead">大多數 bug 不是來自演算法錯誤，而是來自「<em>狀態在錯誤的時間被錯誤的人改了</em>」。函數式編程，本質上是在處理這個問題。</p>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">i</span>核心觀念 · 程式碼 = 資料 + 動作</div>
+          <div class="concept-explain-body">
+            <h5>命令式 vs 函數式：兩種根本不同的世界觀</h5>
+            <p>命令式編程（imperative）的核心是「<strong>動作的序列</strong>」——告訴 CPU 一步一步該做什麼：建立變數、更新變數、判斷條件、跳轉。它的世界裡，<strong>程式的本質是「狀態」</strong>，而程式碼是「<strong>改變狀態的指令</strong>」。</p>
+            <p>函數式編程的核心是「<strong>資料的轉換</strong>」——告訴電腦你要從一個資料變成另一個資料，中間怎麼走由抽象的「函數」負責。它的世界裡，<strong>程式的本質是「表達式」</strong>，而程式碼是「<strong>把輸入映射成輸出的數學公式</strong>」。</p>
+            <div class="metaphor">命令式像是一張「<strong>食譜步驟</strong>」（先切菜、再下鍋、再翻炒）；函數式則像是一條「<strong>輸送帶</strong>」（原料 → 清洗機 → 切割機 → 包裝機 → 成品）。</div>
+            <h5>為什麼前端工程師特別需要 FP？</h5>
+            <p>前端工程的本質就是「<strong>把資料變成 UI</strong>」。React 的核心公式 <code>UI = f(state)</code> 就是純函數的概念——同樣的 state，永遠渲染出同樣的 UI。Redux、Zustand、Vue 的響應式系統、RxJS、TanStack Query——這些工具的設計哲學全都建立在 FP 之上。</p>
+            <p>不學 FP，你只是在「用」這些工具；學了 FP，你才真正<strong>理解</strong>這些工具為什麼這樣設計、以及該怎麼正確使用。</p>
+          </div>
+        </div>
+
+        <h3 class="h3">前端工程師的日常痛點</h3>
+        <p>請先回憶你維護專案時遇到的這些情況：</p>
+        <ul>
+          <li>「咦？這個 state 怎麼變了？是誰改的？」</li>
+          <li>巢狀 if/else 與重複的 null 檢查</li>
+          <li>同樣輸入卻得到不同結果（時序、共享狀態作祟）</li>
+          <li>不敢動既有函數，因為「改了會壞掉哪裡」沒人知道</li>
+          <li>非同步程式碼像金字塔，錯誤處理散落各處</li>
+        </ul>
+        <p>這些問題的<strong>共同根源</strong>：副作用沒有被馴服、資料隨時可變、控制流程隱含在指令中。</p>
+
+        <h3 class="h3">兩種風格的對照</h3>
+        <div class="compare">
+          <div class="compare-cell bad">
+            <div class="compare-label">▲ Imperative · 命令式</div>
+            <p>告訴電腦<strong>怎麼做</strong>。建立變數、迴圈、條件、修改值。關注「步驟」與「狀態變化」。</p>
+          </div>
+          <div class="compare-cell good">
+            <div class="compare-label">● Declarative · 宣告式</div>
+            <p>告訴電腦<strong>要什麼</strong>。用 map、filter、reduce 描述資料如何被轉換。關注「轉換」與「資料流」。</p>
+          </div>
+        </div>
+
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // imperative</span><span class="desc">傳統寫法</span></div>
+<pre><span class="tk-c">// 找出所有成年使用者的姓名，並轉成大寫</span>
+<span class="tk-k">const</span> result = [];
+<span class="tk-k">for</span> (<span class="tk-k">let</span> i = <span class="tk-n">0</span>; i &lt; users.length; i++) {
+  <span class="tk-k">if</span> (users[i].age &gt;= <span class="tk-n">18</span>) {
+    result.push(users[i].name.toUpperCase());
+  }
+}</pre>
+        </div>
+
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // declarative</span><span class="desc">FP 風格</span></div>
+<pre><span class="tk-c">// 同樣需求，但描述的是「資料轉換」</span>
+<span class="tk-k">const</span> result = users
+  .filter(u =&gt; u.age &gt;= <span class="tk-n">18</span>)
+  .map(u =&gt; u.name.toUpperCase());</pre>
+        </div>
+
+        <h3 class="h3">FP 帶來的四個核心好處</h3>
+        <div class="concept-grid">
+          <div class="cg-cell"><div class="ic">i</div><div class="ti">可預測</div><div class="de">純函數同樣輸入永遠同樣輸出，debug 從「猜」變成「推」。</div></div>
+          <div class="cg-cell"><div class="ic">ii</div><div class="ti">可組合</div><div class="de">小函數像樂高一樣組合，比類別繼承靈活百倍。</div></div>
+          <div class="cg-cell"><div class="ic">iii</div><div class="ti">可測試</div><div class="de">沒有副作用就不需要 mock，單元測試輕量到不可思議。</div></div>
+          <div class="cg-cell"><div class="ic">iv</div><div class="ti">可並行</div><div class="de">不可變資料天然避開競態，Web Worker、SSR 都更穩。</div></div>
+        </div>
+
+        <div class="callout">
+          <div class="callout-tag">▸ 講師提醒</div>
+          <p>不要把 FP 講成「比 OOP 更高級」。FP 與 OOP 是不同的工具，前端工作中我們其實兩者並用——元件結構偏向組件導向，狀態管理與資料轉換則高度 FP。<strong>我們學 FP 是為了補齊另一半工具箱</strong>。</p>
+        </div>
+
+        <div class="quote">
+          Programs must be written for people to read, and only incidentally for machines to execute.
+          <span class="quote-attr">— Harold Abelson · SICP</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Ch 2 · 純函數與副作用 ============ -->
+    <section class="chapter" id="ch2">
+      <div class="content">
+        <div class="chapter-tag"><span class="num">02</span>25 分鐘 · 核心觀念</div>
+        <h2 class="chapter-title">純函數與<br><em>副作用</em></h2>
+        <div class="chapter-en">// pure functions & side effects</div>
+
+        <p class="lead">如果整個函數式編程只能學一個觀念，<em>那就是純函數</em>。其他所有概念都是它的延伸，或為了配合它而生。</p>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">?</span>什麼是「純」？為什麼數學家發明這個概念？</div>
+          <div class="concept-explain-body">
+            <h5>從數學的「函數」說起</h5>
+            <p>在數學課，<em>f(x) = x + 1</em> 是一個函數。給它 3，永遠得到 4；給它 100，永遠得到 101。它<strong>不會看心情</strong>，不會今天回 4，明天回 5。也不會在算完之後偷偷把你家的時鐘往前撥一小時。這就是「純」。</p>
+            <p>但程式設計裡的「函數」一開始不是這樣的。傳統 C 語言裡，函數可以讀寫全域變數、讀寫檔案、改變 caller 傳進來的指標指向的記憶體。一個叫 <code>calculate</code> 的函數可能順便把資料庫改了。<strong>名字叫函數，但行為不像函數</strong>。</p>
+            <h5>純函數的兩個條件</h5>
+            <p><strong>條件一：相同輸入 → 相同輸出。</strong>不管何時、何地、被誰呼叫，只要 input 一樣，output 必定一樣。不可以依賴 <code>Date.now()</code>、<code>Math.random()</code>、外部全域變數。</p>
+            <p><strong>條件二：沒有副作用。</strong>函數內部不能對「函數參數與回傳值」以外的東西造成任何改變——不能修改傳進來的物件、不能寫 DOM、不能發 API、不能 console.log。</p>
+            <div class="metaphor">純函數像「<strong>計算機</strong>」——你按 2 + 3，它顯示 5；不管你按多少次、什麼時候按，結果都一樣，計算機也不會偷偷打電話給你媽。</div>
+          </div>
+        </div>
+
+        <div class="formula">f(x) = y · 同樣的 <code>x</code>，永遠得到同樣的 <code>y</code></div>
+
+        <h3 class="h3">什麼是「副作用」？</h3>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">!</span>副作用 · side effect</div>
+          <div class="concept-explain-body">
+            <h5>正式定義</h5>
+            <p>當一個函數除了「<strong>接收輸入、回傳輸出</strong>」之外，還對函數外部產生了任何<strong>可觀察的影響</strong>，這影響就叫「副作用」（side effect）。</p>
+            <h5>常見的副作用清單</h5>
+            <p>● 修改全域變數或外部變數<br>
+               ● 修改傳入的參數（mutating arguments）<br>
+               ● 操作 DOM（document.getElementById、appendChild...）<br>
+               ● 網路請求（fetch、WebSocket）<br>
+               ● 讀寫 localStorage、cookies、檔案<br>
+               ● console.log、alert、彈出視窗<br>
+               ● 拋出例外（throw）<br>
+               ● 依賴或修改時間（Date.now()）、亂數（Math.random()）</p>
+            <h5>副作用為什麼可怕？</h5>
+            <p>副作用本身不是錯的——一個沒有副作用的程式什麼也做不了（連 console.log 都不能用）。<strong>真正可怕的是「不可見的副作用」</strong>：當你看到 <code>calculatePrice(item)</code> 這個函數，你以為它只算個價錢，但它其實悄悄改了購物車、發了 API、改了使用者狀態——那才是 bug 的溫床。</p>
+            <p><strong>FP 不消滅副作用，FP 是把副作用「可見化、集中化、推到邊界」</strong>。</p>
+          </div>
+        </div>
+
+        <h3 class="h3">不純的常見元凶</h3>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // impure ✗</span><span class="desc">這些都是不純的</span></div>
+<pre><span class="tk-c">// ❌ 依賴外部變數</span>
+<span class="tk-k">let</span> tax = <span class="tk-n">0.05</span>;
+<span class="tk-k">function</span> <span class="tk-f">priceWithTax</span>(p) { <span class="tk-k">return</span> p * (<span class="tk-n">1</span> + tax); }
+
+<span class="tk-c">// ❌ 修改傳入的物件 (mutating argument)</span>
+<span class="tk-k">function</span> <span class="tk-f">addItem</span>(cart, item) { cart.push(item); <span class="tk-k">return</span> cart; }
+
+<span class="tk-c">// ❌ 依賴隨機 / 時間</span>
+<span class="tk-k">function</span> <span class="tk-f">expireAt</span>(min) { <span class="tk-k">return</span> Date.now() + min * <span class="tk-n">60000</span>; }
+
+<span class="tk-c">// ❌ I/O 副作用</span>
+<span class="tk-k">function</span> <span class="tk-f">save</span>(user) { <span class="tk-k">return</span> fetch(<span class="tk-s">'/api'</span>, { method: <span class="tk-s">'POST'</span>, body: user }); }</pre>
+        </div>
+
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // pure ✓</span><span class="desc">純化後的版本</span></div>
+<pre><span class="tk-c">// ✅ 把依賴變成參數（顯式注入）</span>
+<span class="tk-k">function</span> <span class="tk-f">priceWithTax</span>(p, rate) { <span class="tk-k">return</span> p * (<span class="tk-n">1</span> + rate); }
+
+<span class="tk-c">// ✅ 回傳新物件，不改原本的</span>
+<span class="tk-k">function</span> <span class="tk-f">addItem</span>(cart, item) { <span class="tk-k">return</span> [...cart, item]; }
+
+<span class="tk-c">// ✅ 把時間當參數注入</span>
+<span class="tk-k">function</span> <span class="tk-f">expireAt</span>(now, min) { <span class="tk-k">return</span> now + min * <span class="tk-n">60000</span>; }</pre>
+        </div>
+
+        <h3 class="h3">「把副作用推到邊界」是什麼意思？</h3>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">★</span>架構心法 · functional core, imperative shell</div>
+          <div class="concept-explain-body">
+            <h5>核心 / 殼層 結構</h5>
+            <p>想像你的程式像一顆雞蛋。<strong>蛋黃（核心）</strong>是你的業務邏輯：計算、轉換、決策——這部分要全部保持純粹。<strong>蛋白（殼層）</strong>是與外界互動的層：fetch、寫 DOM、讀 localStorage——副作用都集中在這裡。</p>
+            <div class="metaphor">就像核能電廠的「<strong>反應爐</strong>」與「<strong>控制室</strong>」：反應爐裡的物理規律是純的（同樣條件、同樣結果），但你要靠控制室的閥門、感應器（副作用）才能與它互動。</div>
+            <h5>React / Redux 是這個哲學的標準範例</h5>
+            <p>● <strong>reducer</strong> 是純函數：<code>(state, action) =&gt; newState</code>，永遠不能 fetch、不能改 state<br>
+               ● <strong>selector</strong> 是純函數：從 state 推導 UI 資料<br>
+               ● <strong>useEffect</strong> 是副作用區：API、訂閱、計時器都放這<br>
+               ● <strong>component</strong> 是純函數：<code>props =&gt; UI</code></p>
+            <p>看出來了嗎？整個 React 生態就是 FP 思維在 UI 框架的落地。</p>
+          </div>
+        </div>
+
+        <div class="flow-diagram">
+          <span class="flow-node">外部世界</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-node">殼層（不純）</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-node accent">核心（純）</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-node">殼層（不純）</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-node">外部世界</span>
+        </div>
+
+        <div class="exercise">
+          <h4>練習 2.1 · 純函數辨識</h4>
+          <p>下列哪些是純函數？為什麼？</p>
+          <div class="code">
+            <div class="code-bar"><span class="lang">javascript // identify</span><span class="desc">思考題</span></div>
+<pre><span class="tk-k">const</span> <span class="tk-f">a</span> = (x, y) =&gt; x + y;
+<span class="tk-k">const</span> <span class="tk-f">b</span> = (arr) =&gt; arr.sort();
+<span class="tk-k">const</span> <span class="tk-f">c</span> = (arr) =&gt; [...arr].sort();
+<span class="tk-k">const</span> <span class="tk-f">d</span> = (user) =&gt; ({ ...user, name: user.name.trim() });
+<span class="tk-k">const</span> <span class="tk-f">e</span> = (id) =&gt; document.getElementById(id);
+<span class="tk-k">const</span> <span class="tk-f">f</span> = (x) =&gt; Math.sqrt(x);</pre>
+          </div>
+          <p><strong>解答：</strong>a、c、d、f 是純函數。b 會修改原陣列（sort 是 mutating）；e 依賴 DOM 這個外部狀態。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Ch 3 · 引用透明 ============ -->
+    <section class="chapter" id="ch3">
+      <div class="content">
+        <div class="chapter-tag"><span class="num">03</span>15 分鐘 · 進階觀念</div>
+        <h2 class="chapter-title">引用<em>透明性</em></h2>
+        <div class="chapter-en">// referential transparency</div>
+
+        <p class="lead">引用透明聽起來像學術名詞，但它其實是「<em>你為什麼能信任純函數</em>」的數學表達。理解它，你會獲得一種新的閱讀程式碼的能力。</p>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">=</span>引用透明 · referential transparency</div>
+          <div class="concept-explain-body">
+            <h5>白話定義</h5>
+            <p>一段程式碼如果是「引用透明」的，意思是：<strong>你可以用它的回傳值，直接取代它本身，整個程式的行為完全不變。</strong></p>
+            <p>舉例：如果 <code>add(2, 3)</code> 永遠回傳 5，那程式裡所有 <code>add(2, 3)</code> 都可以直接改寫成 <code>5</code>，行為一模一樣。這個函數就是引用透明的。</p>
+            <h5>為什麼這個性質這麼重要？</h5>
+            <p>因為它意味著——當你讀程式碼時，<strong>你可以用「等號替換」來理解任何一段程式</strong>，就像國中數學課做代換題一樣。這是極為強大的<strong>「推理工具」</strong>。</p>
+            <div class="metaphor">就像化學裡的「<strong>守恆律</strong>」——當你知道 2H₂ + O₂ = 2H₂O 永遠成立，你就可以放心做計算，不用擔心今天的水分子會偷偷變成別的東西。</div>
+            <h5>反例：不透明的函數</h5>
+            <p>看這段 code：<code>let counter = 0; const next = () =&gt; ++counter;</code></p>
+            <p><code>next()</code> 第一次回 1、第二次回 2、第三次回 3。你<strong>不能</strong>把 <code>next()</code> 替換成任何固定值，因為它每次的結果不同。所以 <code>next</code> 不是引用透明的——它的回傳值依賴外部隱藏狀態。</p>
+            <h5>引用透明 ≈ 純函數，但更精確</h5>
+            <p>嚴格說，「引用透明」是描述「<strong>表達式</strong>」的性質，「純函數」是描述「<strong>函數</strong>」的性質。但實務上你可以把它們當同一回事。每個純函數的呼叫都是引用透明的；每個引用透明的呼叫背後都是純函數。</p>
+          </div>
+        </div>
+
+        <h3 class="h3">用「等號替換」來推理程式</h3>
+        <p>引用透明帶來的最大實務好處：你可以<strong>把任何純函數呼叫，替換成它的結果</strong>，程式碼意義完全不變。這聽起來理所當然，但仔細想想，命令式程式碼根本做不到這件事。</p>
+
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // substitution</span><span class="desc">引用透明的威力</span></div>
+<pre><span class="tk-k">const</span> <span class="tk-f">double</span> = x =&gt; x * <span class="tk-n">2</span>;
+<span class="tk-k">const</span> <span class="tk-f">addOne</span> = x =&gt; x + <span class="tk-n">1</span>;
+
+<span class="tk-k">const</span> result = <span class="tk-f">addOne</span>(<span class="tk-f">double</span>(<span class="tk-n">5</span>));
+<span class="tk-c">// 因為 double 和 addOne 都是純函數，我可以這樣推理：</span>
+<span class="tk-c">// addOne(double(5)) === addOne(10) === 11</span>
+<span class="tk-c">// 整段在程式裡可以「安全地」用 11 取代</span></pre>
+        </div>
+
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // not transparent</span><span class="desc">不透明的對照</span></div>
+<pre><span class="tk-k">let</span> count = <span class="tk-n">0</span>;
+<span class="tk-k">const</span> <span class="tk-f">tick</span> = () =&gt; ++count;
+
+<span class="tk-f">tick</span>() + <span class="tk-f">tick</span>();
+<span class="tk-c">// 第一個 tick() = 1，第二個 tick() = 2，結果是 3</span>
+<span class="tk-c">// 你不能把它改寫成 tick() + 2 或 2 + tick()，結果都會不一樣</span>
+<span class="tk-c">// 因為 tick 不是引用透明的</span></pre>
+        </div>
+
+        <h3 class="h3">引用透明帶來的三大實務能力</h3>
+        <div class="concept-grid">
+          <div class="cg-cell">
+            <div class="ic">i</div>
+            <div class="ti">記憶化（memoization）</div>
+            <div class="de">因為同輸入一定同輸出，可以放心把結果快取起來，下次直接查表。React 的 useMemo / useCallback 就建立在這上面。</div>
+          </div>
+          <div class="cg-cell">
+            <div class="ic">ii</div>
+            <div class="ti">惰性求值（lazy evaluation）</div>
+            <div class="de">既然替換等價，那就可以延後執行——什麼時候真的需要值，再去算。Haskell 的整個語言都建立在這上面。</div>
+          </div>
+          <div class="cg-cell">
+            <div class="ic">iii</div>
+            <div class="ti">平行化</div>
+            <div class="de">純函數之間沒有共享狀態，可以隨意分配到不同執行緒、Worker、機器上跑，不用煩惱鎖的問題。</div>
+          </div>
+        </div>
+
+        <div class="callout info">
+          <div class="callout-tag">▸ React 工程師的福音</div>
+          <p>React 的 <code>useMemo</code>、<code>useCallback</code>、<code>React.memo</code>、Reselect 的 <code>createSelector</code>——這些優化工具<strong>都要求你傳純函數</strong>。原因正是引用透明：只有引用透明的函數才能放心地「同輸入就回傳上次的結果」。當你寫了不純的 selector，整個記憶化就會出 bug。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Ch 4 · 不可變性 ============ -->
+    <section class="chapter" id="ch4">
+      <div class="content">
+        <div class="chapter-tag"><span class="num">04</span>25 分鐘 · 核心觀念</div>
+        <h2 class="chapter-title">不可<em>變性</em></h2>
+        <div class="chapter-en">// immutability</div>
+
+        <p class="lead">「我又沒改原本的東西，怎麼還是壞了？」<em>九成的狀態管理 bug，是因為某處不小心改到了共享的物件。</em>不可變性是純函數的雙胞胎兄弟。</p>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">∞</span>不可變性 · immutability</div>
+          <div class="concept-explain-body">
+            <h5>不可變性是什麼？</h5>
+            <p>不可變（immutable）的意思是：<strong>一個值一旦被建立，就永遠不能被改變</strong>。你想要「修改」？沒辦法。你只能<strong>「以舊值為基礎，建立一個新的值」</strong>。</p>
+            <p>在 JS 裡，原始型別（number、string、boolean、null、undefined、symbol、bigint）本來就是不可變的。<code>"hello".toUpperCase()</code> 不會改變原本的 <code>"hello"</code>，它建立一個新的字串 <code>"HELLO"</code>。<strong>但物件和陣列預設是可變的</strong>，這就是麻煩的開始。</p>
+            <h5>為什麼可變性是 bug 的溫床？</h5>
+            <p>當一個物件可以被任何人在任何時候修改，你就必須在心裡同時追蹤所有可能修改它的地方。當這個物件被傳給三個函數、又被存進兩個快取，<strong>誰是真正的擁有者？誰可以改？什麼時候改？</strong>——這就是「shared mutable state」的本質惡夢。</p>
+            <div class="metaphor">可變物件像「<strong>公共白板</strong>」——任何人都能改任何東西，最後沒人知道為什麼上面寫的是這個。不可變物件像「<strong>已發布的文件</strong>」——要改？發新版，舊版永遠在那不變。</div>
+            <h5>不可變性與純函數的關係</h5>
+            <p>它們是<strong>互為因果</strong>的：一個函數要「純」，就<strong>不能修改傳進來的物件</strong>（否則就是副作用）；如果整個系統的資料都是不可變的，函數就<strong>自動不可能</strong>意外修改它們，於是更容易保持純粹。兩者一起運作才是 FP 的完整體驗。</p>
+          </div>
+        </div>
+
+        <h3 class="h3">JavaScript 的陷阱：傳參考</h3>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">⚠</span>淺拷貝 vs 深拷貝 · 一個經典坑</div>
+          <div class="concept-explain-body">
+            <p>JS 的物件與陣列是<strong>傳參考</strong>（pass by reference）的。意思是：當你把一個物件當參數傳給函數、或賦值給另一個變數，傳的不是物件本身，而是「<strong>指向那個物件的記憶體位置</strong>」。所以兩個變數可能指向同一個物件，改其中一個會影響另一個。</p>
+            <p><strong>spread operator（<code>...</code>）只是淺拷貝</strong>——它只複製第一層，巢狀的物件還是共用同一個參考。這是新手最常踩的坑。</p>
+          </div>
+        </div>
+
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // gotcha</span><span class="desc">淺拷貝陷阱</span></div>
+<pre><span class="tk-k">const</span> user = { name: <span class="tk-s">'Alice'</span>, profile: { age: <span class="tk-n">30</span> } };
+<span class="tk-k">const</span> copy = { ...user };           <span class="tk-c">// 淺拷貝</span>
+copy.profile.age = <span class="tk-n">99</span>;             <span class="tk-c">// 也改到了 user.profile.age！</span>
+console.log(user.profile.age);    <span class="tk-c">// 99 ❗</span></pre>
+        </div>
+
+        <h3 class="h3">三種更新方式的權衡</h3>
+
+        <h4 class="h4">A · Spread / 手動展開</h4>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // spread</span><span class="desc">細粒度更新</span></div>
+<pre><span class="tk-k">const</span> updated = {
+  ...user,
+  profile: { ...user.profile, age: <span class="tk-n">31</span> }
+};</pre>
+        </div>
+        <p>適合淺層結構，深層巢狀會變地獄。</p>
+
+        <h4 class="h4">B · structuredClone（原生 API）</h4>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // es2022+</span><span class="desc">原生深拷貝</span></div>
+<pre><span class="tk-k">const</span> updated = structuredClone(user);
+updated.profile.age = <span class="tk-n">31</span>;       <span class="tk-c">// 改 updated 不會影響 user</span></pre>
+        </div>
+        <p>深拷貝、原生支援、效能不錯，但函數與類別實例（Date 以外）會掉資訊。</p>
+
+        <h4 class="h4">C · Immer（推薦給 React / Redux）</h4>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // with immer</span><span class="desc">draft 模式</span></div>
+<pre><span class="tk-k">import</span> { produce } <span class="tk-k">from</span> <span class="tk-s">'immer'</span>;
+
+<span class="tk-k">const</span> updated = <span class="tk-f">produce</span>(user, draft =&gt; {
+  draft.profile.age = <span class="tk-n">31</span>;        <span class="tk-c">// 看起來像改 mutable，實際產生新物件</span>
+});</pre>
+        </div>
+        <p>程式碼像 mutable，結果卻是 immutable，是工程實務上的最佳平衡。Immer 內部用了 Proxy + 結構共享（structural sharing），只複製真的改到的部分，效能很好。</p>
+
+        <h3 class="h3">陣列的不可變操作對照表</h3>
+        <div class="compare">
+          <div class="compare-cell bad">
+            <div class="compare-label">▲ 會改原陣列（mutating）</div>
+            <p><code>push</code> · <code>pop</code> · <code>shift</code> · <code>unshift</code> · <code>splice</code> · <code>sort</code> · <code>reverse</code></p>
+          </div>
+          <div class="compare-cell good">
+            <div class="compare-label">● 回傳新陣列（non-mutating）</div>
+            <p><code>map</code> · <code>filter</code> · <code>concat</code> · <code>slice</code> · <code>flat</code> · <code>toSorted</code> · <code>toReversed</code> · <code>with</code></p>
+          </div>
+        </div>
+
+        <div class="callout info">
+          <div class="callout-tag">▸ ES2023 新 API</div>
+          <p>ES2023 新增了 <code>toSorted</code>、<code>toReversed</code>、<code>toSpliced</code>、<code>with</code> 四個方法，專門用來取代會 mutate 的版本。Node 20+ 與所有現代瀏覽器都已支援。如果你的專案目標是現代環境，可以直接用。</p>
+        </div>
+
+        <div class="exercise">
+          <h4>練習 4.1 · 找出 mutate</h4>
+          <p>下面的 reducer 為何讓 Redux state 不更新 UI？</p>
+          <div class="code">
+            <div class="code-bar"><span class="lang">javascript // bug</span><span class="desc">redux 不更新</span></div>
+<pre><span class="tk-k">function</span> <span class="tk-f">updateUser</span>(state, action) {
+  state.users[action.id].name = action.name;
+  <span class="tk-k">return</span> state;
+}</pre>
+          </div>
+          <p><strong>提示：</strong>state 與 state.users 的<strong>參考</strong>都沒變。React 用 <code>Object.is</code> 判斷 state 是否變化，比的是參考（reference）而非內容。改成回傳全新的物件樹即可。這也是為什麼<strong>不可變性是 React 渲染機制的基石</strong>。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Ch 5 · 為何用箭頭函數 ============ -->
+    <section class="chapter" id="ch5">
+      <div class="content">
+        <div class="chapter-tag"><span class="num">05</span>10 分鐘 · 語法觀念</div>
+        <h2 class="chapter-title">為何 FP 慣用<br><em>箭頭函數</em>？</h2>
+        <div class="chapter-en">// arrow functions · why they fit FP</div>
+
+        <p class="lead">很多人以為箭頭函數只是「<em>簡寫</em>」。但 FP 大量使用它，是因為箭頭函數的設計，<em>剛好對齊純函數的本質</em>。</p>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">→</span>箭頭函數的三個 FP 友善特性</div>
+          <div class="concept-explain-body">
+            <h5>第一：表達式優先（expression-oriented）</h5>
+            <p>傳統 <code>function</code> 是「<strong>陳述句</strong>」（statement）——你<strong>執行</strong>它做事情。箭頭函數則是「<strong>表達式</strong>」（expression）——它<strong>是一個值</strong>。</p>
+            <p>當你寫 <code>x =&gt; x + 1</code>，整個東西就是一個值，可以放進變數、陣列、參數、任何地方。這呼應了 FP 的核心信念：<strong>函數是值（first-class）</strong>。語法本身就在告訴你「我是一個值」。</p>
+            <div class="metaphor">function 像「<strong>食譜</strong>」（一份做事的說明書）；箭頭函數像「<strong>數學公式</strong>」（直接是個關係表達式）。</div>
+            <h5>第二：沒有自己的 this</h5>
+            <p>傳統 <code>function</code> 有自己動態綁定的 <code>this</code>，會根據呼叫方式（直接呼叫、當方法呼叫、用 call、new 呼叫）改變。這個性質在 OOP 中有用，但在 FP 中是<strong>純粹的麻煩</strong>——因為 FP 函數不應該依賴隱藏的「呼叫上下文」。</p>
+            <p>箭頭函數<strong>沒有自己的 this</strong>，它從外層繼承（詞法綁定）。換句話說，它對「我在哪被呼叫」一無所知——這完美對應「函數只該依賴它的參數」的純函數原則。</p>
+            <h5>第三：簡潔讓組合可讀</h5>
+            <p>當你要寫 <code>pipe(filter(isAdult), map(toName), sortBy(getAge))</code> 這種組合時，每個小函數越短越好。<code>u =&gt; u.age &gt;= 18</code> 比 <code>function (u) { return u.age &gt;= 18; }</code> 在組合裡可讀得多。</p>
+            <p><strong>關鍵不是「字少」，而是「<em>視覺噪音少</em>」</strong>——函數的本體（邏輯）佔比例越高，意圖越清楚。</p>
+          </div>
+        </div>
+
+        <h3 class="h3">語法對照</h3>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // arrow vs function</span><span class="desc">語法對比</span></div>
+<pre><span class="tk-c">// 傳統 function</span>
+<span class="tk-k">function</span> <span class="tk-f">double</span>(x) {
+  <span class="tk-k">return</span> x * <span class="tk-n">2</span>;
+}
+
+<span class="tk-c">// 箭頭函數（單參數 / 單表達式）</span>
+<span class="tk-k">const</span> <span class="tk-f">double</span> = x =&gt; x * <span class="tk-n">2</span>;
+
+<span class="tk-c">// 多參數</span>
+<span class="tk-k">const</span> <span class="tk-f">add</span> = (a, b) =&gt; a + b;
+
+<span class="tk-c">// 多行（用大括號）</span>
+<span class="tk-k">const</span> <span class="tk-f">process</span> = (data) =&gt; {
+  <span class="tk-k">const</span> cleaned = data.trim();
+  <span class="tk-k">return</span> cleaned.toUpperCase();
+};
+
+<span class="tk-c">// 回傳物件要包小括號（否則 {} 會被當成 block）</span>
+<span class="tk-k">const</span> <span class="tk-f">wrap</span> = x =&gt; ({ value: x });</pre>
+        </div>
+
+        <h3 class="h3">this 行為的差異</h3>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // this binding</span><span class="desc">關鍵差異</span></div>
+<pre><span class="tk-k">const</span> obj = {
+  name: <span class="tk-s">'Alice'</span>,
+  greetFn: <span class="tk-k">function</span>() { <span class="tk-k">return</span> <span class="tk-s">`Hi, ${</span><span class="tk-k">this</span><span class="tk-s">.name}`</span>; },
+  greetArrow: () =&gt; <span class="tk-s">`Hi, ${</span><span class="tk-k">this</span><span class="tk-s">?.name}`</span>
+};
+
+obj.greetFn();      <span class="tk-c">// 'Hi, Alice'（this = obj）</span>
+obj.greetArrow();   <span class="tk-c">// 'Hi, undefined'（this 來自外層作用域）</span></pre>
+        </div>
+
+        <h3 class="h3">何時不用箭頭函數？</h3>
+        <div class="concept-grid">
+          <div class="cg-cell"><div class="ic">×</div><div class="ti">物件方法</div><div class="de">需要 this 指向物件時，用傳統 function（或 ES2015 method shorthand）。</div></div>
+          <div class="cg-cell"><div class="ic">×</div><div class="ti">建構子</div><div class="de">箭頭函數不能用 new，因為它沒有 [[Construct]]。</div></div>
+          <div class="cg-cell"><div class="ic">×</div><div class="ti">需要 hoisting</div><div class="de">function 宣告會 hoist，箭頭函數是 const，要先宣告再用。</div></div>
+          <div class="cg-cell"><div class="ic">×</div><div class="ti">需要 arguments</div><div class="de">箭頭函數沒有 arguments 物件，要用 rest（...args）。</div></div>
+        </div>
+
+        <div class="callout">
+          <div class="callout-tag">▸ 結論</div>
+          <p>FP 偏好箭頭函數，不只是「省字」，而是因為箭頭函數的設計（<strong>表達式、無 this、簡潔</strong>）<strong>剛好符合純函數哲學</strong>。寫 FP 的時候用箭頭函數，是<strong>讓語法配合思維</strong>，而不只是省鍵盤。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Ch 6 · 高階函數 ============ -->
+    <section class="chapter" id="ch6">
+      <div class="content">
+        <div class="chapter-tag"><span class="num">06</span>25 分鐘 · 核心觀念</div>
+        <h2 class="chapter-title">高階函數與<br><em>一等公民</em></h2>
+        <div class="chapter-en">// higher-order & first-class functions</div>
+
+        <p class="lead">在 JavaScript 中，<em>函數可以像數字、字串一樣被傳遞、儲存、回傳</em>。這個性質是整個 FP 的基礎，沒有它，後面所有觀念都不存在。</p>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">★</span>「一等公民」是什麼意思？</div>
+          <div class="concept-explain-body">
+            <h5>「first-class」的詞源</h5>
+            <p>這個說法來自 1960 年代，電腦科學家 Christopher Strachey 提出。所謂「一等」（first-class），指的是某類東西在語言中擁有<strong>完整的權利</strong>：可以被命名、可以被當參數、可以被當回傳值、可以放進資料結構。</p>
+            <p>在 C 語言裡，<strong>數字是一等公民</strong>（你可以做以上所有事），但<strong>函數不是</strong>（你不能把函數放進陣列）。在 JS、Python、Haskell 裡，<strong>函數也是一等公民</strong>——它跟數字、字串享有同等地位。</p>
+            <h5>那「高階函數」呢？</h5>
+            <p><strong>高階函數（higher-order function, HOF）</strong>是指：函數的「<strong>輸入或輸出</strong>」是另一個函數的函數。</p>
+            <p>● <code>arr.map(fn)</code> 接收函數當參數 → map 是 HOF<br>
+               ● <code>const greet = name =&gt; () =&gt; \`Hi, ${name}\`</code> 回傳函數 → greet 是 HOF</p>
+            <h5>為什麼 HOF 這麼重要？</h5>
+            <p>因為它讓你能<strong>「把行為當成資料來傳遞」</strong>。傳統 OOP 要把行為傳遞，必須先定義介面、再寫類別、再實例化、再傳實例——非常繁瑣。FP 直接 <code>arr.map(x =&gt; x * 2)</code>，行為就傳過去了。</p>
+            <div class="metaphor">OOP 的「策略模式」是<strong>「為了傳一個行為，蓋了一整棟房子」</strong>；HOF 是<strong>「行為直接從口袋掏出來」</strong>。</div>
+          </div>
+        </div>
+
+        <h3 class="h3">函數作為值的四種用法</h3>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // first-class</span><span class="desc">函數的四種用法</span></div>
+<pre><span class="tk-c">// 1. 存進變數</span>
+<span class="tk-k">const</span> greet = (name) =&gt; <span class="tk-s">`Hi, ${name}`</span>;
+
+<span class="tk-c">// 2. 存進陣列 / 物件</span>
+<span class="tk-k">const</span> handlers = { onClick: greet, onHover: console.log };
+
+<span class="tk-c">// 3. 當參數傳遞</span>
+[<span class="tk-s">'Alice'</span>, <span class="tk-s">'Bob'</span>].map(greet);
+
+<span class="tk-c">// 4. 當回傳值</span>
+<span class="tk-k">const</span> <span class="tk-f">makeGreeter</span> = (prefix) =&gt; (name) =&gt; <span class="tk-s">`${prefix}, ${name}`</span>;</pre>
+        </div>
+
+        <h3 class="h3">三大基石：map / filter / reduce</h3>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">▣</span>從心智模型認識這三個方法</div>
+          <div class="concept-explain-body">
+            <h5>map：一對一轉換</h5>
+            <p>給 map 一個函數，它會把這個函數套用到陣列<strong>每一個元素</strong>上，回傳<strong>長度一樣</strong>的新陣列。原始資料的「結構」（長度、順序）不變，只有「內容」變了。</p>
+            <h5>filter：取子集合</h5>
+            <p>給 filter 一個「斷言函數」（predicate，回傳 true/false），它會留下回傳 true 的元素。新陣列的<strong>長度可能變短</strong>，但每個元素本身不變。</p>
+            <h5>reduce：摺疊（fold）</h5>
+            <p>reduce 是<strong>三者中最強的</strong>。它把陣列「<strong>摺疊</strong>」成單一值——這個值可以是數字、物件、甚至另一個陣列。map 和 filter 都可以用 reduce 寫出來，但反過來不行。</p>
+            <div class="metaphor">map 是「<strong>每張照片加濾鏡</strong>」、filter 是「<strong>只留下喜歡的照片</strong>」、reduce 是「<strong>把所有照片拼成一張拼貼畫</strong>」。</div>
+          </div>
+        </div>
+
+        <h4 class="h4">map · 一對一轉換</h4>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // map</span></div>
+<pre><span class="tk-k">const</span> prices = [<span class="tk-n">100</span>, <span class="tk-n">200</span>, <span class="tk-n">300</span>];
+<span class="tk-k">const</span> withTax = prices.map(p =&gt; p * <span class="tk-n">1.05</span>);
+<span class="tk-c">// [105, 210, 315]</span></pre>
+        </div>
+
+        <h4 class="h4">filter · 取子集合</h4>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // filter</span></div>
+<pre><span class="tk-k">const</span> orders = [{ paid: <span class="tk-k">true</span> }, { paid: <span class="tk-k">false</span> }, { paid: <span class="tk-k">true</span> }];
+<span class="tk-k">const</span> paid = orders.filter(o =&gt; o.paid);
+<span class="tk-c">// [{ paid: true }, { paid: true }]</span></pre>
+        </div>
+
+        <h4 class="h4">reduce · 折疊成單一值</h4>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // reduce</span><span class="desc">最強大的一個</span></div>
+<pre><span class="tk-c">// 加總</span>
+[<span class="tk-n">1</span>,<span class="tk-n">2</span>,<span class="tk-n">3</span>].reduce((acc, x) =&gt; acc + x, <span class="tk-n">0</span>);  <span class="tk-c">// 6</span>
+
+<span class="tk-c">// 分組 (groupBy)</span>
+users.reduce((acc, u) =&gt; {
+  (acc[u.role] ??= []).push(u);
+  <span class="tk-k">return</span> acc;
+}, {});
+
+<span class="tk-c">// reduce 是萬能的，map 和 filter 都能用它寫</span>
+<span class="tk-k">const</span> <span class="tk-f">myMap</span> = (arr, f) =&gt; arr.reduce((acc, x) =&gt; [...acc, <span class="tk-f">f</span>(x)], []);</pre>
+        </div>
+
+        <div class="callout warn">
+          <div class="callout-tag">▸ 別過度使用 reduce</div>
+          <p>reduce 雖然強，但程式碼可讀性常常輸給 map+filter 鏈。實務原則：<strong>能用 map/filter 描述清楚就別用 reduce</strong>。只有當你真的需要把多項摺成一項（總和、計數、分組、組裝）才用 reduce。</p>
+        </div>
+
+        <h3 class="h3">關鍵心智：函數作為「策略」</h3>
+        <p>HOF 讓你把<strong>行為</strong>當參數傳。同一個資料管線，換掉一個函數就改變整體行為——這就是策略模式的本質，但比 OOP 簡潔太多。</p>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // strategy injection</span><span class="desc">行為注入</span></div>
+<pre><span class="tk-c">// 通用排序：把比較策略當參數注入</span>
+<span class="tk-k">const</span> <span class="tk-f">sortBy</span> = (keyFn) =&gt; (arr) =&gt;
+  [...arr].sort((a, b) =&gt; <span class="tk-f">keyFn</span>(a) - <span class="tk-f">keyFn</span>(b));
+
+<span class="tk-k">const</span> byAge   = <span class="tk-f">sortBy</span>(u =&gt; u.age);
+<span class="tk-k">const</span> byScore = <span class="tk-f">sortBy</span>(u =&gt; -u.score);  <span class="tk-c">// 加負號就是降冪</span></pre>
+        </div>
+
+        <div class="exercise">
+          <h4>練習 6.1 · 重寫迴圈</h4>
+          <p>把以下命令式程式碼改寫成 FP 風格：</p>
+          <div class="code">
+            <div class="code-bar"><span class="lang">javascript // rewrite</span></div>
+<pre><span class="tk-k">let</span> total = <span class="tk-n">0</span>;
+<span class="tk-k">for</span> (<span class="tk-k">const</span> order <span class="tk-k">of</span> orders) {
+  <span class="tk-k">if</span> (order.status === <span class="tk-s">'paid'</span>) {
+    total += order.amount * <span class="tk-n">1.05</span>;
+  }
+}</pre>
+          </div>
+          <p><strong>參考答案：</strong></p>
+          <div class="code">
+            <div class="code-bar"><span class="lang">javascript // answer</span></div>
+<pre><span class="tk-k">const</span> total = orders
+  .filter(o =&gt; o.status === <span class="tk-s">'paid'</span>)
+  .map(o =&gt; o.amount * <span class="tk-n">1.05</span>)
+  .reduce((s, x) =&gt; s + x, <span class="tk-n">0</span>);</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Ch 7 · 函數組合 ============ -->
+    <section class="chapter" id="ch7">
+      <div class="content">
+        <div class="chapter-tag"><span class="num">07</span>25 分鐘 · 核心觀念</div>
+        <h2 class="chapter-title">函數<em>組合</em></h2>
+        <div class="chapter-en">// function composition</div>
+
+        <p class="lead">如果純函數是 FP 的<em>原子</em>，那組合就是 FP 的<em>化學鍵</em>。把小函數串在一起，是 FP 構建大型程式的方式。</p>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">∘</span>什麼是函數組合？</div>
+          <div class="concept-explain-body">
+            <h5>數學起源</h5>
+            <p>函數組合的概念源自數學：給定兩個函數 <em>f</em> 和 <em>g</em>，它們的「組合」<em>f ∘ g</em> 定義為「<strong>先做 g，再把結果丟給 f</strong>」，也就是 <em>(f ∘ g)(x) = f(g(x))</em>。</p>
+            <p>這在程式裡有什麼用？因為它讓你能「<strong>把小函數黏起來，當成大函數來用</strong>」。你不必預先寫一個大函數，而是<strong>用小積木拼出</strong>大行為。這就是 FP 構建大型程式的核心方式——<strong>不是繼承、不是組合（OOP 意義的）、是函數組合</strong>。</p>
+            <h5>為什麼這個比繼承還好？</h5>
+            <p>OOP 的繼承是「<strong>固定的關係</strong>」：A 繼承 B，編譯時就決定了。FP 的組合是「<strong>動態的關係</strong>」：你想怎麼組合就怎麼組合，組合方式本身也可以動態決定。</p>
+            <div class="metaphor">繼承像「<strong>家族族譜</strong>」（你的爸是誰寫死了）；函數組合像「<strong>樂高積木</strong>」（你想拼飛機就拼飛機，想拼船就拼船）。</div>
+            <h5>為什麼小函數比大函數好？</h5>
+            <p>● 容易測試：每個小函數只做一件事，測試案例簡單<br>
+               ● 容易命名：行為單一，名字就好取<br>
+               ● 容易重用：你今天寫的 <code>trim</code>，明年的專案還能用<br>
+               ● 容易修改：要加一步？在組合鏈裡插一個進去，其他不動</p>
+          </div>
+        </div>
+
+        <div class="formula">(f ∘ g)(x) = f(g(x))</div>
+
+        <p>在程式裡，我們有兩種風格寫組合：</p>
+
+        <h4 class="h4">compose · 從右往左讀（數學派）</h4>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // compose</span></div>
+<pre><span class="tk-k">const</span> <span class="tk-f">compose</span> = (...fns) =&gt; (x) =&gt; fns.reduceRight((v, f) =&gt; <span class="tk-f">f</span>(v), x);
+
+<span class="tk-k">const</span> shout = <span class="tk-f">compose</span>(
+  s =&gt; s + <span class="tk-s">'!'</span>,
+  s =&gt; s.toUpperCase(),
+  s =&gt; s.trim()
+);
+<span class="tk-f">shout</span>(<span class="tk-s">'  hello  '</span>); <span class="tk-c">// 'HELLO!'</span></pre>
+        </div>
+
+        <h4 class="h4">pipe · 從左往右讀（工程派，更直覺）</h4>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // pipe</span></div>
+<pre><span class="tk-k">const</span> <span class="tk-f">pipe</span> = (...fns) =&gt; (x) =&gt; fns.reduce((v, f) =&gt; <span class="tk-f">f</span>(v), x);
+
+<span class="tk-k">const</span> shout = <span class="tk-f">pipe</span>(
+  s =&gt; s.trim(),
+  s =&gt; s.toUpperCase(),
+  s =&gt; s + <span class="tk-s">'!'</span>
+);</pre>
+        </div>
+
+        <div class="flow-diagram">
+          <span class="flow-node">'  hello  '</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-node">trim</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-node">toUpperCase</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-node">+ '!'</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-node accent">'HELLO!'</span>
+        </div>
+
+        <div class="callout">
+          <div class="callout-tag">▸ 為什麼 pipe 更受歡迎？</div>
+          <p>因為「讀程式碼像讀句子」。<code>pipe(trim, toUpper, addBang)</code> 的閱讀順序就是執行順序，符合人類由左至右的直覺。Lodash 提供 <code>_.flow</code>、Ramda 是 <code>R.pipe</code>、最新提案的 <strong>Pipeline Operator</strong>（<code>|&gt;</code>）也是同樣概念。</p>
+        </div>
+
+        <h3 class="h3">組合的威力：把資料管線顯式化</h3>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">▶</span>從「動詞」到「名詞」的思維轉變</div>
+          <div class="concept-explain-body">
+            <p>命令式程式碼像在說「<strong>動詞</strong>」：do this, then do that。每個動詞分散在不同的程式碼行，整體流程是<strong>隱式</strong>的，必須讀完才能拼湊出來。</p>
+            <p>用 pipe 寫的程式碼，整個流程變成<strong>一個名詞</strong>：「使用者輸入處理管線」、「報表生成管線」、「資料同步管線」。<strong>你可以幫整條管線命名</strong>，整條管線本身可以被傳遞、組合、覆寫。</p>
+            <p>這是巨大的轉變——你不再是「在某個位置寫一段邏輯」，而是「<strong>把一條管線當成一個物件去設計</strong>」。Redux 的 middleware、RxJS 的 operator chain、Next.js 的 middleware pipe，都是這個思維的應用。</p>
+          </div>
+        </div>
+
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // real pipeline</span><span class="desc">真實場景</span></div>
+<pre><span class="tk-c">// 處理使用者輸入 → 驗證 → 標準化 → 存檔</span>
+<span class="tk-k">const</span> processUserInput = <span class="tk-f">pipe</span>(
+  trimAll,
+  validate,
+  normalize,
+  toServerShape,
+  save
+);
+
+<span class="tk-c">// 想多加一步「打日誌」？插進去就好</span>
+<span class="tk-k">const</span> processUserInput = <span class="tk-f">pipe</span>(
+  trimAll,
+  validate,
+  <span class="tk-f">tap</span>(console.log),   <span class="tk-c">// tap = 偷看不改值</span>
+  normalize,
+  toServerShape,
+  save
+);</pre>
+        </div>
+
+        <h3 class="h3">tap：除錯用的小工具</h3>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // tap</span><span class="desc">debugging in pipeline</span></div>
+<pre><span class="tk-k">const</span> <span class="tk-f">tap</span> = (fn) =&gt; (x) =&gt; { <span class="tk-f">fn</span>(x); <span class="tk-k">return</span> x; };
+
+<span class="tk-c">// 在 pipeline 任何一處塞 tap(console.log) 都能看中間值</span>
+<span class="tk-c">// tap 接收一個副作用函數，執行它，但回傳原值（不改變資料流）</span></pre>
+        </div>
+
+        <div class="exercise">
+          <h4>練習 7.1 · 自己實作 pipe</h4>
+          <p>不參考上面的程式碼，自己用 reduce 寫一個 pipe，然後用它把字串「  Hello World  」轉成「hello-world」（去空白、小寫、空格換成連字符）。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Ch 8 · 柯里化 ============ -->
+    <section class="chapter" id="ch8">
+      <div class="content">
+        <div class="chapter-tag"><span class="num">08</span>25 分鐘 · 核心觀念</div>
+        <h2 class="chapter-title">柯<em>里化</em></h2>
+        <div class="chapter-en">// currying & partial application</div>
+
+        <p class="lead">把「需要三個參數的函數」變成「<em>連續呼叫三次、每次傳一個參數</em>」，這就是柯里化。它讓函數變得可以「半成品傳遞」，是組合 pipeline 的關鍵。</p>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">λ</span>什麼是柯里化？為什麼要這樣折磨自己？</div>
+          <div class="concept-explain-body">
+            <h5>命名由來</h5>
+            <p>「柯里化」（currying）以邏輯學家 <strong>Haskell Curry</strong> 命名（同一個人，Haskell 語言也以他命名）。這個技巧的數學基礎更早，由 Moses Schönfinkel 在 1924 年提出，後來 Curry 將它系統化。</p>
+            <h5>柯里化的核心轉換</h5>
+            <p>把「<strong>一次接收 n 個參數</strong>」的函數，轉成「<strong>每次接收 1 個參數、回傳新函數</strong>」的函數鏈。直到所有參數都收齊，才回傳最終結果。</p>
+            <p>● 原本：<code>add(1, 2, 3)</code> 回傳 6<br>
+               ● 柯里化後：<code>add(1)(2)(3)</code> 也回傳 6<br>
+               ● 中間狀態：<code>add(1)</code> 回傳「等著收第二個參數」的新函數<br>
+               ● 再中間：<code>add(1)(2)</code> 回傳「等著收第三個參數」的新函數</p>
+            <h5>為什麼這樣有用？</h5>
+            <p><strong>因為你可以提前綁定一部分參數，留下「半成品函數」之後用。</strong>這就是<strong>「函數工廠」</strong>的概念——同樣的母函數，不同的部分綁定，產出一系列<strong>專用函數</strong>。</p>
+            <div class="metaphor">柯里化像「<strong>客製化咖啡機</strong>」——你不必每次都重新告訴它「我要拿鐵、燕麥奶、少糖、加熱」。你先設定好「<em>我的拿鐵</em>」（部分綁定），之後只要按一下，就出你的拿鐵。</div>
+            <h5>為什麼配合 pipe 特別好用？</h5>
+            <p>pipe 要求裡面每個函數都是「<strong>單參數函數</strong>」（一進一出）。但現實中你很多函數是多參數的（如 <code>map(fn, arr)</code>）。柯里化讓你能「<strong>先綁定 fn，留下要收 arr 的單參數函數</strong>」，這就能塞進 pipe 了。</p>
+          </div>
+        </div>
+
+        <div class="formula">f(a, b, c) ⇨ f(a)(b)(c)</div>
+
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // curry</span><span class="desc">從多參數到柯里化</span></div>
+<pre><span class="tk-c">// 一般版</span>
+<span class="tk-k">const</span> <span class="tk-f">add</span> = (a, b, c) =&gt; a + b + c;
+<span class="tk-f">add</span>(<span class="tk-n">1</span>, <span class="tk-n">2</span>, <span class="tk-n">3</span>);              <span class="tk-c">// 6</span>
+
+<span class="tk-c">// 柯里化版</span>
+<span class="tk-k">const</span> <span class="tk-f">addC</span> = a =&gt; b =&gt; c =&gt; a + b + c;
+<span class="tk-f">addC</span>(<span class="tk-n">1</span>)(<span class="tk-n">2</span>)(<span class="tk-n">3</span>);              <span class="tk-c">// 6</span>
+<span class="tk-k">const</span> add5 = <span class="tk-f">addC</span>(<span class="tk-n">2</span>)(<span class="tk-n">3</span>);     <span class="tk-c">// add5(x) = x + 5（半成品！）</span></pre>
+        </div>
+
+        <h3 class="h3">為什麼這很有用？實務範例</h3>
+        <p>當函數柯里化後，你可以<strong>提前綁定部分參數</strong>，得到一個「配置好的、更小的函數」。這就是「函數工廠」。</p>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // function factory</span><span class="desc">配置 → 專用函數</span></div>
+<pre><span class="tk-c">// 把設定凍結起來，產生專用函數</span>
+<span class="tk-k">const</span> <span class="tk-f">log</span> = level =&gt; tag =&gt; msg =&gt;
+  console.log(<span class="tk-s">`[${level}] ${tag}: ${msg}`</span>);
+
+<span class="tk-k">const</span> error = <span class="tk-f">log</span>(<span class="tk-s">'ERROR'</span>);              <span class="tk-c">// 凍結 level</span>
+<span class="tk-k">const</span> apiError = <span class="tk-f">error</span>(<span class="tk-s">'API'</span>);         <span class="tk-c">// 凍結 tag</span>
+<span class="tk-f">apiError</span>(<span class="tk-s">'Timeout'</span>);                <span class="tk-c">// [ERROR] API: Timeout</span></pre>
+        </div>
+
+        <h3 class="h3">「資料放最後」的設計慣例</h3>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">⇄</span>data-last vs data-first</div>
+          <div class="concept-explain-body">
+            <p>觀察兩個寫法：</p>
+            <p>● <strong>data-first</strong>（lodash 預設）：<code>_.map(arr, fn)</code>——資料在前<br>
+               ● <strong>data-last</strong>（Ramda、lodash/fp）：<code>R.map(fn, arr)</code>——資料在後</p>
+            <p>為什麼 FP 函數庫一致選擇 <strong>data-last + 柯里化</strong>？因為當資料放最後，你可以<strong>先綁定「怎麼處理」，留下「處理什麼」當參數</strong>。這個「半成品」剛好就是 pipe 想要的「單參數函數」。</p>
+            <p>反過來，data-first 的設計，每次都要先給資料，柯里化的好處就消失了。<strong>所以 data-last 不是任意選擇，是為了配合 pipe / compose 的必然結果</strong>。</p>
+          </div>
+        </div>
+
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // data-last</span><span class="desc">為什麼這樣設計</span></div>
+<pre><span class="tk-c">// data-last + 柯里化 = 完美與 pipe 配合</span>
+<span class="tk-k">const</span> <span class="tk-f">map</span>    = f =&gt; arr =&gt; arr.map(f);
+<span class="tk-k">const</span> <span class="tk-f">filter</span> = p =&gt; arr =&gt; arr.filter(p);
+
+<span class="tk-k">const</span> processUsers = <span class="tk-f">pipe</span>(
+  <span class="tk-f">filter</span>(u =&gt; u.active),    <span class="tk-c">// 先綁定 predicate，留下「等收 arr」的半成品</span>
+  <span class="tk-f">map</span>(u =&gt; u.email)         <span class="tk-c">// 同上</span>
+);
+
+<span class="tk-f">processUsers</span>(users);  <span class="tk-c">// 漂亮的資料管線</span></pre>
+        </div>
+
+        <h3 class="h3">柯里化 vs 偏應用</h3>
+        <p>柯里化是「<em>強制</em>變成一次一個參數」；偏應用（partial application）則是「<em>一次綁定幾個</em>都可以」。在 JS 中常用 <code>.bind</code> 或自寫 helper：</p>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // partial application</span></div>
+<pre><span class="tk-k">const</span> <span class="tk-f">partial</span> = (fn, ...presets) =&gt; (...rest) =&gt; <span class="tk-f">fn</span>(...presets, ...rest);
+
+<span class="tk-k">const</span> <span class="tk-f">request</span> = (baseURL, path, options) =&gt; <span class="tk-f">fetch</span>(baseURL + path, options);
+<span class="tk-k">const</span> api = <span class="tk-f">partial</span>(request, <span class="tk-s">'https://api.example.com'</span>);
+<span class="tk-f">api</span>(<span class="tk-s">'/users'</span>, { method: <span class="tk-s">'GET'</span> });</pre>
+        </div>
+
+        <div class="callout warn">
+          <div class="callout-tag">▸ 何時用、何時不用</div>
+          <p>柯里化在「同一個函數要被多次配置成不同變體」時超好用（HTTP client、logger、formatter、與 pipe 配合）；但日常單次呼叫的函數不必柯里化，會讓 call site 變吵。<strong>柯里化是工具，不是儀式</strong>。</p>
+        </div>
+
+        <div class="exercise">
+          <h4>練習 8.1 · 寫一個 formatter 工廠</h4>
+          <p>實作一個柯里化的價格格式器 <code>formatPrice(currency)(decimals)(amount)</code>，使得：</p>
+          <div class="code">
+            <div class="code-bar"><span class="lang">javascript // target</span></div>
+<pre><span class="tk-k">const</span> twd = <span class="tk-f">formatPrice</span>(<span class="tk-s">'NT$'</span>)(<span class="tk-n">0</span>);
+<span class="tk-k">const</span> usd = <span class="tk-f">formatPrice</span>(<span class="tk-s">'US$'</span>)(<span class="tk-n">2</span>);
+
+<span class="tk-f">twd</span>(<span class="tk-n">12345</span>);    <span class="tk-c">// 'NT$12,345'</span>
+<span class="tk-f">usd</span>(<span class="tk-n">99.5</span>);     <span class="tk-c">// 'US$99.50'</span></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Ch 9 · Functor ============ -->
+    <section class="chapter" id="ch9">
+      <div class="content">
+        <div class="chapter-tag"><span class="num">09</span>25 分鐘 · 進階觀念</div>
+        <h2 class="chapter-title">Functor<br><em>是什麼？</em></h2>
+        <div class="chapter-en">// the mappable container</div>
+
+        <p class="lead">當我們說「Functor」時，<em>大多數人其實每天都在用它</em>——只是不知道它有名字。陣列就是 Functor，Promise 也是 Functor。</p>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">□</span>從「容器」開始理解 Functor</div>
+          <div class="concept-explain-body">
+            <h5>問題：你不只想處理「值」，還想處理「裝著值的東西」</h5>
+            <p>真實世界裡，我們很少直接處理一個赤裸的值。我們處理的是：</p>
+            <p>● <strong>陣列</strong>裡的值<br>
+               ● <strong>Promise</strong> 裡（將來會到達的）值<br>
+               ● <strong>可能為 null</strong> 的值<br>
+               ● <strong>可能是錯誤</strong> 的值<br>
+               ● 樹狀結構某節點上的值</p>
+            <p>這些「裝著值的東西」叫做「<strong>容器</strong>」（container 或 context）。問題是：怎麼處理容器裡的值，而<strong>不打開容器</strong>？</p>
+            <h5>Functor 的答案：定義一個 map 方法</h5>
+            <p>Functor 就是一個<strong>有 map 方法的容器</strong>，這個 map 方法做兩件事：</p>
+            <p>● 接收一個函數 f<br>
+               ● 把容器裡的值套用 f，<strong>結果還是裝在同型別的容器裡</strong></p>
+            <p>關鍵在於最後一點——map 不會把值「<strong>倒出來</strong>」。你 map 一個陣列得到陣列；你 map 一個 Promise 得到 Promise；你 map 一個 Maybe 得到 Maybe。<strong>容器型別永遠不變，只有裡面的內容被轉換</strong>。</p>
+            <div class="metaphor">Functor 像「<strong>真空包裝食物</strong>」——你想把生菜變成沙拉？你不必拆開包裝（那會搞髒）。你把整個包裝丟進「沙拉加工機」（map），出來的還是真空包裝，但裡面的內容變成沙拉了。</div>
+          </div>
+        </div>
+
+        <div class="formula">Functor = 一個有 <code>map</code> 方法的容器</div>
+
+        <p>當一個「盒子」滿足以下兩條，它就是 Functor：</p>
+        <ol>
+          <li>它<strong>包裝了某個值</strong>（可以是任意型別）</li>
+          <li>它有一個 <code>map(f)</code> 方法：把 f 套用到裡面的值，<strong>回傳一個同型別的新盒子</strong></li>
+        </ol>
+
+        <h3 class="h3">陣列就是 Functor</h3>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // array as functor</span></div>
+<pre>[<span class="tk-n">1</span>, <span class="tk-n">2</span>, <span class="tk-n">3</span>].map(x =&gt; x * <span class="tk-n">2</span>);
+<span class="tk-c">// [2, 4, 6] —— 依然是陣列，只是內容變了</span></pre>
+        </div>
+
+        <h3 class="h3">自己動手寫一個 Box</h3>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // minimal functor</span><span class="desc">最小可運作的 Functor</span></div>
+<pre><span class="tk-k">const</span> <span class="tk-f">Box</span> = (x) =&gt; ({
+  map: (f) =&gt; <span class="tk-f">Box</span>(<span class="tk-f">f</span>(x)),
+  fold: (f) =&gt; <span class="tk-f">f</span>(x),       <span class="tk-c">// 把值拿出來</span>
+  inspect: () =&gt; <span class="tk-s">`Box(${x})`</span>
+});
+
+<span class="tk-f">Box</span>(<span class="tk-s">'  hello  '</span>)
+  .map(s =&gt; s.trim())
+  .map(s =&gt; s.toUpperCase())
+  .fold(s =&gt; s + <span class="tk-s">'!'</span>);
+<span class="tk-c">// 'HELLO!'</span></pre>
+        </div>
+        <p>注意 <code>map</code> 永遠回傳新的 Box，所以可以鏈式呼叫。這跟陣列 <code>.map().filter().map()</code> 是完全一樣的模式。</p>
+
+        <h3 class="h3">Promise 也是 Functor</h3>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // promise as functor</span></div>
+<pre><span class="tk-f">fetch</span>(<span class="tk-s">'/api/user'</span>)
+  .then(r =&gt; r.json())     <span class="tk-c">// .then 在 Functor 觀點下就是 map</span>
+  .then(u =&gt; u.name);
+
+<span class="tk-c">// 包在 Promise 裡的值，透過 then 被轉換，仍然包在 Promise 裡</span></pre>
+        </div>
+
+        <h3 class="h3">為什麼 Functor 重要？</h3>
+        <div class="concept-grid">
+          <div class="cg-cell"><div class="ic">i</div><div class="ti">統一介面</div><div class="de">陣列、Promise、Maybe、Tree 都用 map，不用為每個型別記不同 API。</div></div>
+          <div class="cg-cell"><div class="ic">ii</div><div class="ti">保留上下文</div><div class="de">map 不會把值「倒出來」，能安全地在容器內持續轉換。</div></div>
+          <div class="cg-cell"><div class="ic">iii</div><div class="ti">延遲執行</div><div class="de">Promise / Observable 的 map 可以串接，但執行時機由容器決定。</div></div>
+        </div>
+
+        <div class="callout warn">
+          <div class="callout-tag">▸ Functor 法則（簡述）</div>
+          <p>真正的 Functor 要滿足兩條法則：<strong>恆等性</strong>（<code>box.map(x =&gt; x)</code> 等於原本的 box）與<strong>組合性</strong>（<code>box.map(f).map(g)</code> 等於 <code>box.map(x =&gt; g(f(x)))</code>）。日常使用不必背，但若你發現某個 map 不符合這兩條，那它就不是真正的 Functor（這也是為什麼 Promise 嚴格說不是「乾淨的」Functor，因為它的 then 還會 unwrap）。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Ch 10 · Monad ============ -->
+    <section class="chapter" id="ch10">
+      <div class="content">
+        <div class="chapter-tag"><span class="num">10</span>30 分鐘 · 進階觀念</div>
+        <h2 class="chapter-title">Monad<br><em>不再神秘</em></h2>
+        <div class="chapter-en">// monad · maybe / either</div>
+
+        <p class="lead">「Monad 是一個 endofunctor 範疇中的 monoid」——<em>這句話沒幫到任何人</em>。讓我們用 JS 工程師的語言來理解：Monad 就是「會自動展開盒子的 Functor」。</p>
+
+        <div class="concept-explain">
+          <div class="concept-explain-head"><span class="ic">⊕</span>從 Functor 的痛點，理解 Monad 為什麼存在</div>
+          <div class="concept-explain-body">
+            <h5>Functor 解決了「在容器內處理值」</h5>
+            <p>有了 Functor，我們可以對 Box、陣列、Promise 裡的值做轉換，而不必把值倒出來。很美好。</p>
+            <h5>但很快就遇到新問題：巢狀容器</h5>
+            <p>當你 map 的函數本身也回傳一個容器時，就會出現「<strong>容器套容器</strong>」的情況。比方說 <code>findUser(id)</code> 回傳 <code>Box(user)</code>，那 <code>Box(1).map(findUser)</code> 就會回傳 <code>Box(Box(user))</code>——巢狀了。</p>
+            <p>實務上這超常見——當你的轉換步驟本身會「可能失敗」、「可能 null」、「需要非同步」時，這個函數一定回傳容器。<strong>每多一步就多一層 Box</strong>，最後變成 Box(Box(Box(...)))，沒人玩得起來。</p>
+            <h5>Monad 的解法：flatMap</h5>
+            <p>Monad 是<strong>強化版的 Functor</strong>，多了一個 <code>flatMap</code> 方法（也叫 chain、bind、then）。它跟 map 幾乎一樣，<strong>但會自動把巢狀的容器攤平一層</strong>。</p>
+            <p>● <code>map(f)</code>：f 回傳 <em>普通值</em>，Box 層數不變<br>
+               ● <code>flatMap(f)</code>：f 回傳 <em>Box(值)</em>，自動攤平成 Box(值)</p>
+            <div class="metaphor">如果 Functor 是「<strong>真空包裝食物</strong>」（map 不打開包裝），那 Monad 就是會處理「<strong>套疊包裝</strong>」的版本——當你的加工機回傳的也是真空包裝食物，flatMap 不會讓你變成「包裝套包裝」，它會幫你自動拆掉一層。</div>
+            <h5>為什麼這這麼重要？</h5>
+            <p>因為它讓你能<strong>把「可能失敗的、有副作用的、非同步的」運算，組合成一條乾淨的管線</strong>。沒有 Monad 時你要寫 try/catch、null check、巢狀 then；有了 Monad，這些<strong>都消失</strong>，剩下純粹的資料轉換。</p>
+            <p>Monad 的本質：<strong>讓「會生成新容器」的函數能與「在容器內處理」的世界協作</strong>。</p>
+          </div>
+        </div>
+
+        <h3 class="h3">Functor 的痛點：盒子套盒子</h3>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // problem</span></div>
+<pre><span class="tk-c">// 假設 findUser 回傳 Box(user)</span>
+<span class="tk-k">const</span> result = <span class="tk-f">Box</span>(<span class="tk-n">1</span>)
+  .map(id =&gt; <span class="tk-f">findUser</span>(id));        <span class="tk-c">// Box(Box(user)) ❌</span></pre>
+        </div>
+
+        <h3 class="h3">Monad 的解法：flatMap</h3>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // flatmap</span><span class="desc">monad 的核心方法</span></div>
+<pre><span class="tk-k">const</span> <span class="tk-f">Box</span> = (x) =&gt; ({
+  map:     (f) =&gt; <span class="tk-f">Box</span>(<span class="tk-f">f</span>(x)),
+  flatMap: (f) =&gt; <span class="tk-f">f</span>(x),                <span class="tk-c">// 不再包一層！</span>
+  fold:    (f) =&gt; <span class="tk-f">f</span>(x)
+});
+
+<span class="tk-f">Box</span>(<span class="tk-n">1</span>)
+  .flatMap(id =&gt; <span class="tk-f">findUser</span>(id))    <span class="tk-c">// Box(user)</span>
+  .flatMap(u =&gt; <span class="tk-f">findPosts</span>(u.id)); <span class="tk-c">// Box(posts) ✓</span></pre>
+        </div>
+
+        <div class="callout info">
+          <div class="callout-tag">▸ 你早就在用 Monad</div>
+          <p>Promise 的 <code>.then</code> 同時具備 <strong>map</strong> 與 <strong>flatMap</strong> 的能力——它會自動 unwrap 嵌套的 Promise，這就是為什麼 <code>then(x =&gt; fetch(...))</code> 不會變成 <code>Promise&lt;Promise&lt;...&gt;&gt;</code>。陣列的 <code>flatMap</code> 同理：<code>[1,2,3].flatMap(x =&gt; [x, x*2])</code> 自動把 <code>[[1,2],[2,4],[3,6]]</code> 攤平成 <code>[1,2,2,4,3,6]</code>。</p>
+        </div>
+
+        <h3 class="h3">三種實用的 Monad</h3>
+
+        <h4 class="h4">Maybe · 處理 null / undefined</h4>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // maybe monad</span><span class="desc">取代 ?. 與 ??</span></div>
+<pre><span class="tk-k">const</span> <span class="tk-f">Some</span> = (x) =&gt; ({
+  map: (f) =&gt; <span class="tk-f">Some</span>(<span class="tk-f">f</span>(x)),
+  flatMap: (f) =&gt; <span class="tk-f">f</span>(x),
+  getOrElse: () =&gt; x,
+  isNone: <span class="tk-k">false</span>
+});
+
+<span class="tk-k">const</span> None = {
+  map: () =&gt; None,
+  flatMap: () =&gt; None,
+  getOrElse: (d) =&gt; d,
+  isNone: <span class="tk-k">true</span>
+};
+
+<span class="tk-k">const</span> <span class="tk-f">Maybe</span> = (x) =&gt; (x == <span class="tk-k">null</span> ? None : <span class="tk-f">Some</span>(x));
+
+<span class="tk-c">// 不再需要層層 ?. 與 ??</span>
+<span class="tk-k">const</span> name = <span class="tk-f">Maybe</span>(user)
+  .map(u =&gt; u.profile)
+  .map(p =&gt; p.name)
+  .map(n =&gt; n.toUpperCase())
+  .getOrElse(<span class="tk-s">'Anonymous'</span>);</pre>
+        </div>
+
+        <h4 class="h4">Either · 處理錯誤而不丟例外</h4>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // either monad</span><span class="desc">取代 try / catch</span></div>
+<pre><span class="tk-k">const</span> <span class="tk-f">Right</span> = (x) =&gt; ({
+  map: (f) =&gt; <span class="tk-f">Right</span>(<span class="tk-f">f</span>(x)),
+  flatMap: (f) =&gt; <span class="tk-f">f</span>(x),
+  fold: (_l, r) =&gt; <span class="tk-f">r</span>(x)
+});
+
+<span class="tk-k">const</span> <span class="tk-f">Left</span> = (e) =&gt; ({
+  map: () =&gt; <span class="tk-f">Left</span>(e),
+  flatMap: () =&gt; <span class="tk-f">Left</span>(e),
+  fold: (l, _r) =&gt; <span class="tk-f">l</span>(e)
+});
+
+<span class="tk-k">const</span> <span class="tk-f">safeDiv</span> = (a, b) =&gt;
+  b === <span class="tk-n">0</span> ? <span class="tk-f">Left</span>(<span class="tk-s">'Cannot divide by zero'</span>) : <span class="tk-f">Right</span>(a / b);
+
+<span class="tk-f">safeDiv</span>(<span class="tk-n">10</span>, <span class="tk-n">2</span>)
+  .map(x =&gt; x + <span class="tk-n">1</span>)
+  .fold(
+    err =&gt; <span class="tk-s">`錯誤: ${err}`</span>,
+    val =&gt; <span class="tk-s">`結果: ${val}`</span>
+  );  <span class="tk-c">// '結果: 6'</span></pre>
+        </div>
+
+        <h3 class="h3">為什麼這比 try/catch 好？</h3>
+        <div class="compare">
+          <div class="compare-cell bad">
+            <div class="compare-label">▲ try / catch</div>
+            <p>錯誤是<strong>隱式</strong>的（看不出哪個函數會丟），破壞函數的純粹性，難以組合。例外會「跨越」呼叫棧，違反引用透明。</p>
+          </div>
+          <div class="compare-cell good">
+            <div class="compare-label">● Either</div>
+            <p>錯誤是<strong>型別的一部分</strong>，TypeScript 編譯器會強制你處理，且可以與 pipe 完美組合。每個函數的成功/失敗都顯式可見。</p>
+          </div>
+        </div>
+
+        <h3 class="h3">心智圖：Functor vs Monad</h3>
+        <div class="concept-grid">
+          <div class="cg-cell"><div class="ic">F</div><div class="ti">Functor</div><div class="de"><strong>map(f)</strong>：f 回傳普通值，容器層數不變。例：陣列、Promise。</div></div>
+          <div class="cg-cell"><div class="ic">M</div><div class="ti">Monad</div><div class="de"><strong>flatMap(f)</strong>：f 回傳同型別的容器，會自動攤平。例：Maybe、Either、Promise。</div></div>
+        </div>
+
+        <div class="exercise">
+          <h4>練習 10.1 · 用 Maybe 重寫</h4>
+          <p>下面的程式碼充滿了空值檢查，請用 Maybe 重寫：</p>
+          <div class="code">
+            <div class="code-bar"><span class="lang">javascript // imperative null check</span></div>
+<pre><span class="tk-k">function</span> <span class="tk-f">getStreet</span>(user) {
+  <span class="tk-k">if</span> (!user) <span class="tk-k">return</span> <span class="tk-s">'N/A'</span>;
+  <span class="tk-k">if</span> (!user.address) <span class="tk-k">return</span> <span class="tk-s">'N/A'</span>;
+  <span class="tk-k">if</span> (!user.address.street) <span class="tk-k">return</span> <span class="tk-s">'N/A'</span>;
+  <span class="tk-k">return</span> user.address.street.toUpperCase();
+}</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Ch 11 · 實戰 ============ -->
+    <section class="chapter" id="ch11">
+      <div class="content">
+        <div class="chapter-tag"><span class="num">11</span>25 分鐘 · 綜合實戰</div>
+        <h2 class="chapter-title">實戰：<br>用 FP 重構<br><em>API 模組</em></h2>
+        <div class="chapter-en">// final workshop · refactor a real api layer</div>
+
+        <p class="lead">前面學的所有觀念，在這一章會用<em>一個你每天都會寫的場景</em>串起來：呼叫 API、驗證資料、處理錯誤、轉換成 UI 需要的格式。</p>
+
+        <h3 class="h3">情境：使用者個人頁面</h3>
+        <p>需求：從 API 取得使用者，過濾啟用中的、根據註冊日期排序，並轉換成 UI 需要的格式。失敗時要有清楚的錯誤。</p>
+
+        <h4 class="h4">命令式版本（典型寫法）</h4>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // before</span><span class="desc">典型寫法</span></div>
+<pre><span class="tk-k">async function</span> <span class="tk-f">getActiveUsers</span>() {
+  <span class="tk-k">try</span> {
+    <span class="tk-k">const</span> res = <span class="tk-k">await</span> <span class="tk-f">fetch</span>(<span class="tk-s">'/api/users'</span>);
+    <span class="tk-k">if</span> (!res.ok) <span class="tk-k">throw new</span> <span class="tk-f">Error</span>(<span class="tk-s">'API error'</span>);
+
+    <span class="tk-k">const</span> users = <span class="tk-k">await</span> res.json();
+    <span class="tk-k">const</span> result = [];
+
+    <span class="tk-k">for</span> (<span class="tk-k">const</span> u <span class="tk-k">of</span> users) {
+      <span class="tk-k">if</span> (u.active) {
+        result.push({
+          id: u.id,
+          name: (u.firstName + <span class="tk-s">' '</span> + u.lastName).trim(),
+          since: <span class="tk-k">new</span> <span class="tk-f">Date</span>(u.createdAt).getFullYear()
+        });
+      }
+    }
+
+    result.sort((a, b) =&gt; b.since - a.since);
+    <span class="tk-k">return</span> result;
+  } <span class="tk-k">catch</span> (e) {
+    console.error(e);
+    <span class="tk-k">return</span> [];
+  }
+}</pre>
+        </div>
+
+        <h4 class="h4">FP 重構版本</h4>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // after</span><span class="desc">FP 風格</span></div>
+<pre><span class="tk-c">// ── 小工具（純函數）──</span>
+<span class="tk-k">const</span> <span class="tk-f">pipe</span> = (...fns) =&gt; (x) =&gt; fns.reduce((v, f) =&gt; <span class="tk-f">f</span>(v), x);
+<span class="tk-k">const</span> <span class="tk-f">prop</span> = (k) =&gt; (o) =&gt; o[k];
+<span class="tk-k">const</span> <span class="tk-f">filter</span> = (p) =&gt; (xs) =&gt; xs.filter(p);
+<span class="tk-k">const</span> <span class="tk-f">map</span> = (f) =&gt; (xs) =&gt; xs.map(f);
+<span class="tk-k">const</span> <span class="tk-f">sortBy</span> = (keyFn) =&gt; (xs) =&gt; [...xs].sort((a, b) =&gt; <span class="tk-f">keyFn</span>(b) - <span class="tk-f">keyFn</span>(a));
+
+<span class="tk-c">// ── 領域函數（純）──</span>
+<span class="tk-k">const</span> isActive   = (u) =&gt; u.active;
+<span class="tk-k">const</span> fullName   = (u) =&gt; <span class="tk-s">`${u.firstName} ${u.lastName}`</span>.trim();
+<span class="tk-k">const</span> yearOf     = (u) =&gt; <span class="tk-k">new</span> <span class="tk-f">Date</span>(u.createdAt).getFullYear();
+<span class="tk-k">const</span> toViewModel = (u) =&gt; ({ id: u.id, name: <span class="tk-f">fullName</span>(u), since: <span class="tk-f">yearOf</span>(u) });
+
+<span class="tk-c">// ── 資料管線（組合上面所有小函數）──</span>
+<span class="tk-k">const</span> transformUsers = <span class="tk-f">pipe</span>(
+  <span class="tk-f">filter</span>(isActive),
+  <span class="tk-f">map</span>(toViewModel),
+  <span class="tk-f">sortBy</span>(<span class="tk-f">prop</span>(<span class="tk-s">'since'</span>))
+);
+
+<span class="tk-c">// ── 副作用（推到邊界）──</span>
+<span class="tk-k">async function</span> <span class="tk-f">getActiveUsers</span>() {
+  <span class="tk-k">const</span> res = <span class="tk-k">await</span> <span class="tk-f">fetch</span>(<span class="tk-s">'/api/users'</span>);
+  <span class="tk-k">if</span> (!res.ok) <span class="tk-k">throw new</span> <span class="tk-f">Error</span>(<span class="tk-s">'API error'</span>);
+  <span class="tk-k">const</span> users = <span class="tk-k">await</span> res.json();
+  <span class="tk-k">return</span> <span class="tk-f">transformUsers</span>(users);
+}</pre>
+        </div>
+
+        <h3 class="h3">重構帶來了什麼？</h3>
+        <ul>
+          <li><strong>核心邏輯（transformUsers）完全是純函數</strong>，可以單獨測試，不需要 mock fetch。</li>
+          <li><strong>副作用只剩一處</strong>：fetch 與錯誤處理集中在 getActiveUsers 入口（核心 / 殼層架構）。</li>
+          <li><strong>每個小函數都可以單獨重用</strong>：fullName、yearOf 在其他地方也用得到。</li>
+          <li><strong>修改容易</strong>：要加篩選條件？在 pipe 裡插一行；要換排序？換一個 keyFn。</li>
+        </ul>
+
+        <h3 class="h3">進階版：用 Either 處理錯誤</h3>
+        <div class="code">
+          <div class="code-bar"><span class="lang">javascript // with either</span><span class="desc">無 try / catch 的錯誤處理</span></div>
+<pre><span class="tk-k">const</span> <span class="tk-f">safeFetch</span> = <span class="tk-k">async</span> (url) =&gt; {
+  <span class="tk-k">try</span> {
+    <span class="tk-k">const</span> res = <span class="tk-k">await</span> <span class="tk-f">fetch</span>(url);
+    <span class="tk-k">return</span> res.ok
+      ? <span class="tk-f">Right</span>(<span class="tk-k">await</span> res.json())
+      : <span class="tk-f">Left</span>(<span class="tk-s">`HTTP ${res.status}`</span>);
+  } <span class="tk-k">catch</span> (e) {
+    <span class="tk-k">return</span> <span class="tk-f">Left</span>(<span class="tk-s">`Network: ${e.message}`</span>);
+  }
+};
+
+<span class="tk-k">const</span> result = (<span class="tk-k">await</span> <span class="tk-f">safeFetch</span>(<span class="tk-s">'/api/users'</span>))
+  .map(transformUsers)
+  .fold(
+    err =&gt; ({ ok: <span class="tk-k">false</span>, error: err }),
+    data =&gt; ({ ok: <span class="tk-k">true</span>, data })
+  );</pre>
+        </div>
+
+        <div class="callout">
+          <div class="callout-tag">▸ 收尾觀念整合</div>
+          <p>看看這個範例用到了哪些章節的概念：純函數（02）、引用透明（03）、不可變（04）、箭頭函數（05）、HOF（06）、pipe（07）、curry（08）、Functor / Monad（09 & 10）。<strong>FP 不是某個炫技，而是一整套互相支撐的設計哲學。</strong></p>
+        </div>
+
+        <div class="exercise">
+          <h4>練習 11.1 · 你的程式碼</h4>
+          <p>找一段你最近寫的 API 處理函數，套用上面的模式重構它。重點：</p>
+          <ol>
+            <li>把資料轉換邏輯抽成純函數</li>
+            <li>用 pipe 串起來</li>
+            <li>副作用只在 async function 外殼</li>
+          </ol>
+        </div>
+
+        <h3 class="h3">下一步：學習路徑</h3>
+        <div class="concept-grid">
+          <div class="cg-cell"><div class="ic">▶</div><div class="ti">入門延伸</div><div class="de">《Mostly Adequate Guide to FP》、Functional Light JS、Lodash/fp 文件</div></div>
+          <div class="cg-cell"><div class="ic">▶</div><div class="ti">實戰工具</div><div class="de">Ramda、Immer、Zod、fp-ts、Effect-ts、TanStack Query</div></div>
+          <div class="cg-cell"><div class="ic">▶</div><div class="ti">進階主題</div><div class="de">Lens、Transducer、Applicative、Free Monad、Algebraic Effects</div></div>
+          <div class="cg-cell"><div class="ic">▶</div><div class="ti">語言探索</div><div class="de">Elm（前端 FP）、Haskell、F#、ReScript、PureScript</div></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============ Footer ============ -->
+    <footer class="footer">
+      <div class="content">
+        <div class="footer-mark">∮</div>
+        <p class="footer-text">函數式編程不是要取代你已經會的，<br>而是讓你寫出更值得信任的程式碼。</p>
+        <div class="footer-meta">end of material · fp workshop · 2026</div>
+      </div>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+// ============================================
+// Side Menu: 點擊跳轉 + active state
+// ============================================
+const menuItems = document.querySelectorAll('.menu-item');
+const sections = document.querySelectorAll('[id]');
+const sidemenu = document.querySelector('.sidemenu');
+
+// 點擊：平滑捲動 + 設定 active + 手機關閉選單
+menuItems.forEach(item => {
+  item.addEventListener('click', (e) => {
+    e.preventDefault();
+    const targetId = item.getAttribute('href').slice(1);
+    const target = document.getElementById(targetId);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setActive(targetId);
+      // 手機關閉
+      if (window.innerWidth <= 1024) {
+        sidemenu.classList.remove('open');
+      }
+    }
+  });
+});
+
+function setActive(id) {
+  menuItems.forEach(item => {
+    item.classList.toggle('active', item.getAttribute('data-section') === id);
+  });
+}
+
+// 滾動時自動高亮對應 menu item
+const trackedSections = Array.from(document.querySelectorAll('section[id], header[id]'));
+const observer = new IntersectionObserver((entries) => {
+  // 找出最接近視窗頂部的 section
+  const visible = entries.filter(e => e.isIntersecting);
+  if (visible.length > 0) {
+    // 取第一個進入視窗的
+    visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    const id = visible[0].target.id;
+    setActive(id);
+  }
+}, {
+  rootMargin: '-20% 0px -60% 0px',
+  threshold: 0
+});
+
+trackedSections.forEach(s => observer.observe(s));
+
+// 初始化：把第一個設為 active
+if (menuItems.length > 0) menuItems[0].classList.add('active');
+</script>
+
+</body>
+</html>

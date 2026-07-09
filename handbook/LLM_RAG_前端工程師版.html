@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM × RAG — 前端工程師學習指南</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg:       #0f0f13;
+  --bg2:      #16161d;
+  --bg3:      #1c1c26;
+  --border:   #2a2a38;
+  --text:     #f0f0f5;
+  --muted:    #7b7b96;
+  --fe:       #61dafb;   /* React blue — 前端色 */
+  --ai:       #a78bfa;   /* AI purple */
+  --green:    #4ade80;
+  --yellow:   #fbbf24;
+  --red:      #f87171;
+  --fe-dim:   rgba(97,218,251,0.12);
+  --ai-dim:   rgba(167,139,250,0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+/* ── HEADER ── */
+header {
+  padding: 56px 48px 44px;
+  background: linear-gradient(160deg, #0f0f13 0%, #13101e 100%);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 500px 300px at 80% 50%, rgba(97,218,251,0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 250px at 20% 80%, rgba(167,139,250,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+.header-pills { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  letter-spacing: 1px;
+}
+.pill-fe  { background: var(--fe-dim);  color: var(--fe);  border: 1px solid rgba(97,218,251,0.25); }
+.pill-ai  { background: var(--ai-dim);  color: var(--ai);  border: 1px solid rgba(167,139,250,0.25); }
+
+header h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(26px, 4vw, 42px);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  margin-bottom: 10px;
+}
+header h1 em { font-style: normal; color: var(--fe); }
+header p { color: var(--muted); font-size: 14px; max-width: 560px; }
+
+/* ── NAV ── */
+nav {
+  display: flex;
+  gap: 0;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+nav::-webkit-scrollbar { display: none; }
+nav button {
+  background: none; border: none;
+  color: var(--muted);
+  padding: 14px 22px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color .2s, border-color .2s;
+}
+nav button:hover { color: var(--text); }
+nav button.active { color: var(--fe); border-bottom-color: var(--fe); }
+
+/* ── LAYOUT ── */
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 40px 100px;
+}
+@media (max-width: 600px) {
+  header { padding: 36px 24px 28px; }
+  main { padding: 28px 20px 80px; }
+}
+
+.section { display: none; animation: fadeIn .25s ease; }
+.section.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+/* ── SECTION TITLE ── */
+.sec-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 28px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.3px;
+}
+.sec-title span { color: var(--fe); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin-bottom: 20px;
+}
+.card:hover { border-color: rgba(97,218,251,0.2); }
+
+.card-head {
+  display: flex; align-items: flex-start; gap: 14px;
+  margin-bottom: 20px;
+}
+.c-icon {
+  width: 38px; height: 38px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; flex-shrink: 0; margin-top: 1px;
+}
+.c-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 17px; font-weight: 700; margin-bottom: 2px;
+}
+.c-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--muted); letter-spacing: 1px;
+}
+
+/* ── ANALOGY BOX ── */
+.analogy {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 16px 0;
+}
+.analogy-side {
+  padding: 18px 20px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.a-fe { background: var(--fe-dim); }
+.a-ai { background: var(--ai-dim); }
+.a-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.a-fe .a-label { color: var(--fe); }
+.a-ai .a-label { color: var(--ai); }
+.analogy-side p { color: var(--text); }
+@media (max-width: 560px) {
+  .analogy { grid-template-columns: 1fr; }
+}
+
+/* ── CODE SNIPPET ── */
+.code-block {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-x: auto;
+  margin: 14px 0;
+  color: var(--text);
+}
+.code-block .c-comment { color: var(--muted); }
+.code-block .c-key     { color: var(--fe); }
+.code-block .c-val     { color: var(--yellow); }
+.code-block .c-str     { color: var(--green); }
+.code-block .c-fn      { color: var(--ai); }
+
+/* ── CALLOUT ── */
+.callout {
+  border-left: 3px solid;
+  border-radius: 0 8px 8px 0;
+  padding: 13px 17px;
+  margin: 12px 0;
+  font-size: 14px;
+}
+.callout.fe    { border-color: var(--fe);    background: var(--fe-dim); }
+.callout.ai    { border-color: var(--ai);    background: var(--ai-dim); }
+.callout.tip   { border-color: var(--yellow); background: rgba(251,191,36,0.08); }
+.callout.warn  { border-color: var(--red);    background: rgba(248,113,113,0.08); }
+.callout.ok    { border-color: var(--green);  background: rgba(74,222,128,0.08); }
+
+.callout strong {
+  display: block; margin-bottom: 4px; font-size: 11px;
+  font-family: 'JetBrains Mono', monospace; letter-spacing: 1px;
+}
+.callout.fe strong    { color: var(--fe); }
+.callout.ai strong    { color: var(--ai); }
+.callout.tip strong   { color: var(--yellow); }
+.callout.warn strong  { color: var(--red); }
+.callout.ok strong    { color: var(--green); }
+
+/* ── TABLE ── */
+table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0; }
+th {
+  background: var(--bg3); color: var(--muted);
+  font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+}
+td { padding: 10px 14px; border-bottom: 1px solid rgba(42,42,56,0.6); vertical-align: top; }
+tr:hover td { background: rgba(97,218,251,0.02); }
+
+/* ── GRID ── */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+@media (max-width: 580px) { .g2 { grid-template-columns: 1fr; } }
+
+.mini {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  font-size: 13px;
+}
+.mini h4 { font-size: 12px; color: var(--fe); margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; }
+.mini p, .mini li { color: var(--muted); line-height: 1.7; }
+.mini ul { padding-left: 16px; }
+.mini li { margin-bottom: 4px; }
+
+/* ── FLOW ── */
+.flow {
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap; margin: 14px 0;
+}
+.fb {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 16px;
+  font-size: 13px;
+  text-align: center;
+  line-height: 1.4;
+}
+.fb.hl { background: var(--fe-dim); border-color: rgba(97,218,251,0.35); color: var(--fe); }
+.fb.hl2 { background: var(--ai-dim); border-color: rgba(167,139,250,0.35); color: var(--ai); }
+.fa { color: var(--muted); font-size: 16px; }
+
+/* ── STEPS ── */
+.step { display: flex; gap: 14px; margin-bottom: 18px; }
+.sn {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--fe); color: #000;
+  font-weight: 700; font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 2px;
+  font-family: 'Syne', sans-serif;
+}
+.sc strong { display: block; margin-bottom: 3px; }
+.sc p { color: var(--muted); font-size: 13px; }
+
+/* ── TAGS ── */
+.tags { display: flex; flex-wrap: wrap; gap: 7px; margin: 10px 0; }
+.tag {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  padding: 3px 10px; border-radius: 5px;
+  background: var(--fe-dim); color: var(--fe);
+  border: 1px solid rgba(97,218,251,0.2);
+}
+.tag.ai { background: var(--ai-dim); color: var(--ai); border-color: rgba(167,139,250,0.2); }
+.tag.y  { background: rgba(251,191,36,0.1); color: var(--yellow); border-color: rgba(251,191,36,0.2); }
+
+/* ── QUIZ ── */
+.qcard { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 24px 28px; margin-bottom: 18px; }
+.qq { font-weight: 600; margin-bottom: 14px; }
+.qq .qn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--fe-dim); color: var(--fe);
+  font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  margin-right: 8px; vertical-align: middle;
+}
+.qopts { display: flex; flex-direction: column; gap: 8px; }
+.qopt {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 11px 14px;
+  cursor: pointer; font-size: 13px;
+  transition: border-color .15s, background .15s;
+}
+.qopt:hover { border-color: var(--fe); }
+.qopt .ql {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  width: 20px; height: 20px; border: 1px solid currentColor;
+  border-radius: 4px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px; color: var(--muted);
+}
+.qopt.right { background: rgba(74,222,128,0.08); border-color: var(--green); color: var(--green); }
+.qopt.right .ql { color: var(--green); }
+.qopt.wrong { background: rgba(248,113,113,0.08); border-color: var(--red); color: var(--red); }
+.qopt.wrong .ql { color: var(--red); }
+.qfb { margin-top: 12px; padding: 10px 14px; border-radius: 7px; font-size: 13px; display: none; }
+.qfb.show { display: block; }
+.qfb.ok   { background: rgba(74,222,128,0.08); color: var(--green); }
+.qfb.bad  { background: rgba(248,113,113,0.08); color: var(--red); }
+
+/* ── COMPARE CARDS ── */
+.cmp3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin: 14px 0; }
+@media (max-width: 680px) { .cmp3 { grid-template-columns: 1fr; } }
+.ccard {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 18px;
+}
+.ccard h4 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+.ccard p  { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+code {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg3); border: 1px solid var(--border);
+  padding: 2px 7px; border-radius: 4px; font-size: 12px; color: var(--ai);
+}
+
+hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
+ul.bl { padding-left: 18px; }
+ul.bl li { margin-bottom: 6px; font-size: 14px; color: var(--muted); }
+ul.bl li strong { color: var(--text); }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-pills">
+    <span class="pill pill-fe">前端工程師視角</span>
+    <span class="pill pill-ai">LLM × RAG</span>
+    <span class="pill pill-fe">有 API/JSON 基礎</span>
+  </div>
+  <h1>LLM &amp; RAG<br><em>前端工程師</em>學習指南</h1>
+  <p>所有 AI 專有名詞都用前端開發的日常類比來解釋，讓你秒懂概念，不再霧裡看花。</p>
+</header>
+
+<nav>
+  <button class="active" onclick="go('token',this)">🔤 Token &amp; Embedding</button>
+  <button onclick="go('transformer',this)">⚙️ Transformer 原理</button>
+  <button onclick="go('rag',this)">🔍 RAG 架構</button>
+  <button onclick="go('training',this)">🏋️ 模型訓練</button>
+  <button onclick="go('summary',this)">📊 三種方法比較</button>
+  <button onclick="go('quiz',this)">🎯 自我測驗</button>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════ TOKEN & EMBEDDING -->
+<div id="token" class="section active">
+  <h2 class="sec-title">Token &amp; <span>Embedding</span></h2>
+
+  <!-- TOKEN -->
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--fe-dim)">🔤</div>
+      <div>
+        <div class="c-title">Token 是什麼？</div>
+        <div class="c-sub">AI 語言的最小單位</div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-side a-fe">
+        <div class="a-label">前端你熟悉的</div>
+        <p>你呼叫 API 時，資料是 <strong>JSON 格式</strong>傳輸的。字串 <code>"前端工程師"</code> 在底層其實是一串 UTF-8 bytes，電腦才能處理。</p>
+      </div>
+      <div class="analogy-side a-ai">
+        <div class="a-label">AI 世界的概念</div>
+        <p>LLM 也看不懂「中文字」，所以先把文字切成 <strong>Token（詞塊）</strong>，再轉成 <strong>整數 ID</strong>。這就像 UTF-8 encoding，只是 AI 版本。</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+<span class="c-comment">// 前端呼叫 API，你熟悉的樣子</span>
+<span class="c-key">const</span> text = <span class="c-str">"我正在找前端工程師職缺"</span>
+
+<span class="c-comment">// Tokenizer 把它切成「詞塊」並編成 ID</span>
+<span class="c-comment">// 類比：就像 string → charCodeAt()，但更聰明</span>
+tokenize(text) <span class="c-comment">// → ["我正在", "找", "前端工程師", "職缺"]</span>
+             <span class="c-comment">// → [  101,   234,    3892,    561 ]  ← Token ID</span>
+
+<span class="c-comment">// BPE 演算法：高頻字組會被合併成單一 Token</span>
+<span class="c-comment">// "前端工程師" 常一起出現 → 整個變 1 個 Token！</span>
+<span class="c-comment">// 效果：17 個字 → 壓縮成 4~5 個 Token ✨</span>
+    </div>
+
+    <div class="callout tip">
+      <strong>💡 為什麼要壓縮？</strong>
+      LLM 有「Token 上限」（就像 API request body 有大小限制），壓縮越好，能處理的文字越長、費用越低。
+    </div>
+  </div>
+
+  <!-- EMBEDDING -->
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--ai-dim)">📐</div>
+      <div>
+        <div class="c-title">Embedding 是什麼？</div>
+        <div class="c-sub">把「意思」轉成數字陣列</div>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <strong>⚠️ Token 的問題</strong>
+      Token ID 只是索引，本身沒有意義。<code>101</code> 和 <code>102</code> 差 1，不代表它們語意相近。
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-side a-fe">
+        <div class="a-label">前端你熟悉的</div>
+        <p>你用 CSS 的 <strong>座標系</strong>定位元素。<code>top: 20px; left: 50px;</code> 這兩個數字讓你知道元素「在哪裡」、跟其他元素的「距離」。</p>
+      </div>
+      <div class="analogy-side a-ai">
+        <div class="a-label">AI 世界的概念</div>
+        <p>Embedding 就是把每個詞放進 <strong>高維度座標空間</strong>（1536 維）。意思相近的詞，座標就距離近——「前端工程師」跟「Web Developer」在這空間裡幾乎是鄰居。</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+<span class="c-comment">// 類比：CSS 是 2D 座標，Embedding 是 1536D 座標</span>
+<span class="c-comment">// position: { top: 20, left: 50 }  ← 2 維</span>
+
+<span class="c-key">const</span> embedding_前端工程師 = [<span class="c-val">0.82</span>, <span class="c-val">-0.31</span>, <span class="c-val">0.67</span>, <span class="c-comment">...1533 個數字...</span>]
+<span class="c-key">const</span> embedding_WebDeveloper  = [<span class="c-val">0.79</span>, <span class="c-val">-0.28</span>, <span class="c-val">0.71</span>, <span class="c-comment">...1533 個數字...</span>]
+<span class="c-key">const</span> embedding_行政助理      = [<span class="c-val">-0.4</span>,  <span class="c-val">0.55</span>, <span class="c-val">-0.2</span>, <span class="c-comment">...1533 個數字...</span>]
+
+<span class="c-comment">// 計算「餘弦相似度」(cosineSimilarity)  ← 就像算兩點距離</span>
+<span class="c-fn">cosineSimilarity</span>(前端工程師, WebDeveloper) <span class="c-comment">// → 0.94  很近 ✅</span>
+<span class="c-fn">cosineSimilarity</span>(前端工程師, 行政助理)     <span class="c-comment">// → 0.11  很遠 ❌</span>
+    </div>
+
+    <div class="callout ok">
+      <strong>✅ 這有什麼用？</strong>
+      搜尋「前端工程師」→ 系統透過 Embedding 距離，也能找到「Web Developer」、「React 開發者」，不再只是死板的關鍵字比對！
+    </div>
+
+    <hr>
+    <div class="c-sub" style="margin-bottom:10px">TOKEN vs EMBEDDING 快速對照</div>
+    <table>
+      <tr><th>特性</th><th>Token</th><th>Embedding</th></tr>
+      <tr><td>本質</td><td>整數 ID（如 <code>492</code>）</td><td>浮點數陣列（如 <code>[0.13, -0.27, ...]</code>）</td></tr>
+      <tr><td>前端類比</td><td>字元的 <code>charCode</code></td><td>元素在畫面上的「座標」</td></tr>
+      <tr><td>有語意嗎？</td><td>❌ 只是索引</td><td>✅ 距離代表意思相近</td></tr>
+      <tr><td>用途</td><td>輸入模型的基本單位</td><td>語意搜尋、RAG 核心</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ TRANSFORMER -->
+<div id="transformer" class="section">
+  <h2 class="sec-title">Transformer <span>原理</span></h2>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--fe-dim)">⚙️</div>
+      <div>
+        <div class="c-title">Transformer 是 LLM 的核心引擎</div>
+        <div class="c-sub">Encoder（理解）+ Decoder（生成）</div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-side a-fe">
+        <div class="a-label">前端你熟悉的</div>
+        <p>前端有 <strong>編譯器（Compiler）</strong>把你寫的 TypeScript 或 JSX 「理解並轉譯」成瀏覽器看得懂的 JS。</p>
+      </div>
+      <div class="analogy-side a-ai">
+        <div class="a-label">AI 世界的概念</div>
+        <p>Transformer 的 <strong>Encoder</strong> = 理解輸入文字的意思（像讀懂 TS 語法）；<strong>Decoder</strong> = 根據理解逐字生成回答（像輸出 JS）。</p>
+      </div>
+    </div>
+
+    <div class="flow" style="justify-content:center; margin: 20px 0;">
+      <div class="fb">輸入：<br><small>「幫我寫 button」</small></div>
+      <div class="fa">→</div>
+      <div class="fb hl">Encoder<br><small>理解語意</small></div>
+      <div class="fa">→</div>
+      <div class="fb hl2">Decoder<br><small>逐字生成</small></div>
+      <div class="fa">→</div>
+      <div class="fb">輸出：<br><small><code>&lt;button&gt;...&lt;/button&gt;</code></small></div>
+    </div>
+
+    <table>
+      <tr>
+        <th>模型類型</th>
+        <th>前端類比</th>
+        <th>擅長</th>
+        <th>代表模型</th>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--fe)">Encoder（BERT）</strong></td>
+        <td>ESLint / TypeScript 型別檢查——理解程式碼結構</td>
+        <td>分類、情感分析、搜尋</td>
+        <td>BERT、Sentence-BERT</td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--ai)">Decoder（GPT/LLM）</strong></td>
+        <td>Copilot——看到上文，預測並生成下一行</td>
+        <td>生成文字、對話、翻譯</td>
+        <td>GPT、Claude、Gemini</td>
+      </tr>
+    </table>
+
+    <div class="callout fe">
+      <strong>💡 前端角度理解 LLM 生成原理</strong>
+      LLM 每次只預測「下一個 Token」，就像 autocomplete。輸入「&lt;div class="」→ 預測下一個 token 可能是「container」(70%)、「wrapper」(15%)、「main」(8%)… 然後一直重複，直到生成完整回答。
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--ai-dim)">🧮</div>
+      <div>
+        <div class="c-title">Encoder 的核心：位置編碼 + Attention</div>
+        <div class="c-sub">機器怎麼「讀懂」一句話</div>
+      </div>
+    </div>
+
+    <div class="callout ai">
+      <strong>📍 位置編碼（Positional Encoding）</strong>
+      LLM 要同時知道「這個詞是什麼意思」跟「它在句子哪個位置」。就像 React 的 key prop——光知道元素是什麼不夠，還要知道它在 list 哪個位置。
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-side a-fe">
+        <div class="a-label">前端你熟悉的</div>
+        <p><strong>event delegation</strong>：一個父元素監聽所有子元素的事件，根據 <code>event.target</code> 判斷是誰觸發，並給予不同權重。</p>
+      </div>
+      <div class="analogy-side a-ai">
+        <div class="a-label">Attention 機制</div>
+        <p>處理「活動吧有活動的活動吧」時，第二個「活動」需要「注意」前後哪些詞，才能判斷它是「聚會」還是「運動」。<strong>Attention</strong> 就是這個加權判斷機制。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ RAG -->
+<div id="rag" class="section">
+  <h2 class="sec-title">RAG <span>架構</span></h2>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--fe-dim)">🤔</div>
+      <div>
+        <div class="c-title">為什麼需要 RAG？</div>
+        <div class="c-sub">LLM 的兩個致命傷</div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-side a-fe">
+        <div class="a-label">前端你熟悉的情境</div>
+        <p>你的 React app <strong>沒有串 API</strong>，全用 hardcode 假資料。資料永遠是舊的、跟後端脫節，使用者看到錯誤資訊。</p>
+      </div>
+      <div class="analogy-side a-ai">
+        <div class="a-label">LLM 面對的問題</div>
+        <p>LLM 的知識是訓練時「燒進去」的，<strong>沒辦法即時更新</strong>。問它公司最新政策？它要嘛不知道，要嘛瞎掰（幻覺）。</p>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div class="callout warn">
+        <strong>⚠️ 痛點 1：AI 幻覺</strong>
+        LLM 猜不到答案時，會「一本正經地亂說」——就像前端 undefined 卻不報錯，直接渲染了錯誤的值。
+      </div>
+      <div class="callout warn">
+        <strong>⚠️ 痛點 2：知識過時</strong>
+        模型訓練有截止日，公司最新 FAQ、最新規定它根本不知道——就像 bundle 打包後就定版，沒辦法 hot update。
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--ai-dim)">🔍</div>
+      <div>
+        <div class="c-title">RAG 怎麼解決？</div>
+        <div class="c-sub">Retrieval-Augmented Generation — 讓 LLM 「開卷考試」</div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-side a-fe">
+        <div class="a-label">前端你熟悉的</div>
+        <p>加了 <strong>API fetch</strong>！使用者查詢 → 前端即時呼叫 API → 拿到最新資料 → 渲染正確內容。不再依賴 hardcode。</p>
+      </div>
+      <div class="analogy-side a-ai">
+        <div class="a-label">RAG 的做法</div>
+        <p>使用者提問 → 先去 <strong>向量資料庫</strong>撈最相關的文件 → 把文件塞進 Prompt → LLM 根據「真實資料」回答，不再瞎猜。</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+<span class="c-comment">// 沒有 RAG（像 hardcode）</span>
+<span class="c-fn">askLLM</span>(<span class="c-str">"公司遠距工作規定是什麼？"</span>)
+<span class="c-comment">// LLM: "根據一般企業規範，遠距工作通常…" ← 瞎猜！幻覺出現 😱</span>
+
+<span class="c-comment">// 有 RAG（像 fetch 最新資料）</span>
+<span class="c-key">const</span> docs = <span class="c-key">await</span> <span class="c-fn">vectorSearch</span>(<span class="c-str">"遠距工作規定"</span>) <span class="c-comment">// 撈相關文件</span>
+<span class="c-key">const</span> prompt = <span class="c-str">`根據以下文件回答：\n${docs}\n\n問題：公司遠距工作規定？`</span>
+<span class="c-fn">askLLM</span>(prompt)
+<span class="c-comment">// LLM: "根據公司 2024 年 HR 手冊第 3 條…" ← 有依據！✅</span>
+    </div>
+
+    <hr>
+    <div style="font-weight:600; margin-bottom:14px;">RAG 完整流程（前端視角）</div>
+
+    <div class="step">
+      <div class="sn">1</div>
+      <div class="sc">
+        <strong>建立知識庫 Index（一次性，像 build 流程）</strong>
+        <p>把公司文件 → 切成小段（Chunking）→ 每段轉成 Embedding 向量 → 存進 Vector DB。就像 webpack build，只要文件更新才需要重跑。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="sn">2</div>
+      <div class="sc">
+        <strong>使用者提問（Runtime，像 API request）</strong>
+        <p>把問題也轉成 Embedding → 在 Vector DB 找「距離最近」的文件段落（ANN Search）→ 取出 Top-K 筆。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="sn">3</div>
+      <div class="sc">
+        <strong>Prompt 增強（像組 request body）</strong>
+        <p>把撈到的文件段落 + 原始問題 → 組成一個完整 Prompt → 送給 LLM。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="sn">4</div>
+      <div class="sc">
+        <strong>LLM 生成回答（像 API response）</strong>
+        <p>LLM 只根據塞進去的文件回答，不再瞎猜，還可以附上出處。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--fe-dim)">🗄️</div>
+      <div>
+        <div class="c-title">Vector DB vs SQL DB</div>
+        <div class="c-sub">前端工程師最常問的問題</div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-side a-fe">
+        <div class="a-label">SQL（你可能用過）</div>
+        <p><code>WHERE title = '前端工程師'</code><br>精確比對。搜尋「前端工程師」，找不到「Web Developer」——就像 <code>===</code> 嚴格相等。</p>
+      </div>
+      <div class="analogy-side a-ai">
+        <div class="a-label">Vector DB（RAG 用的）</div>
+        <p>把查詢也轉成向量，找「語意最近的」文件。就像 fuzzy search，但更聰明——「Web Developer」、「React 開發者」都能找到。</p>
+      </div>
+    </div>
+
+    <div class="tags">
+      <span class="tag">Pinecone</span>
+      <span class="tag">Milvus</span>
+      <span class="tag">Qdrant</span>
+      <span class="tag">Elasticsearch</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--ai-dim)">🤖</div>
+      <div>
+        <div class="c-title">AI Agent — RAG 的進化版</div>
+        <div class="c-sub">從「查資料」到「主動執行任務」</div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-side a-fe">
+        <div class="a-label">前端你熟悉的</div>
+        <p>純 <strong>fetch data + 渲染</strong> 的靜態頁面，升級為有 <strong>useEffect + 多個 API + 狀態管理</strong> 的互動 App。</p>
+      </div>
+      <div class="analogy-side a-ai">
+        <div class="a-label">Agent 的概念</div>
+        <p>不只是「問答」，AI Agent 可以自己規劃步驟、呼叫工具（API）、執行動作（發 email、更新資料庫），最後給你結果。</p>
+      </div>
+    </div>
+
+    <div class="g2" style="margin-top:14px">
+      <div class="mini">
+        <h4>🧠 大腦（LLM）</h4>
+        <p>負責推理與規劃，就像 App 的 business logic，決定「下一步做什麼」。</p>
+      </div>
+      <div class="mini">
+        <h4>💾 記憶（RAG）</h4>
+        <p>從向量庫撈歷史知識，就像 App 的 state + cache，不用每次重問。</p>
+      </div>
+      <div class="mini">
+        <h4>🦾 工具（Tools/API）</h4>
+        <p>呼叫外部系統，就像前端呼叫後端 API——發通知、查資料庫、排行程。</p>
+      </div>
+      <div class="mini">
+        <h4>🔄 Agentic Loop</h4>
+        <p>規劃 → 執行 → 觀察結果 → 反思調整 → 再執行。像 while loop，直到任務完成。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ TRAINING -->
+<div id="training" class="section">
+  <h2 class="sec-title">模型<span>訓練與微調</span></h2>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--fe-dim)">🔄</div>
+      <div>
+        <div class="c-title">三階段訓練流程</div>
+        <div class="c-sub">從一片空白到聰明的 AI</div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-side a-fe">
+        <div class="a-label">前端你熟悉的</div>
+        <p>一個新人工程師的成長路徑：先廣泛自學（看書、教程）→ 進公司學專案規範（帶教）→ 在實戰中被 code review 磨練（強化學習）</p>
+      </div>
+      <div class="analogy-side a-ai">
+        <div class="a-label">AI 訓練流程</div>
+        <p><strong>Pretrain</strong>（海量文本自學）→ <strong>SFT</strong>（人工標註資料微調）→ <strong>RLHF</strong>（人類回饋強化學習）</p>
+      </div>
+    </div>
+
+    <div style="margin-top:20px">
+      <div class="step">
+        <div class="sn" style="background:var(--muted)">1</div>
+        <div class="sc">
+          <strong>預訓練 Pretrain — 「自學階段」</strong>
+          <p>用海量無標註文本（整個網路）訓練。模型學會語言規則，但不知道怎麼對話。就像新人工程師自學程式，能寫 code 但不懂公司流程。<br><span style="color:var(--red);font-size:12px">▸ 成本極高（需要超大算力），不是一般公司能做的事</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="sn" style="background:var(--yellow);color:#000">2</div>
+        <div class="sc">
+          <strong>SFT 監督微調 — 「帶教階段」</strong>
+          <p>用人工標註的 Q&amp;A 對話資料，教模型「正確的回答方式」。就像 Tech Lead 帶著新人做 code review，糾正壞習慣。<br><span style="color:var(--yellow);font-size:12px">▸ 成本中等，需要高品質標註資料</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="sn" style="background:var(--ai);color:#fff">3</div>
+        <div class="sc">
+          <strong>RLHF 強化學習 — 「實戰磨練」</strong>
+          <p>讓模型生成多個回答，人類評分哪個更好，模型從回饋中學習。就像工程師從 code review 留言、user feedback 中持續進步。<br><span style="color:var(--ai);font-size:12px">▸ 讓模型從「能用」變成「聰明」</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--ai-dim)">🎯</div>
+      <div>
+        <div class="c-title">Fine-tuning（微調）是什麼？</div>
+        <div class="c-sub">幫模型「專精化」</div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-side a-fe">
+        <div class="a-label">前端你熟悉的</div>
+        <p>你 fork 了一個 open source UI library，根據公司設計系統改了 color token、加了公司專用 component，<strong>客製化</strong>成公司版本。</p>
+      </div>
+      <div class="analogy-side a-ai">
+        <div class="a-label">Fine-tuning</div>
+        <p>拿現成的大模型（如 Gemma3、LLaMA），用公司自己的 FAQ 資料繼續訓練它，讓它「專精」公司業務知識，說話更符合公司風格。</p>
+      </div>
+    </div>
+
+    <div class="callout fe">
+      <strong>💡 LoRA / QLoRA — 高效微調技術</strong>
+      不更新整個模型（太貴），只更新一小部分「增量參數」（LoRA 矩陣）。就像不重寫整個 library，只 override 你需要的幾個 CSS variables——省時省錢，效果幾乎一樣。
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--fe-dim)">🧬</div>
+      <div>
+        <div class="c-title">模型蒸餾（Knowledge Distillation）</div>
+        <div class="c-sub">讓小模型學大模型的「思考方式」</div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-side a-fe">
+        <div class="a-label">前端你熟悉的</div>
+        <p><strong>Tree-shaking</strong>：webpack 把龐大的 npm package 打包時，只保留你實際用到的程式碼，輸出更小的 bundle。效能差不多，但體積大幅縮減。</p>
+      </div>
+      <div class="analogy-side a-ai">
+        <div class="a-label">模型蒸餾</div>
+        <p>讓小模型（Student）模仿大模型（Teacher）的「思考分布」，而不是複製參數。輸出更小、更快的模型，能力幾乎保留。</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+<span class="c-comment">// 例子：DeepSeek R1 (671B 大模型) 蒸餾成小模型</span>
+<span class="c-comment">// 就像把一個 50MB 的 bundle → tree-shake 成 3MB</span>
+
+Teacher: DeepSeek-R1  (671B 參數，很強但很重)
+         ↓ 蒸餾
+Student: DeepSeek-R1-Distill-Qwen-7B  (7B 參數，輕量快速)
+
+<span class="c-comment">// 不是複製參數，是讓小模型學大模型</span>
+<span class="c-comment">// 「這個問題，我猜 A 的機率是 0.7，B 是 0.2，C 是 0.1」</span>
+<span class="c-comment">// 的這種「機率分布思維」</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ SUMMARY -->
+<div id="summary" class="section">
+  <h2 class="sec-title">三種方法<span>怎麼選？</span></h2>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--fe-dim)">📊</div>
+      <div>
+        <div class="c-title">Prompt vs RAG vs Fine-tuning</div>
+        <div class="c-sub">用前端開發決策類比</div>
+      </div>
+    </div>
+
+    <div class="cmp3">
+      <div class="ccard" style="border-color:rgba(74,222,128,0.3)">
+        <h4 style="color:var(--green)">💬 Prompt Engineering</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">前端類比：<strong style="color:var(--text)">直接改 CSS inline style</strong></p>
+        <p>快速、彈性，不需要額外設定。但可能被其他樣式蓋掉（不穩定），Token 長度有限（就像 inline style 太長很難維護）。</p>
+        <div class="tags" style="margin-top:10px">
+          <span class="tag y">成本 ⭐⭐⭐</span>
+          <span class="tag y">速度 ⭐⭐⭐</span>
+        </div>
+        <div class="callout ok" style="margin-top:10px;padding:10px 12px">
+          <strong>適合場景</strong>
+          PoC 原型、一次性任務、簡單問答
+        </div>
+      </div>
+
+      <div class="ccard" style="border-color:rgba(97,218,251,0.3)">
+        <h4 style="color:var(--fe)">🔍 RAG</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">前端類比：<strong style="color:var(--text)">串 API，即時取最新資料</strong></p>
+        <p>知識即時更新（不需重新訓練），大幅減少幻覺，可以附上來源出處。需要維護向量庫和檢索品質。</p>
+        <div class="tags" style="margin-top:10px">
+          <span class="tag">成本 ⭐⭐⭐⭐</span>
+          <span class="tag">準確 ⭐⭐⭐⭐</span>
+        </div>
+        <div class="callout fe" style="margin-top:10px;padding:10px 12px">
+          <strong>適合場景</strong>
+          企業知識庫、客服問答、需要最新資料的系統
+        </div>
+      </div>
+
+      <div class="ccard" style="border-color:rgba(167,139,250,0.3)">
+        <h4 style="color:var(--ai)">🏋️ Fine-tuning</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">前端類比：<strong style="color:var(--text)">客製化 fork 整個 UI library</strong></p>
+        <p>模型深度「記住」領域知識，推論快又穩定。但前期訓練成本極高，知識更新需要重新訓練。</p>
+        <div class="tags" style="margin-top:10px">
+          <span class="tag ai">成本 ⭐</span>
+          <span class="tag ai">速度 ⭐⭐⭐⭐⭐</span>
+        </div>
+        <div class="callout ai" style="margin-top:10px;padding:10px 12px">
+          <strong>適合場景</strong>
+          金融、醫療等垂直領域，大規模產品化服務
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <strong>💡 課程最佳實踐：RAFT = RAG + Fine-tuning</strong>
+      先用 Fine-tuning 讓模型有「語感」和「專業知識基礎」，再加上 RAG 確保知識隨時是最新的。就像先讀書考到執照，工作時再查最新的法規手冊。
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="c-icon" style="background:var(--ai-dim)">🗺️</div>
+      <div>
+        <div class="c-title">身為前端工程師，你最可能接觸到的部分</div>
+        <div class="c-sub">學習優先順序</div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="mini" style="border-color:rgba(97,218,251,0.3)">
+        <h4>🔥 高度相關（現在就用得到）</h4>
+        <ul>
+          <li>呼叫 LLM API（OpenAI、Claude）</li>
+          <li>Prompt Engineering 技巧</li>
+          <li>RAG 架構的前端整合（串向量搜尋 API）</li>
+          <li>Streaming response 處理（token by token）</li>
+          <li>LM Studio 本地模型測試</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h4>📚 理解概念即可（不需深入）</h4>
+        <ul>
+          <li>Token/Embedding 原理（知道在幹嘛就好）</li>
+          <li>Transformer 架構（概念層次）</li>
+          <li>Fine-tuning 流程（了解何時需要）</li>
+          <li>模型蒸餾（知道有這個選項）</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ QUIZ -->
+<div id="quiz" class="section">
+  <h2 class="sec-title">自我<span>測驗</span></h2>
+  <p style="color:var(--muted);margin-bottom:28px;font-size:13px">全部用前端視角出題，點選答案即時解析 ✨</p>
+
+  <div class="qcard">
+    <div class="qq"><span class="qn">1</span>Token 就像前端的什麼概念？</div>
+    <div class="qopts">
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">A</div>CSS class name</div>
+      <div class="qopt" onclick="ans(this,true)"><div class="ql">B</div>字元的 charCode（整數 ID，本身沒有語意）</div>
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">C</div>React state</div>
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">D</div>API response body</div>
+    </div>
+    <div class="qfb ok">✅ 正確！Token 就是文字的整數 ID，就像 <code>charCodeAt()</code>，本身只是索引，不代表任何語意。</div>
+    <div class="qfb bad">❌ Token = 整數 ID，類比 <code>charCodeAt()</code>。它只是索引，沒有語意——語意是 Embedding 的工作。</div>
+  </div>
+
+  <div class="qcard">
+    <div class="qq"><span class="qn">2</span>Embedding 最像前端的哪個概念？</div>
+    <div class="qopts">
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">A</div>z-index（堆疊順序）</div>
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">B</div>event listener</div>
+      <div class="qopt" onclick="ans(this,true)"><div class="ql">C</div>元素在畫面的座標（top/left），距離代表關係遠近</div>
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">D</div>localStorage</div>
+    </div>
+    <div class="qfb ok">✅ 正確！Embedding = 高維座標，「前端工程師」和「Web Developer」座標距離很近，代表語意相近。就像兩個 div 位置靠近，代表它們屬於同一區塊。</div>
+    <div class="qfb bad">❌ Embedding 是「語意座標」——每個詞在高維空間的位置，距離近 = 意思相近。類比元素的 top/left 座標。</div>
+  </div>
+
+  <div class="qcard">
+    <div class="qq"><span class="qn">3</span>沒有 RAG 的 LLM，像前端的哪種情境？</div>
+    <div class="qopts">
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">A</div>用了 React Query，資料自動 refetch</div>
+      <div class="qopt" onclick="ans(this,true)"><div class="ql">B</div>頁面全部用 hardcode 假資料，沒串 API</div>
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">C</div>用 WebSocket 即時推送最新資料</div>
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">D</div>用了 Service Worker 做快取</div>
+    </div>
+    <div class="qfb ok">✅ 完全正確！LLM 的知識訓練完就固定了，就像 hardcode 假資料——永遠是舊的，問它最新動態只能靠「猜」（幻覺）。RAG 就是幫它加上「串 API」的能力。</div>
+    <div class="qfb bad">❌ 沒有 RAG 的 LLM 就像「hardcode 假資料」——知識固定在訓練時，問最新的事只能瞎猜。RAG 就是幫它「串 API 拿最新資料」。</div>
+  </div>
+
+  <div class="qcard">
+    <div class="qq"><span class="qn">4</span>Vector DB 和 SQL DB 的最大差別是什麼？</div>
+    <div class="qopts">
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">A</div>Vector DB 比 SQL 快很多</div>
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">B</div>Vector DB 儲存費用較低</div>
+      <div class="qopt" onclick="ans(this,true)"><div class="ql">C</div>Vector DB 用語意相似度搜尋，SQL 只能精確字面比對（像 === vs fuzzy match）</div>
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">D</div>Vector DB 支援 JOIN 語法</div>
+    </div>
+    <div class="qfb ok">✅ 正確！SQL 就像 <code>===</code> 嚴格相等，「Web Developer」≠「前端工程師」找不到。Vector DB 像語意 fuzzy search，理解它們是同一類工作。</div>
+    <div class="qfb bad">❌ 關鍵差異是搜尋方式：SQL = 精確比對（<code>===</code>），Vector DB = 語意相似度（fuzzy match，理解「Web Developer」就是「前端」）。</div>
+  </div>
+
+  <div class="qcard">
+    <div class="qq"><span class="qn">5</span>LoRA 微調技術，最像前端的哪個概念？</div>
+    <div class="qopts">
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">A</div>重寫整個前端框架</div>
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">B</div>把 React 升級到最新版</div>
+      <div class="qopt" onclick="ans(this,true)"><div class="ql">C</div>只 override 幾個 CSS variables，不動整個 library 的原始碼</div>
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">D</div>用 CDN 加速靜態資源</div>
+    </div>
+    <div class="qfb ok">✅ 完美類比！LoRA 不更新全部模型參數（太貴），只更新一小部分「增量」。就像不改整個 UI library，只 override 你需要的幾個 CSS variables，省時省力效果好。</div>
+    <div class="qfb bad">❌ LoRA = 只更新少量「增量參數」，不動整個模型。就像只 override 幾個 CSS variables，而不是 fork 整個 design system 重寫。</div>
+  </div>
+
+  <div class="qcard">
+    <div class="qq"><span class="qn">6</span>身為前端工程師，以下哪個 AI 技能「現在就能用到」且優先學習？</div>
+    <div class="qopts">
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">A</div>從頭訓練一個 LLM（Pretrain）</div>
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">B</div>深入研究 Transformer 的數學推導</div>
+      <div class="qopt" onclick="ans(this,true)"><div class="ql">C</div>呼叫 LLM API、Prompt Engineering、串 RAG 向量搜尋、處理 Streaming response</div>
+      <div class="qopt" onclick="ans(this,false)"><div class="ql">D</div>模型量化（8-bit / 4-bit 精度壓縮）</div>
+    </div>
+    <div class="qfb ok">✅ 完全正確！前端工程師的 AI 優先技能：呼叫 LLM API + Prompt 技巧 + RAG 整合 + Streaming 處理。這些直接對應你的前端開發技能，馬上就能上手！</div>
+    <div class="qfb bad">❌ Pretrain、數學推導、模型量化是 ML 工程師的工作。前端工程師的戰場是：呼叫 LLM API、設計好 Prompt、整合 RAG、處理 Streaming token！</div>
+  </div>
+</div>
+
+</main>
+
+<script>
+function go(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function ans(opt, correct) {
+  const card = opt.closest('.qcard');
+  if (card.querySelector('.qopt.right') || card.querySelector('.qopt.wrong')) return;
+  opt.classList.add(correct ? 'right' : 'wrong');
+  if (!correct) {
+    card.querySelectorAll('.qopt').forEach(o => {
+      if (o.getAttribute('onclick').includes('true')) o.classList.add('right');
+    });
+  }
+  const fbs = card.querySelectorAll('.qfb');
+  fbs[correct ? 0 : 1].classList.add('show');
+}
+</script>
+</body>
+</html>
