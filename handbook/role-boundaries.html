@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TPM / PJM / PM / EM 職權邊界</title>
+<style>
+  :root{
+    --bg:#F4F1EA;
+    --paper:#FBF9F3;
+    --ink:#2B2621;
+    --muted:#6B6258;
+    --line:#DED7C9;
+    --red:#7C2529;
+    --red-soft:#9B3B3F;
+    --tag:#EFE8D9;
+    --warn:#8A5A1A;
+    --warn-bg:#F5ECD8;
+    --pm:#4A6C6F;
+    --pjm:#8A6D3B;
+    --tpm:#5B5A8C;
+    --em:#7C2529;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75;
+    font-size:16px;
+  }
+  .layout{
+    display:grid;
+    grid-template-columns:230px 1fr;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  /* Sidebar */
+  aside{
+    position:sticky;
+    top:0;
+    align-self:start;
+    height:100vh;
+    padding:48px 28px;
+    border-right:1px solid var(--line);
+  }
+  .brand{
+    font-family:"Noto Serif TC","Songti TC",serif;
+    color:var(--red);
+    font-weight:700;
+    font-size:1.05rem;
+    letter-spacing:.02em;
+    margin-bottom:6px;
+  }
+  .brand small{
+    display:block;
+    color:var(--muted);
+    font-weight:400;
+    font-size:.72rem;
+    letter-spacing:.15em;
+    margin-top:4px;
+  }
+  nav{margin-top:36px;}
+  nav a{
+    display:block;
+    color:var(--muted);
+    text-decoration:none;
+    font-size:.86rem;
+    padding:7px 0 7px 14px;
+    border-left:2px solid transparent;
+    transition:all .2s;
+  }
+  nav a:hover{color:var(--ink);}
+  nav a.active{
+    color:var(--red);
+    border-left-color:var(--red);
+    font-weight:600;
+  }
+  /* Main */
+  main{padding:64px 56px 120px;}
+  header.hero{
+    border-bottom:2px solid var(--red);
+    padding-bottom:28px;
+    margin-bottom:48px;
+  }
+  header.hero .eyebrow{
+    font-size:.72rem;
+    letter-spacing:.28em;
+    color:var(--red-soft);
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  header.hero h1{
+    font-family:"Noto Serif TC","Songti TC",serif;
+    font-size:2.5rem;
+    line-height:1.25;
+    margin:0 0 12px;
+    color:var(--ink);
+    font-weight:700;
+  }
+  header.hero p{
+    color:var(--muted);
+    max-width:52ch;
+    margin:0;
+  }
+  section{margin-bottom:64px; scroll-margin-top:40px;}
+  h2{
+    font-family:"Noto Serif TC","Songti TC",serif;
+    font-size:1.5rem;
+    color:var(--red);
+    margin:0 0 8px;
+    font-weight:700;
+  }
+  h2 .num{
+    font-family:"Noto Serif TC",serif;
+    color:var(--line);
+    font-size:1.3rem;
+    margin-right:12px;
+  }
+  .lead{color:var(--muted); margin:0 0 26px; max-width:60ch;}
+  /* Table */
+  .table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:4px;}
+  table{
+    width:100%;
+    border-collapse:collapse;
+    background:var(--paper);
+    min-width:640px;
+    font-size:.9rem;
+  }
+  th,td{
+    text-align:left;
+    padding:14px 16px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  thead th{
+    background:var(--tag);
+    font-family:"Noto Serif TC",serif;
+    color:var(--ink);
+    font-weight:700;
+    border-bottom:2px solid var(--line);
+  }
+  thead th.c-pm{color:var(--pm);}
+  thead th.c-pjm{color:var(--pjm);}
+  thead th.c-tpm{color:var(--tpm);}
+  thead th.c-em{color:var(--em);}
+  tbody th{
+    font-weight:600;
+    color:var(--muted);
+    white-space:nowrap;
+    background:var(--paper);
+  }
+  tbody tr:last-child td, tbody tr:last-child th{border-bottom:none;}
+  tbody tr:hover td{background:#F6F2E8;}
+  /* Role cards */
+  .cards{display:grid; grid-template-columns:repeat(2,1fr); gap:18px;}
+  .card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-top:4px solid var(--red);
+    border-radius:4px;
+    padding:22px 24px;
+  }
+  .card.pm{border-top-color:var(--pm);}
+  .card.pjm{border-top-color:var(--pjm);}
+  .card.tpm{border-top-color:var(--tpm);}
+  .card.em{border-top-color:var(--em);}
+  .card h3{
+    font-family:"Noto Serif TC",serif;
+    margin:0 0 2px;
+    font-size:1.15rem;
+  }
+  .card .role-en{font-size:.72rem; letter-spacing:.12em; color:var(--muted); text-transform:uppercase;}
+  .card .ask{
+    margin:12px 0 16px;
+    padding:8px 12px;
+    background:var(--tag);
+    border-radius:3px;
+    font-size:.85rem;
+    color:var(--ink);
+  }
+  .card h4{
+    font-size:.78rem;
+    letter-spacing:.05em;
+    margin:14px 0 6px;
+    color:var(--muted);
+  }
+  .card ul{margin:0; padding-left:18px; font-size:.86rem;}
+  .card li{margin-bottom:5px;}
+  .can li::marker{color:var(--pm);}
+  .cant li::marker{color:var(--red);}
+  .kpi{
+    margin-top:14px;
+    padding-top:12px;
+    border-top:1px dashed var(--line);
+    font-size:.82rem;
+    color:var(--muted);
+  }
+  .kpi b{color:var(--ink);}
+  /* Warn box */
+  .warn{
+    background:var(--warn-bg);
+    border-left:4px solid var(--warn);
+    padding:16px 20px;
+    border-radius:3px;
+    margin-top:18px;
+    font-size:.88rem;
+  }
+  .warn strong{color:var(--warn);}
+  /* Conflict list */
+  .conflicts{counter-reset:c; padding:0; list-style:none; margin:0;}
+  .conflicts li{
+    counter-increment:c;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:18px 22px 18px 60px;
+    position:relative;
+    margin-bottom:14px;
+  }
+  .conflicts li::before{
+    content:counter(c);
+    position:absolute;
+    left:20px; top:18px;
+    font-family:"Noto Serif TC",serif;
+    color:var(--red);
+    font-size:1.3rem;
+    font-weight:700;
+  }
+  .conflicts h4{margin:0 0 6px; font-size:1rem;}
+  .conflicts p{margin:0; font-size:.88rem; color:var(--muted);}
+  .memo{font-family:"Noto Serif TC",serif; font-size:1.05rem; color:var(--red); text-align:center; padding:20px; background:var(--tag); border-radius:4px; margin-top:8px;}
+  footer{color:var(--muted); font-size:.78rem; border-top:1px solid var(--line); padding-top:20px; margin-top:60px;}
+  @media(max-width:860px){
+    .layout{grid-template-columns:1fr;}
+    aside{position:static; height:auto; border-right:none; border-bottom:1px solid var(--line); padding:28px;}
+    nav{margin-top:16px; display:flex; flex-wrap:wrap; gap:4px 16px;}
+    nav a{border-left:none; padding:4px 0;}
+    nav a.active{border-left:none;}
+    main{padding:40px 24px 80px;}
+    .cards{grid-template-columns:1fr;}
+    header.hero h1{font-size:1.9rem;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brand">B Team 內部手冊<small>ROLE BOUNDARIES</small></div>
+    <nav id="nav">
+      <a href="#overview">一、本質差異</a>
+      <a href="#matrix">二、職權對照表</a>
+      <a href="#roles">三、逐角色展開</a>
+      <a href="#conflicts">四、高頻衝突點</a>
+      <a href="#recap">五、快速回顧</a>
+    </nav>
+  </aside>
+
+  <main>
+    <header class="hero">
+      <div class="eyebrow">Team Collaboration · 職權邊界</div>
+      <h1>TPM / PJM / PM / EM<br>職權邊界</h1>
+      <p>四個最容易混淆的角色，界線一旦畫清楚，協作摩擦就少一半。一句話記憶：PM 定方向、PJM 顧時程、TPM 串技術、EM 帶團隊。</p>
+    </header>
+
+    <section id="overview">
+      <h2><span class="num">01</span>本質差異</h2>
+      <p class="lead">抓住每個角色的「核心提問」與「對的對象」，就能快速定位彼此的界線。</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>角色</th>
+              <th>核心提問</th>
+              <th>對的對象</th>
+              <th>一句話定位</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th style="color:var(--pm)">PM</th><td>做什麼、為什麼做</td><td>市場 / 用戶</td><td>產品的業務負責人</td></tr>
+            <tr><th style="color:var(--pjm)">PJM</th><td>如何準時交付</td><td>範疇 / 時程 / 預算</td><td>專案的節奏控制者</td></tr>
+            <tr><th style="color:var(--tpm)">TPM</th><td>跨團隊技術如何協同</td><td>跨團隊技術相依</td><td>跨團隊的技術翻譯與協調者</td></tr>
+            <tr><th style="color:var(--em)">EM</th><td>如何把東西做出來、做好</td><td>工程師 / 工程品質</td><td>團隊的技術與人的負責人</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="matrix">
+      <h2><span class="num">02</span>職權對照表</h2>
+      <p class="lead">同一面向橫向比較，最能看出四者的分工與授權深度。</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>面向</th>
+              <th class="c-pm">PM</th>
+              <th class="c-pjm">PJM</th>
+              <th class="c-tpm">TPM</th>
+              <th class="c-em">EM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th>核心問題</th>
+              <td>做什麼、為什麼</td>
+              <td>如何準時交付</td>
+              <td>跨團隊技術如何落地</td>
+              <td>如何做出來、做好</td>
+            </tr>
+            <tr>
+              <th>主要產出</th>
+              <td>PRD、Roadmap、優先順序</td>
+              <td>專案計畫、甘特圖、進度報告</td>
+              <td>技術相依地圖、跨團隊里程碑</td>
+              <td>技術決策、人力調度、品質</td>
+            </tr>
+            <tr>
+              <th>KPI</th>
+              <td>產品成效（採用、營收、留存）</td>
+              <td>三準：準時、準範疇、準預算</td>
+              <td>跨團隊交付與技術風險收斂</td>
+              <td>團隊產能、交付品質、成員成長</td>
+            </tr>
+            <tr>
+              <th>授權深度</th>
+              <td>決定需求，不碰技術實作</td>
+              <td>管流程，不碰技術細節</td>
+              <td>協調而不指揮他隊工程師</td>
+              <td>決定技術方案與資源分配</td>
+            </tr>
+            <tr>
+              <th>遇衝突往上</th>
+              <td>—</td>
+              <td>拉 PM 對齊</td>
+              <td>拉 EM 對齊</td>
+              <td>拉經理層對齊</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="roles">
+      <h2><span class="num">03</span>逐角色展開</h2>
+      <p class="lead">每個角色「可以做」與「不可以做」的清單，界線就藏在後者。</p>
+      <div class="cards">
+
+        <div class="card pm">
+          <h3>PM</h3>
+          <div class="role-en">Product Manager · 產品經理</div>
+          <div class="ask">核心提問：做什麼、為什麼做</div>
+          <h4>可以做</h4>
+          <ul class="can">
+            <li>定義需求、撰寫 PRD、規劃 Roadmap</li>
+            <li>決定功能優先順序（What &amp; Why）</li>
+            <li>驗收產品是否達成商業與用戶目標</li>
+          </ul>
+          <h4>不可以做</h4>
+          <ul class="cant">
+            <li>指定技術實作方式</li>
+            <li>直接指派工程師任務</li>
+            <li>干預估點與工時</li>
+          </ul>
+          <div class="kpi"><b>KPI：</b>產品成效 — 採用率、營收、留存、滿意度</div>
+        </div>
+
+        <div class="card pjm">
+          <h3>PJM</h3>
+          <div class="role-en">Project Manager · 專案經理</div>
+          <div class="ask">核心提問：如何準時交付</div>
+          <h4>可以做</h4>
+          <ul class="can">
+            <li>建立專案計畫、時程表、里程碑</li>
+            <li>追蹤進度、管理風險與相依</li>
+            <li>協調會議、資源、向上匯報</li>
+          </ul>
+          <h4>不可以做</h4>
+          <ul class="cant">
+            <li>變更產品需求</li>
+            <li>決定技術方案</li>
+            <li>因趕時程單方壓縮品質</li>
+          </ul>
+          <div class="kpi"><b>KPI：</b>三準交付 — 準時、準範疇、準預算</div>
+        </div>
+
+        <div class="card tpm">
+          <h3>TPM</h3>
+          <div class="role-en">Technical Program Manager · 技術專案經理</div>
+          <div class="ask">核心提問：跨團隊技術如何協同落地</div>
+          <h4>可以做</h4>
+          <ul class="can">
+            <li>拆解跨團隊技術相依、畫 dependency map</li>
+            <li>對齊多團隊里程碑、收斂技術風險</li>
+            <li>促成跨團隊技術對齊（協調而非命令）</li>
+          </ul>
+          <h4>不可以做</h4>
+          <ul class="cant">
+            <li>直接指揮其他團隊的工程師</li>
+            <li>越過 EM 決定內部實作</li>
+            <li>要求揭露超出協作所需的內部細節</li>
+          </ul>
+          <div class="kpi"><b>KPI：</b>跨團隊交付達成率、技術風險收斂程度</div>
+        </div>
+
+        <div class="card em">
+          <h3>EM</h3>
+          <div class="role-en">Engineering Manager · 工程主管</div>
+          <div class="ask">核心提問：團隊如何把東西做出來、做好</div>
+          <h4>可以做</h4>
+          <ul class="can">
+            <li>決定團隊內技術方案與架構取向</li>
+            <li>指派任務、調度人力</li>
+            <li>對交付品質負責（對趕工犧牲品質有否決權）</li>
+          </ul>
+          <h4>不可以做</h4>
+          <ul class="cant">
+            <li>單方面變更產品需求（須與 PM 對齊）</li>
+            <li>無視已對外承諾的里程碑（須與 TPM/PJM 對齊）</li>
+            <li>以「黑箱」為藉口拒絕合理協作透明度</li>
+          </ul>
+          <div class="kpi"><b>KPI：</b>團隊產能、交付品質、成員成長與留任</div>
+        </div>
+
+      </div>
+
+      <div class="warn">
+        <strong>⚠ 特別提醒 — TPM 的合法資訊範圍</strong><br>
+        TPM 能問的是「協作介面」：你們何時能交付什麼、有哪些技術相依會影響別人。至於「內部怎麼指派、怎麼算工時、怎麼估點」屬於 EM 的黑箱，TPM 無權逐項索取。當提問開始深入內部顆粒度時，應由 EM 界定分界，必要時 EM 對 EM 或往經理層拉齊，而非讓工程師直接對 TPM 攤開。
+      </div>
+    </section>
+
+    <section id="conflicts">
+      <h2><span class="num">04</span>高頻衝突點與處理原則</h2>
+      <p class="lead">界線的價值在衝突時才顯現，四種最常見的拉扯與原則如下。</p>
+      <ol class="conflicts">
+        <li>
+          <h4>需求 vs. 實作（PM ↔ EM）</h4>
+          <p>PM 出「What」，EM 出「How」。PM 說「我要即時通知功能」是對的；說「你們用 WebSocket 不要用 SSE」就越界了。</p>
+        </li>
+        <li>
+          <h4>進度 vs. 品質（PJM/TPM ↔ EM）</h4>
+          <p>PJM/TPM 顧時程，EM 對品質有最終否決權。衝突時不硬碰，把「時程 vs. 品質 vs. 範疇」三選一的取捨往上攤開，由有權者決策。</p>
+        </li>
+        <li>
+          <h4>跨團隊技術詢問的顆粒度（TPM ↔ EM）</h4>
+          <p>TPM 索取資訊若超出協作所需（進入內部指派邏輯、工時演算法），EM 有權界定「協作介面」與「團隊內部」的分界，保護自主決策空間與工程師專注度。</p>
+        </li>
+        <li>
+          <h4>產品 vs. 專案的優先權（PM ↔ PJM）</h4>
+          <p>PM 想加需求、PJM 想守時程。範疇變更必須走正式 change request，由 PM 說明價值、PJM 評估衝擊，不能靠會議口頭「順便加一下」。</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="recap">
+      <h2><span class="num">05</span>快速回顧</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>面向</th>
+              <th class="c-pm">PM</th>
+              <th class="c-pjm">PJM</th>
+              <th class="c-tpm">TPM</th>
+              <th class="c-em">EM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th>對的是</th><td>市場/用戶</td><td>時程/範疇</td><td>跨團隊技術</td><td>工程師/品質</td></tr>
+            <tr><th>核心提問</th><td>做什麼</td><td>何時交付</td><td>如何串接</td><td>如何做好</td></tr>
+            <tr><th>授權止於</th><td>需求，不碰實作</td><td>流程，不碰內容</td><td>協調，不指揮他隊</td><td>團隊內，須對齊外部承諾</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="memo">PM 定方向 ・ PJM 顧時程 ・ TPM 串技術 ・ EM 帶團隊</div>
+      <footer>B Team 內部協作手冊 · 職權邊界 v1.0</footer>
+    </section>
+  </main>
+</div>
+
+<script>
+  const links=[...document.querySelectorAll('#nav a')];
+  const sections=links.map(a=>document.querySelector(a.getAttribute('href')));
+  const obs=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const id='#'+e.target.id;
+        links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')===id));
+      }
+    });
+  },{rootMargin:'-30% 0px -60% 0px'});
+  sections.forEach(s=>s&&obs.observe(s));
+</script>
+</body>
+</html>

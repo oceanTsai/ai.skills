@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jira → GitHub Issue 自動化｜開發指導手冊</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --cream: #F5F0E8;
+    --cream-dark: #EDE7D9;
+    --ink: #1C1A17;
+    --ink-light: #4A4540;
+    --red: #B03A2E;
+    --red-light: #F9EDEB;
+    --gold: #A0813A;
+    --gold-light: #FDF6E3;
+    --blue: #1F4E79;
+    --blue-light: #EBF3FB;
+    --green: #1E6645;
+    --green-light: #EAF4EE;
+    --border: #D4CCC0;
+    --sidebar-w: 260px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.8;
+    font-size: 15px;
+  }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--sidebar-w);
+    height: 100vh;
+    background: var(--ink);
+    color: #C8C0B4;
+    overflow-y: auto;
+    padding: 32px 0 40px;
+    z-index: 100;
+  }
+  #sidebar .logo {
+    padding: 0 24px 24px;
+    border-bottom: 1px solid #333;
+    margin-bottom: 20px;
+  }
+  #sidebar .logo-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  #sidebar .logo-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 14px;
+    color: #EDE7D9;
+    line-height: 1.5;
+  }
+  #sidebar nav a {
+    display: block;
+    padding: 7px 24px;
+    font-size: 13px;
+    color: #9A9088;
+    text-decoration: none;
+    transition: color .15s, background .15s;
+    border-left: 2px solid transparent;
+  }
+  #sidebar nav a:hover,
+  #sidebar nav a.active {
+    color: #F5F0E8;
+    background: rgba(255,255,255,.04);
+    border-left-color: var(--red);
+  }
+  #sidebar nav .section-label {
+    padding: 16px 24px 4px;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #555;
+  }
+
+  /* ── MAIN ── */
+  #main {
+    margin-left: var(--sidebar-w);
+    padding: 56px 64px 100px;
+    max-width: calc(var(--sidebar-w) + 860px);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 36px;
+    margin-bottom: 56px;
+  }
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+  .hero-desc {
+    font-size: 16px;
+    color: var(--ink-light);
+    max-width: 620px;
+    line-height: 1.9;
+  }
+  .hero-meta {
+    margin-top: 20px;
+    display: flex;
+    gap: 24px;
+    font-size: 12px;
+    color: #888;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── SECTION ── */
+  .part {
+    margin-bottom: 72px;
+  }
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .part-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .1em;
+    color: var(--red);
+    background: var(--red-light);
+    border: 1px solid #E8C5C0;
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .part-header h2 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  h3 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 28px 0 10px;
+  }
+
+  p { margin-bottom: 14px; color: var(--ink-light); }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-left: 3px solid;
+    padding: 14px 18px;
+    margin: 20px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+    line-height: 1.75;
+  }
+  .callout.info    { border-color: var(--blue);  background: var(--blue-light);  color: #1a3d60; }
+  .callout.warn    { border-color: var(--gold);  background: var(--gold-light);  color: #6b5420; }
+  .callout.success { border-color: var(--green); background: var(--green-light); color: #164d30; }
+  .callout.danger  { border-color: var(--red);   background: var(--red-light);   color: #7a2418; }
+  .callout strong  { font-weight: 600; }
+
+  /* ── CODE ── */
+  pre {
+    background: #1C1A17;
+    color: #D4CCC0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    padding: 24px 28px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 16px 0 24px;
+    position: relative;
+  }
+  pre .comment  { color: #6B7C6A; }
+  pre .keyword  { color: #C792EA; }
+  pre .string   { color: #C3E88D; }
+  pre .fn       { color: #82AAFF; }
+  pre .num      { color: #F78C6C; }
+  pre .prop     { color: #FFCB6B; }
+  .code-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: var(--ink);
+    color: var(--gold);
+    padding: 4px 12px;
+    display: inline-block;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: -4px;
+    margin-top: 16px;
+  }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+  th {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: .05em;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink-light);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--cream-dark); }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--cream-dark);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--red);
+  }
+
+  /* ── ARCH DIAGRAM ── */
+  .arch-diagram {
+    background: var(--ink);
+    color: #C8C0B4;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 2;
+    padding: 28px 32px;
+    border-radius: 8px;
+    margin: 20px 0;
+    white-space: pre;
+  }
+  .arch-diagram .highlight { color: var(--gold); }
+  .arch-diagram .arrow { color: #82AAFF; }
+
+  /* ── STEP LIST ── */
+  ol.steps { padding-left: 0; list-style: none; counter-reset: step; }
+  ol.steps li {
+    counter-increment: step;
+    padding: 10px 0 10px 44px;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink-light);
+    font-size: 14px;
+    line-height: 1.75;
+  }
+  ol.steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 26px; height: 26px;
+    background: var(--red);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  ul.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 18px; list-style: none; }
+  ul.tags li {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+  ul.tags li.gas  { border-color: #3A7D44; color: #2a5c32; background: #eaf4ee; }
+  ul.tags li.jira { border-color: #0052CC; color: #003a99; background: #e6edff; }
+  ul.tags li.gh   { border-color: #333; color: #333; background: #f0f0f0; }
+  ul.tags li.sheet{ border-color: #A0813A; color: #7a5e20; background: #fdf6e3; }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="logo">
+    <div class="logo-label">B Team Internal</div>
+    <div class="logo-title">Jira → GitHub<br>自動化開發手冊</div>
+  </div>
+  <nav>
+    <div class="section-label">概覽</div>
+    <a href="#arch">整體架構</a>
+    <a href="#prereq">前置準備</a>
+    <div class="section-label">實作步驟</div>
+    <a href="#part1">Part 1 — 試算表規格</a>
+    <a href="#part2">Part 2 — GAS 子任務抓取</a>
+    <a href="#part3">Part 3 — GAS 排程觸發</a>
+    <a href="#part4">Part 4 — GitHub Actions</a>
+    <div class="section-label">設定</div>
+    <a href="#env">環境變數清單</a>
+    <a href="#verify">驗收 Checklist</a>
+  </nav>
+</nav>
+
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">B Team · 臨時自動化方案</div>
+    <h1>Jira 子任務 → GitHub Issue<br>自動化開發指導手冊</h1>
+    <p class="hero-desc">
+      本手冊描述一套以 Google Apps Script + GitHub Actions 組成的輕量自動化流程：
+      依據指定母單號，抓取 Label 為 <code>Alice</code> 的子任務，
+      每日凌晨 4 點自動將任務描述同步開立為 GitHub Issue。
+    </p>
+    <div class="hero-meta">
+      <span>適用：Google Apps Script (V8)</span>
+      <span>Jira Cloud REST API v3</span>
+      <span>GitHub Actions</span>
+    </div>
+  </div>
+
+  <!-- ARCH -->
+  <div class="part" id="arch">
+    <div class="part-header">
+      <span class="part-number">OVERVIEW</span>
+      <h2>整體架構</h2>
+    </div>
+    <div class="arch-diagram"><span class="highlight">┌─ 手動執行（一次性或需要更新時）──────────────────────────┐</span>
+│                                                            │
+│  GAS: fetchAliceSubtasks()                                 │
+│  <span class="arrow">→</span> 呼叫 Jira API 取得母單 {PARENT_ISSUE_KEY} 的所有 Subtask   │
+│  <span class="arrow">→</span> 篩選 Label 包含 "Alice" 的子任務                           │
+│  <span class="arrow">→</span> 將 Issue Key 寫入 Google Sheets（Sheet: task_queue）       │
+│                                                            │
+<span class="highlight">└────────────────────────────────────────────────────────────┘</span>
+
+<span class="highlight">┌─ 每日凌晨 4:00（GAS Time-based Trigger）──────────────────┐</span>
+│                                                            │
+│  GAS: dispatchToGitHub()                                   │
+│  <span class="arrow">→</span> 讀取 Sheets task_queue，取出 status = "pending" 的列      │
+│  <span class="arrow">→</span> 每筆 Issue Key 各自觸發一次 GitHub workflow_dispatch       │
+│  <span class="arrow">→</span> 更新該列 status = "dispatched"                            │
+│                                                            │
+<span class="highlight">└────────────────────────────────────────────────────────────┘</span>
+
+<span class="highlight">┌─ GitHub Actions: sync-jira-issue.yml ──────────────────────┐</span>
+│                                                            │
+│  Input: jira_issue_key                                     │
+│  <span class="arrow">→</span> 呼叫 Jira API 取得該 Issue 的 summary / description       │
+│  <span class="arrow">→</span> 以 summary 為 title、description 為 body                  │
+│  <span class="arrow">→</span> 呼叫 GitHub API 建立 GitHub Issue                         │
+│                                                            │
+<span class="highlight">└────────────────────────────────────────────────────────────┘</span></div>
+
+    <div class="callout info">
+      <strong>設計決策備忘</strong>：GitHub workflow dispatch 採每筆各自觸發（方案 B），
+      錯誤隔離、每個 run 有獨立 log，單筆失敗可直接在 GitHub Actions UI 手動 re-run，
+      不影響其他筆。
+    </div>
+  </div>
+
+  <!-- PREREQ -->
+  <div class="part" id="prereq">
+    <div class="part-header">
+      <span class="part-number">STEP 0</span>
+      <h2>前置準備</h2>
+    </div>
+
+    <h3>需要準備的帳號與 Token</h3>
+    <table>
+      <tr><th>項目</th><th>說明</th><th>取得方式</th></tr>
+      <tr>
+        <td><code>Jira API Token</code></td>
+        <td>用於 GAS 及 GitHub Actions 呼叫 Jira</td>
+        <td>Jira → 帳號頭像 → Manage account → Security → API tokens</td>
+      </tr>
+      <tr>
+        <td><code>Jira Email</code></td>
+        <td>與 API Token 搭配做 Basic Auth</td>
+        <td>登入 Jira 的 email</td>
+      </tr>
+      <tr>
+        <td><code>Jira Base URL</code></td>
+        <td>例如 <code>https://your-org.atlassian.net</code></td>
+        <td>Jira 網址列複製</td>
+      </tr>
+      <tr>
+        <td><code>GitHub Fine-grained PAT</code></td>
+        <td>GAS 觸發 workflow dispatch 用，<strong>只對指定 repo 的 Actions 有效</strong></td>
+        <td>見下方建立步驟</td>
+      </tr>
+      <tr>
+        <td><code>GitHub Token（Actions 內部用）</code></td>
+        <td>建立 GitHub Issue 用</td>
+        <td>直接用 <code>secrets.GITHUB_TOKEN</code>，GitHub 自動產生，無需額外建立</td>
+      </tr>
+    </table>
+
+    <h3>① Jira API Token 建立與設定</h3>
+    <ol class="steps">
+      <li>登入 Jira，點右上角頭像 → <strong>Manage account</strong></li>
+      <li>上方頁籤選 <strong>Security</strong> → <strong>API tokens</strong> → <strong>Create API token</strong></li>
+      <li>輸入名稱（例如 <code>gas-jira-sync</code>），複製產生的 token 值（離開後不再顯示）</li>
+      <li>
+        <strong>此 token 需設定到兩個地方：</strong>
+        <table style="margin-top:10px">
+          <tr><th>設定位置</th><th>屬性／Secret 名稱</th><th>說明</th></tr>
+          <tr><td>GAS Script Properties</td><td><code>JIRA_API_TOKEN</code></td><td>GAS 呼叫 Jira API 用</td></tr>
+          <tr><td>GitHub Repository Secrets</td><td><code>JIRA_API_TOKEN</code></td><td>GitHub Actions 呼叫 Jira API 用</td></tr>
+        </table>
+      </li>
+    </ol>
+
+    <h3>② 確認你的 GitHub 帳號名稱</h3>
+    <ol class="steps">
+      <li>登入 GitHub，點右上角頭像</li>
+      <li>第一行顯示的就是你的帳號名稱（例如 <code>ocean-tsai</code>），或進入 <strong>Settings → Public profile</strong> 查看 <strong>Username</strong> 欄位</li>
+      <li>記下這個名稱，後續需填入 GitHub Secrets 的 <code>ALLOWED_GITHUB_ACTOR</code></li>
+    </ol>
+
+    <h3>③ GitHub Fine-grained PAT 建立步驟</h3>
+    <ol class="steps">
+      <li>GitHub 右上角頭像 → <strong>Settings</strong></li>
+      <li>左側選單最底部 → <strong>Developer settings</strong></li>
+      <li><strong>Personal access tokens</strong> → <strong>Fine-grained tokens</strong> → 右上角 <strong>Generate new token</strong></li>
+      <li>填寫設定：
+        <table style="margin-top:10px">
+          <tr><th>欄位</th><th>填入值</th></tr>
+          <tr><td>Token name</td><td><code>gas-jira-sync</code>（自訂）</td></tr>
+          <tr><td>Expiration</td><td>建議 90 天或 1 年</td></tr>
+          <tr><td>Resource owner</td><td>下拉選<strong>公司組織名稱</strong>（例如 <code>104corp</code>），不要選個人帳號，否則看不到公司 repo</td></tr>
+          <tr><td>Repository access</td><td><strong>Only select repositories</strong> → 選目標 repo</td></tr>
+          <tr><td>Permissions → Actions</td><td><strong>Read and write</strong>（勾選 Actions 後，右側下拉選 Read and write）</td></tr>
+          <tr><td>Permissions → Metadata</td><td><strong>Read-only</strong>（GitHub 自動勾選，必要項目，不需更動）</td></tr>
+          <tr><td>其他所有 Permissions</td><td>維持 <strong>No access</strong></td></tr>
+        </table>
+      </li>
+      <li>點 <strong>Generate token</strong>，立刻複製 token 值（離開頁面後不會再顯示）</li>
+      <li>將 token 值貼入 <strong>GAS Script Properties</strong> 的 <code>GITHUB_TOKEN</code> 欄位（只需設定這一個地方）</li>
+    </ol>
+
+    <div class="callout info">
+      <strong>Fine-grained PAT vs Classic PAT</strong>：Classic PAT 一旦洩漏，持有者可對你帳號下<strong>所有 repo</strong> 操作；
+      Fine-grained PAT 限定單一 repo 且只開 Actions 權限，洩漏後攻擊面只有這一個 repo 的 workflow 觸發，其他全部無效。
+      本方案<strong>一律使用 Fine-grained PAT</strong>，不使用 Classic PAT。
+    </div>
+
+    <div class="callout warn">
+      <strong>組織管理員審核</strong>：Resource owner 選組織後，組織管理員可能需要先在
+      GitHub 組織設定中允許 Fine-grained PAT 存取。若送出後看到「等待審核」提示，
+      需請組織管理員到 <strong>Organization Settings → Personal access tokens → Pending requests</strong> 審核通過後才能使用。
+      若組織管理員尚未開放此功能，可暫時改用 <strong>Classic PAT</strong>（選 <code>workflow</code> scope），
+      功能相同，但權限範圍較大，請妥善保管。
+    </div>
+
+    <h3>④ GAS Script Properties 設定方式</h3>
+    <ol class="steps">
+      <li>開啟 GAS 專案，上方選單點 <strong>專案設定</strong>（齒輪圖示）</li>
+      <li>往下捲到 <strong>指令碼屬性</strong> 區塊，點 <strong>新增指令碼屬性</strong></li>
+      <li>依下表逐一新增，每筆填入屬性名稱與對應的值：
+        <table style="margin-top:10px">
+          <tr><th>屬性名稱</th><th>填入值來源</th></tr>
+          <tr><td><code>JIRA_BASE_URL</code></td><td>Jira 網址列，例如 <code>https://your-org.atlassian.net</code></td></tr>
+          <tr><td><code>JIRA_EMAIL</code></td><td>登入 Jira 的 email</td></tr>
+          <tr><td><code>JIRA_API_TOKEN</code></td><td>步驟 ① 產生的 Jira API Token</td></tr>
+          <tr><td><code>JIRA_PARENT_KEY</code></td><td>母單 Issue Key，例如 <code>VIPOP-999</code></td></tr>
+          <tr><td><code>SPREADSHEET_ID</code></td><td>試算表網址中 <code>/d/</code> 與 <code>/edit</code> 之間那段</td></tr>
+          <tr><td><code>GITHUB_TOKEN</code></td><td>步驟 ③ 產生的 Fine-grained PAT</td></tr>
+          <tr><td><code>GITHUB_OWNER</code></td><td>GitHub 組織或帳號名稱</td></tr>
+          <tr><td><code>GITHUB_REPO</code></td><td>目標 Repository 名稱</td></tr>
+          <tr><td><code>GITHUB_WORKFLOW_ID</code></td><td><code>sync-jira-issue.yml</code></td></tr>
+          <tr><td><code>GITHUB_REF</code></td><td><code>main</code></td></tr>
+        </table>
+      </li>
+      <li>全部填完後點 <strong>儲存指令碼屬性</strong></li>
+    </ol>
+
+    <h3>⑤ GitHub Repository Secrets 設定方式</h3>
+    <ol class="steps">
+      <li>進入目標 GitHub repo 頁面</li>
+      <li>上方頁籤點 <strong>Settings</strong></li>
+      <li>左側選單 → <strong>Secrets and variables</strong> → <strong>Actions</strong></li>
+      <li>點 <strong>New repository secret</strong>，依下表逐一新增：
+        <table style="margin-top:10px">
+          <tr><th>Secret 名稱</th><th>填入值來源</th></tr>
+          <tr><td><code>JIRA_BASE_URL</code></td><td>Jira 網址列，例如 <code>https://your-org.atlassian.net</code></td></tr>
+          <tr><td><code>JIRA_EMAIL</code></td><td>登入 Jira 的 email</td></tr>
+          <tr><td><code>JIRA_API_TOKEN</code></td><td>步驟 ① 產生的 Jira API Token（與 GAS 同一組）</td></tr>
+          <tr><td><code>ALLOWED_GITHUB_ACTOR</code></td><td>步驟 ② 確認的 GitHub 帳號名稱</td></tr>
+        </table>
+      </li>
+    </ol>
+
+    <div class="callout warn">
+      <strong>注意</strong>：Jira API Token 會同時存在 GAS Script Properties 與 GitHub Secrets 兩邊，
+      填入的值相同，只是兩個系統各自需要一份。請勿將任何 Token 直接寫死在程式碼中。
+    </div>
+
+    <h3>GitHub Actions 身份驗證說明</h3>
+    <p>
+      workflow 收到 dispatch 請求後，第一步會驗證觸發者的 GitHub 帳號是否在白名單內。
+      這個帳號資訊（<code>triggering_actor</code>）是 <strong>GitHub 系統自動判斷的</strong>，
+      來自 Fine-grained PAT 所綁定的帳號，無法偽造。
+      已在步驟 ⑤ 設定到 <code>ALLOWED_GITHUB_ACTOR</code>。
+    </p>
+  </div>
+
+  <!-- PART 1 -->
+  <div class="part" id="part1">
+    <div class="part-header">
+      <span class="part-number">PART 1</span>
+      <h2>Google Sheets 試算表規格</h2>
+    </div>
+    <ul class="tags">
+      <li class="sheet">Google Sheets</li>
+      <li class="gas">手動建立</li>
+    </ul>
+
+    <p>工程師需先手動建立一張 Google Sheets，之後 GAS 會對它進行讀寫。</p>
+
+    <h3>建立步驟</h3>
+    <ol class="steps">
+      <li>在 Google Drive 新增一張試算表，命名為 <strong>jira-alice-task-queue</strong>（或自訂，之後需將 ID 填入 Script Properties）。</li>
+      <li>將預設的 Sheet1 改名為 <code>task_queue</code>（大小寫需一致）。</li>
+      <li>在第一列建立以下欄位標題（A1 開始）：</li>
+    </ol>
+
+    <table>
+      <tr><th>欄位</th><th>欄名（第一列）</th><th>說明</th></tr>
+      <tr><td>A</td><td><code>issue_key</code></td><td>Jira 子任務編號，例如 <code>VIPOP-1234</code></td></tr>
+      <tr><td>B</td><td><code>summary</code></td><td>子任務標題（抓取時一併寫入，方便人工核對）</td></tr>
+      <tr><td>C</td><td><code>status</code></td><td><code>pending</code> / <code>dispatched</code> / <code>error</code></td></tr>
+      <tr><td>D</td><td><code>fetched_at</code></td><td>抓取時間戳記</td></tr>
+      <tr><td>E</td><td><code>dispatched_at</code></td><td>dispatch 觸發時間戳記</td></tr>
+      <tr><td>F</td><td><code>note</code></td><td>錯誤訊息或備註</td></tr>
+    </table>
+
+    <div class="callout success">
+      建好後，從瀏覽器網址列複製 Spreadsheet ID（網址中 <code>/d/</code> 和 <code>/edit</code> 之間那段），
+      後續填入 GAS Script Properties。
+    </div>
+  </div>
+
+  <!-- PART 2 -->
+  <div class="part" id="part2">
+    <div class="part-header">
+      <span class="part-number">PART 2</span>
+      <h2>GAS Script A — 抓取 Jira 子任務</h2>
+    </div>
+    <ul class="tags">
+      <li class="gas">Google Apps Script</li>
+      <li class="jira">Jira REST API v3</li>
+      <li class="sheet">Google Sheets</li>
+    </ul>
+
+    <p>
+      此 Script 負責：呼叫 Jira API 取得指定母單下所有 Subtask，
+      篩選 Label 包含 <code>Alice</code> 的項目，寫入試算表 <code>task_queue</code> sheet，
+      預設 status 為 <code>pending</code>。
+    </p>
+
+    <div class="callout info">
+      <strong>執行時機</strong>：此函式為<strong>手動執行</strong>（或需要重新抓取時執行），
+      不需設排程。建議在確認母單號、試算表都就緒後，執行一次。
+    </div>
+
+    <h3>建立 GAS 專案</h3>
+    <ol class="steps">
+      <li>前往 <a href="https://script.google.com" target="_blank">script.google.com</a>，新增專案，命名為 <strong>JiraAliceSync</strong>。</li>
+      <li>建立兩個檔案：<code>Config.gs</code>（存放常數）與 <code>FetchTasks.gs</code>（主邏輯）。</li>
+      <li>進入「專案設定」→「指令碼屬性」，新增下方表格的所有屬性。</li>
+    </ol>
+
+    <h3>Script Properties 設定</h3>
+    <table>
+      <tr><th>屬性名稱</th><th>範例值</th><th>說明</th></tr>
+      <tr><td><code>JIRA_BASE_URL</code></td><td><code>https://your-org.atlassian.net</code></td><td>Jira 網域</td></tr>
+      <tr><td><code>JIRA_EMAIL</code></td><td><code>you@company.com</code></td><td>Jira 帳號 email</td></tr>
+      <tr><td><code>JIRA_API_TOKEN</code></td><td><code>ATATxxxxxxxx</code></td><td>Jira API Token</td></tr>
+      <tr><td><code>JIRA_PARENT_KEY</code></td><td><code>VIPOP-999</code></td><td>母單 Issue Key</td></tr>
+      <tr><td><code>SPREADSHEET_ID</code></td><td><code>1BxiM...</code></td><td>試算表 ID</td></tr>
+    </table>
+
+    <div class="code-label">FetchTasks.gs</div>
+    <pre><span class="comment">// ── CONFIG：從 Script Properties 讀取，避免 Token 寫死在程式碼 ──</span>
+<span class="keyword">const</span> <span class="prop">CONFIG</span> = {
+  <span class="fn">get</span> <span class="prop">JIRA_BASE_URL</span>()   { <span class="keyword">return</span> <span class="fn">PropertiesService</span>.<span class="fn">getScriptProperties</span>().<span class="fn">getProperty</span>(<span class="string">'JIRA_BASE_URL'</span>); },
+  <span class="fn">get</span> <span class="prop">JIRA_EMAIL</span>()      { <span class="keyword">return</span> <span class="fn">PropertiesService</span>.<span class="fn">getScriptProperties</span>().<span class="fn">getProperty</span>(<span class="string">'JIRA_EMAIL'</span>); },
+  <span class="fn">get</span> <span class="prop">JIRA_API_TOKEN</span>()  { <span class="keyword">return</span> <span class="fn">PropertiesService</span>.<span class="fn">getScriptProperties</span>().<span class="fn">getProperty</span>(<span class="string">'JIRA_API_TOKEN'</span>); },
+  <span class="fn">get</span> <span class="prop">JIRA_PARENT_KEY</span>() { <span class="keyword">return</span> <span class="fn">PropertiesService</span>.<span class="fn">getScriptProperties</span>().<span class="fn">getProperty</span>(<span class="string">'JIRA_PARENT_KEY'</span>); },
+  <span class="fn">get</span> <span class="prop">SPREADSHEET_ID</span>()  { <span class="keyword">return</span> <span class="fn">PropertiesService</span>.<span class="fn">getScriptProperties</span>().<span class="fn">getProperty</span>(<span class="string">'SPREADSHEET_ID'</span>); },
+  <span class="prop">SHEET_NAME</span>: <span class="string">'task_queue'</span>,
+  <span class="prop">ALICE_LABEL</span>: <span class="string">'Alice'</span>,
+};
+
+<span class="comment">// ─────────────────────────────────────────────────────────────────</span>
+
+<span class="comment">/**
+ * 主入口：抓取母單下所有 Label = Alice 的子任務，寫入試算表
+ * 手動執行此函式，或需要重新同步時執行
+ */</span>
+<span class="keyword">function</span> <span class="fn">fetchAliceSubtasks</span>() {
+  <span class="keyword">const</span> subtasks = <span class="fn">_getSubtasksFromJira</span>(CONFIG.<span class="prop">JIRA_PARENT_KEY</span>);
+  <span class="keyword">const</span> aliceTasks = subtasks.<span class="fn">filter</span>(t => t.labels.<span class="fn">includes</span>(CONFIG.<span class="prop">ALICE_LABEL</span>));
+
+  <span class="keyword">if</span> (aliceTasks.length === <span class="num">0</span>) {
+    <span class="fn">Logger</span>.<span class="fn">log</span>(<span class="string">'未找到 Label = Alice 的子任務'</span>);
+    <span class="keyword">return</span>;
+  }
+
+  <span class="fn">_writeTasksToSheet</span>(aliceTasks);
+  <span class="fn">Logger</span>.<span class="fn">log</span>(<span class="string">`完成：共寫入 ${aliceTasks.length} 筆任務`</span>);
+}
+
+<span class="comment">/**
+ * 呼叫 Jira API 取得母單的所有子任務（issuetype = Subtask）
+ * @param {string} parentKey - 母單 Issue Key，例如 "VIPOP-999"
+ * @returns {Array} subtask 陣列，每筆包含 key, summary, labels
+ */</span>
+<span class="keyword">function</span> <span class="fn">_getSubtasksFromJira</span>(parentKey) {
+  <span class="keyword">const</span> jql = <span class="string">`parent = "${parentKey}" AND issuetype = Subtask`</span>;
+  <span class="keyword">const</span> url = <span class="string">`${CONFIG.JIRA_BASE_URL}/rest/api/3/search`</span>
+    + <span class="string">`?jql=${encodeURIComponent(jql)}`</span>
+    + <span class="string">`&fields=summary,labels`</span>
+    + <span class="string">`&maxResults=100`</span>;
+
+  <span class="keyword">const</span> token = <span class="fn">Utilities</span>.<span class="fn">base64Encode</span>(<span class="string">`${CONFIG.JIRA_EMAIL}:${CONFIG.JIRA_API_TOKEN}`</span>);
+  <span class="keyword">const</span> response = <span class="fn">UrlFetchApp</span>.<span class="fn">fetch</span>(url, {
+    method: <span class="string">'get'</span>,
+    headers: {
+      <span class="string">'Authorization'</span>: <span class="string">`Basic ${token}`</span>,
+      <span class="string">'Accept'</span>: <span class="string">'application/json'</span>,
+    },
+    muteHttpExceptions: <span class="keyword">true</span>,
+  });
+
+  <span class="keyword">if</span> (response.<span class="fn">getResponseCode</span>() !== <span class="num">200</span>) {
+    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="fn">Error</span>(<span class="string">`Jira API 錯誤: ${response.getResponseCode()} ${response.getContentText()}`</span>);
+  }
+
+  <span class="keyword">const</span> data = <span class="fn">JSON</span>.<span class="fn">parse</span>(response.<span class="fn">getContentText</span>());
+  <span class="keyword">return</span> data.issues.<span class="fn">map</span>(issue => ({
+    key: issue.key,
+    summary: issue.fields.summary,
+    labels: issue.fields.labels || [],
+  }));
+}
+
+<span class="comment">/**
+ * 將子任務陣列寫入 Google Sheets
+ * 若 issue_key 已存在則跳過（不重複寫入）
+ * @param {Array} tasks - { key, summary, labels }
+ */</span>
+<span class="keyword">function</span> <span class="fn">_writeTasksToSheet</span>(tasks) {
+  <span class="keyword">const</span> ss    = <span class="fn">SpreadsheetApp</span>.<span class="fn">openById</span>(CONFIG.<span class="prop">SPREADSHEET_ID</span>);
+  <span class="keyword">const</span> sheet = ss.<span class="fn">getSheetByName</span>(CONFIG.<span class="prop">SHEET_NAME</span>);
+  <span class="keyword">const</span> now   = <span class="keyword">new</span> <span class="fn">Date</span>().<span class="fn">toISOString</span>();
+
+  <span class="comment">// 取得已存在的 issue_key 清單，避免重複寫入</span>
+  <span class="keyword">const</span> lastRow   = sheet.<span class="fn">getLastRow</span>();
+  <span class="keyword">const</span> existKeys = lastRow > <span class="num">1</span>
+    ? sheet.<span class="fn">getRange</span>(<span class="num">2</span>, <span class="num">1</span>, lastRow - <span class="num">1</span>, <span class="num">1</span>).<span class="fn">getValues</span>().<span class="fn">flat</span>()
+    : [];
+
+  <span class="keyword">const</span> newRows = tasks
+    .<span class="fn">filter</span>(t => !existKeys.<span class="fn">includes</span>(t.key))
+    .<span class="fn">map</span>(t => [t.key, t.summary, <span class="string">'pending'</span>, now, <span class="string">''</span>, <span class="string">''</span>]);
+
+  <span class="keyword">if</span> (newRows.length === <span class="num">0</span>) {
+    <span class="fn">Logger</span>.<span class="fn">log</span>(<span class="string">'所有任務均已存在於試算表，無新增'</span>);
+    <span class="keyword">return</span>;
+  }
+
+  sheet.<span class="fn">getRange</span>(lastRow + <span class="num">1</span>, <span class="num">1</span>, newRows.length, <span class="num">6</span>).<span class="fn">setValues</span>(newRows);
+  <span class="fn">Logger</span>.<span class="fn">log</span>(<span class="string">`新增 ${newRows.length} 筆，跳過 ${tasks.length - newRows.length} 筆（已存在）`</span>);
+}</pre>
+  </div>
+
+  <!-- PART 3 -->
+  <div class="part" id="part3">
+    <div class="part-header">
+      <span class="part-number">PART 3</span>
+      <h2>GAS Script B — 排程觸發 GitHub Dispatch</h2>
+    </div>
+    <ul class="tags">
+      <li class="gas">Google Apps Script</li>
+      <li class="gh">GitHub API</li>
+      <li class="sheet">Google Sheets</li>
+    </ul>
+
+    <p>
+      此 Script 負責：每日凌晨 4:00 讀取試算表中 status = <code>pending</code> 的列，
+      逐一呼叫 GitHub API 觸發 <code>workflow_dispatch</code>，
+      成功後將該列 status 更新為 <code>dispatched</code>。
+    </p>
+
+    <h3>新增 Script Properties</h3>
+    <table>
+      <tr><th>屬性名稱</th><th>範例值</th><th>說明</th></tr>
+      <tr><td><code>GITHUB_TOKEN</code></td><td><code>github_pat_xxx</code></td><td>Fine-grained PAT，需 Actions: write 權限</td></tr>
+      <tr><td><code>GITHUB_OWNER</code></td><td><code>your-org</code></td><td>GitHub 組織或帳號名稱</td></tr>
+      <tr><td><code>GITHUB_REPO</code></td><td><code>your-repo</code></td><td>目標 Repository 名稱</td></tr>
+      <tr><td><code>GITHUB_WORKFLOW_ID</code></td><td><code>sync-jira-issue.yml</code></td><td>workflow 檔案名稱</td></tr>
+      <tr><td><code>GITHUB_REF</code></td><td><code>main</code></td><td>觸發的 branch</td></tr>
+    </table>
+
+    <div class="code-label">DispatchTasks.gs</div>
+    <pre><span class="comment">/**
+ * 排程主入口：凌晨 4:00 由 Time-based Trigger 自動呼叫
+ * 讀取試算表 pending 任務，逐一觸發 GitHub workflow dispatch
+ */</span>
+<span class="keyword">function</span> <span class="fn">dispatchToGitHub</span>() {
+  <span class="keyword">const</span> ss    = <span class="fn">SpreadsheetApp</span>.<span class="fn">openById</span>(CONFIG.<span class="prop">SPREADSHEET_ID</span>);
+  <span class="keyword">const</span> sheet = ss.<span class="fn">getSheetByName</span>(CONFIG.<span class="prop">SHEET_NAME</span>);
+  <span class="keyword">const</span> rows  = <span class="fn">_getPendingRows</span>(sheet);
+
+  <span class="keyword">if</span> (rows.length === <span class="num">0</span>) {
+    <span class="fn">Logger</span>.<span class="fn">log</span>(<span class="string">'目前無 pending 任務'</span>);
+    <span class="keyword">return</span>;
+  }
+
+  rows.<span class="fn">forEach</span>(({ rowIndex, issueKey }) => {
+    <span class="keyword">try</span> {
+      <span class="fn">_triggerWorkflowDispatch</span>(issueKey);
+      <span class="fn">_updateRowStatus</span>(sheet, rowIndex, <span class="string">'dispatched'</span>);
+      <span class="fn">Logger</span>.<span class="fn">log</span>(<span class="string">`✓ dispatched: ${issueKey}`</span>);
+    } <span class="keyword">catch</span> (e) {
+      <span class="fn">_updateRowStatus</span>(sheet, rowIndex, <span class="string">'error'</span>, e.message);
+      <span class="fn">Logger</span>.<span class="fn">log</span>(<span class="string">`✗ error: ${issueKey} → ${e.message}`</span>);
+    }
+  });
+}
+
+<span class="comment">/**
+ * 從試算表取出所有 status = "pending" 的列
+ * @returns {Array} [{ rowIndex, issueKey }]
+ */</span>
+<span class="keyword">function</span> <span class="fn">_getPendingRows</span>(sheet) {
+  <span class="keyword">const</span> lastRow = sheet.<span class="fn">getLastRow</span>();
+  <span class="keyword">if</span> (lastRow < <span class="num">2</span>) <span class="keyword">return</span> [];
+
+  <span class="keyword">const</span> data = sheet.<span class="fn">getRange</span>(<span class="num">2</span>, <span class="num">1</span>, lastRow - <span class="num">1</span>, <span class="num">3</span>).<span class="fn">getValues</span>();
+  <span class="keyword">return</span> data
+    .<span class="fn">map</span>(([issueKey, summary, status], i) => ({ rowIndex: i + <span class="num">2</span>, issueKey, status }))
+    .<span class="fn">filter</span>(r => r.status === <span class="string">'pending'</span> && r.issueKey);
+}
+
+<span class="comment">/**
+ * 呼叫 GitHub API 觸發 workflow_dispatch
+ * @param {string} issueKey - Jira Issue Key，例如 "VIPOP-1234"
+ */</span>
+<span class="keyword">function</span> <span class="fn">_triggerWorkflowDispatch</span>(issueKey) {
+  <span class="keyword">const</span> props  = <span class="fn">PropertiesService</span>.<span class="fn">getScriptProperties</span>().<span class="fn">getProperties</span>();
+  <span class="keyword">const</span> url    = <span class="string">`https://api.github.com/repos/${props.GITHUB_OWNER}/${props.GITHUB_REPO}`</span>
+                + <span class="string">`/actions/workflows/${props.GITHUB_WORKFLOW_ID}/dispatches`</span>;
+
+  <span class="keyword">const</span> payload = {
+    ref: props.<span class="prop">GITHUB_REF</span>,
+    inputs: { jira_issue_key: issueKey },
+  };
+
+  <span class="keyword">const</span> response = <span class="fn">UrlFetchApp</span>.<span class="fn">fetch</span>(url, {
+    method: <span class="string">'post'</span>,
+    headers: {
+      <span class="string">'Authorization'</span>: <span class="string">`Bearer ${props.GITHUB_TOKEN}`</span>,
+      <span class="string">'Accept'</span>: <span class="string">'application/vnd.github+json'</span>,
+      <span class="string">'X-GitHub-Api-Version'</span>: <span class="string">'2022-11-28'</span>,
+    },
+    contentType: <span class="string">'application/json'</span>,
+    payload: <span class="fn">JSON</span>.<span class="fn">stringify</span>(payload),
+    muteHttpExceptions: <span class="keyword">true</span>,
+  });
+
+  <span class="comment">// workflow_dispatch 成功回傳 204 No Content</span>
+  <span class="keyword">const</span> code = response.<span class="fn">getResponseCode</span>();
+  <span class="keyword">if</span> (code !== <span class="num">204</span>) {
+    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="fn">Error</span>(<span class="string">`GitHub API 錯誤: ${code} ${response.getContentText()}`</span>);
+  }
+}
+
+<span class="comment">/**
+ * 更新試算表指定列的 status 與 dispatched_at / note
+ */</span>
+<span class="keyword">function</span> <span class="fn">_updateRowStatus</span>(sheet, rowIndex, status, note = <span class="string">''</span>) {
+  <span class="keyword">const</span> now = <span class="keyword">new</span> <span class="fn">Date</span>().<span class="fn">toISOString</span>();
+  sheet.<span class="fn">getRange</span>(rowIndex, <span class="num">3</span>).<span class="fn">setValue</span>(status);
+  sheet.<span class="fn">getRange</span>(rowIndex, <span class="num">5</span>).<span class="fn">setValue</span>(now);
+  sheet.<span class="fn">getRange</span>(rowIndex, <span class="num">6</span>).<span class="fn">setValue</span>(note);
+}
+
+<span class="comment">// ─────────────────────────────────────────────
+//  排程建立（只需執行一次）
+//  在 GAS 編輯器手動執行 setupTrigger()
+// ─────────────────────────────────────────────</span>
+<span class="keyword">function</span> <span class="fn">setupTrigger</span>() {
+  <span class="comment">// 先刪除舊的同名 trigger，避免重複</span>
+  <span class="fn">ScriptApp</span>.<span class="fn">getProjectTriggers</span>()
+    .<span class="fn">filter</span>(t => t.<span class="fn">getHandlerFunction</span>() === <span class="string">'dispatchToGitHub'</span>)
+    .<span class="fn">forEach</span>(t => <span class="fn">ScriptApp</span>.<span class="fn">deleteTrigger</span>(t));
+
+  <span class="fn">ScriptApp</span>.<span class="fn">newTrigger</span>(<span class="string">'dispatchToGitHub'</span>)
+    .<span class="fn">timeBased</span>()
+    .<span class="fn">everyDays</span>(<span class="num">1</span>)
+    .<span class="fn">atHour</span>(<span class="num">4</span>)
+    .<span class="fn">create</span>();
+
+  <span class="fn">Logger</span>.<span class="fn">log</span>(<span class="string">'排程建立完成：每日 04:00 執行 dispatchToGitHub'</span>);
+}</pre>
+
+    <div class="callout warn">
+      <strong><code>setupTrigger()</code> 只需執行一次。</strong>
+      執行後可在「觸發條件」頁面確認排程是否建立成功。
+      重複執行會先清除舊的再重建，不會產生重複排程。
+    </div>
+  </div>
+
+  <!-- PART 4 -->
+  <div class="part" id="part4">
+    <div class="part-header">
+      <span class="part-number">PART 4</span>
+      <h2>GitHub Actions Workflow</h2>
+    </div>
+    <ul class="tags">
+      <li class="gh">GitHub Actions</li>
+      <li class="jira">Jira REST API v3</li>
+      <li class="gh">GitHub Issues API</li>
+    </ul>
+
+    <p>
+      此 workflow 由 GAS 觸發，接收 <code>jira_issue_key</code> 作為 input，
+      取回 Jira 任務的 summary 與 description，然後在 GitHub repo 建立 Issue。
+    </p>
+
+    <h3>檔案位置</h3>
+    <p>在 repo 中建立以下路徑的檔案：<code>.github/workflows/sync-jira-issue.yml</code></p>
+
+    <h3>GitHub Secrets 設定</h3>
+    <p>前往 repo → Settings → Secrets and variables → Actions，新增：</p>
+    <table>
+      <tr><th>Secret 名稱</th><th>說明</th></tr>
+      <tr><td><code>JIRA_BASE_URL</code></td><td>Jira 網域，例如 <code>https://your-org.atlassian.net</code></td></tr>
+      <tr><td><code>JIRA_EMAIL</code></td><td>Jira 帳號 email</td></tr>
+      <tr><td><code>JIRA_API_TOKEN</code></td><td>Jira API Token</td></tr>
+      <tr><td><code>ALLOWED_GITHUB_ACTOR</code></td><td>允許觸發此 workflow 的 GitHub 帳號名稱（用於身份驗證）</td></tr>
+    </table>
+
+    <div class="callout info">
+      建立 GitHub Issue 使用 <code>secrets.GITHUB_TOKEN</code>，這是 Actions 自動提供的，
+      <strong>不需要</strong>額外建立 Secret。
+    </div>
+
+    <div class="code-label">.github/workflows/sync-jira-issue.yml</div>
+    <pre><span class="prop">name</span>: <span class="string">Sync Jira Issue to GitHub</span>
+
+<span class="prop">on</span>:
+  <span class="prop">workflow_dispatch</span>:
+    <span class="prop">inputs</span>:
+      <span class="prop">jira_issue_key</span>:
+        <span class="prop">description</span>: <span class="string">'Jira Issue Key (e.g. VIPOP-1234)'</span>
+        <span class="prop">required</span>: <span class="keyword">true</span>
+        <span class="prop">type</span>: <span class="string">string</span>
+
+<span class="prop">jobs</span>:
+  <span class="prop">create-github-issue</span>:
+    <span class="prop">runs-on</span>: <span class="string">ubuntu-latest</span>
+    <span class="prop">permissions</span>:
+      <span class="prop">issues</span>: <span class="string">write</span>
+
+    <span class="prop">steps</span>:
+      - <span class="prop">name</span>: <span class="string">Verify caller identity</span>
+        <span class="prop">run</span>: |
+          <span class="comment"># triggering_actor 是 GitHub 系統判斷的觸發者帳號，非外部傳入，無法偽造</span>
+          ACTOR="${{ github.triggering_actor }}"
+          ALLOWED="${{ secrets.ALLOWED_GITHUB_ACTOR }}"
+          if [ "$ACTOR" != "$ALLOWED" ]; then
+            echo "❌ Unauthorized: triggered by '$ACTOR', expected '$ALLOWED'"
+            exit 1
+          fi
+          echo "✓ Identity verified: $ACTOR"
+
+      - <span class="prop">name</span>: <span class="string">Fetch Jira Issue</span>
+        <span class="prop">id</span>: <span class="string">jira</span>
+        <span class="prop">run</span>: |
+          <span class="comment"># 呼叫 Jira REST API v3 取得 issue 詳細資訊</span>
+          RESPONSE=$(curl -s -u "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Accept: application/json" \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${{ inputs.jira_issue_key }}?fields=summary,description")
+
+          <span class="comment"># 解析 summary</span>
+          SUMMARY=$(echo "$RESPONSE" | jq -r '.fields.summary')
+
+          <span class="comment"># description 為 Atlassian Document Format (ADF)，轉換為純文字</span>
+          <span class="comment"># 取 ADF 中所有 text node 的內容串接</span>
+          DESCRIPTION=$(echo "$RESPONSE" | jq -r '
+            [.fields.description.content[]? |
+              .. | .text? | strings] | join("\n")
+          ')
+
+          <span class="comment"># 若 description 為空，填入預設說明</span>
+          if [ -z "$DESCRIPTION" ]; then
+            DESCRIPTION="（Jira 描述為空）"
+          fi
+
+          <span class="comment"># 輸出供後續 step 使用（使用 heredoc 處理多行）</span>
+          echo "summary=$SUMMARY" >> "$GITHUB_OUTPUT"
+          {
+            echo "description<<EOF_MARKER"
+            echo "$DESCRIPTION"
+            echo "EOF_MARKER"
+          } >> "$GITHUB_OUTPUT"
+
+      - <span class="prop">name</span>: <span class="string">Create GitHub Issue</span>
+        <span class="prop">uses</span>: <span class="string">actions/github-script@v7</span>
+        <span class="prop">with</span>:
+          <span class="prop">github-token</span>: <span class="string">${{ secrets.GITHUB_TOKEN }}</span>
+          <span class="prop">script</span>: |
+            const issueKey  = `${{ inputs.jira_issue_key }}`;
+            const summary   = `${{ steps.jira.outputs.summary }}`;
+            const desc      = `${{ steps.jira.outputs.description }}`;
+            const jiraUrl   = `${{ secrets.JIRA_BASE_URL }}/browse/${issueKey}`;
+
+            const body = [
+              `> 此 Issue 由自動化流程從 Jira 同步建立`,
+              `> Jira 連結：[${issueKey}](${jiraUrl})`,
+              ``,
+              desc,
+            ].join('\n');
+
+            const result = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              title: `[${issueKey}] ${summary}`,
+              body,
+              labels: ['from-jira'],
+            });
+
+            core.info(`GitHub Issue 建立成功：${result.data.html_url}`);</pre>
+
+    <div class="callout warn">
+      <strong>關於 Jira Description 格式</strong>：Jira Cloud 的 description 使用
+      Atlassian Document Format（ADF，一種 JSON 結構）儲存，
+      workflow 中已使用 <code>jq</code> 將所有 text node 攤平取出。
+      若原始描述包含複雜表格或巢狀 Panel，轉換結果為純文字，格式可能不完整，
+      這在臨時方案下是可接受的。
+    </div>
+  </div>
+
+  <!-- ENV SUMMARY -->
+  <div class="part" id="env">
+    <div class="part-header">
+      <span class="part-number">CONFIG</span>
+      <h2>所有環境變數總覽</h2>
+    </div>
+
+    <h3>GAS Script Properties（兩個 Script 共用同一個 GAS 專案即可）</h3>
+    <table>
+      <tr><th>屬性名稱</th><th>使用於</th><th>說明</th></tr>
+      <tr><td><code>JIRA_BASE_URL</code></td><td>Part 2 / Part 3</td><td>Jira Cloud 網域</td></tr>
+      <tr><td><code>JIRA_EMAIL</code></td><td>Part 2</td><td>Jira 帳號</td></tr>
+      <tr><td><code>JIRA_API_TOKEN</code></td><td>Part 2</td><td>Jira API Token</td></tr>
+      <tr><td><code>JIRA_PARENT_KEY</code></td><td>Part 2</td><td>母單 Issue Key</td></tr>
+      <tr><td><code>SPREADSHEET_ID</code></td><td>Part 2 / Part 3</td><td>Google Sheets ID</td></tr>
+      <tr><td><code>GITHUB_TOKEN</code></td><td>Part 3</td><td>Fine-grained PAT</td></tr>
+      <tr><td><code>GITHUB_OWNER</code></td><td>Part 3</td><td>GitHub 組織或帳號</td></tr>
+      <tr><td><code>GITHUB_REPO</code></td><td>Part 3</td><td>目標 Repository</td></tr>
+      <tr><td><code>GITHUB_WORKFLOW_ID</code></td><td>Part 3</td><td>workflow 檔案名稱</td></tr>
+      <tr><td><code>GITHUB_REF</code></td><td>Part 3</td><td>觸發 branch，通常為 <code>main</code></td></tr>
+    </table>
+
+    <h3>GitHub Repository Secrets</h3>
+    <table>
+      <tr><th>Secret 名稱</th><th>說明</th></tr>
+      <tr><td><code>JIRA_BASE_URL</code></td><td>Jira Cloud 網域</td></tr>
+      <tr><td><code>JIRA_EMAIL</code></td><td>Jira 帳號</td></tr>
+      <tr><td><code>JIRA_API_TOKEN</code></td><td>Jira API Token（與 GAS 同一組）</td></tr>
+      <tr><td><code>ALLOWED_GITHUB_ACTOR</code></td><td>允許觸發 workflow 的 GitHub 帳號名稱，workflow 第一步驗證用</td></tr>
+    </table>
+  </div>
+
+  <!-- VERIFY -->
+  <div class="part" id="verify">
+    <div class="part-header">
+      <span class="part-number">QA</span>
+      <h2>驗收 Checklist</h2>
+    </div>
+
+    <h3>Part 1 — 試算表</h3>
+    <ol class="steps">
+      <li>試算表已建立，Sheet 名稱為 <code>task_queue</code>，欄位標題與規格吻合。</li>
+      <li>Spreadsheet ID 已複製備用。</li>
+    </ol>
+
+    <h3>Part 2 — 子任務抓取</h3>
+    <ol class="steps">
+      <li>GAS Script Properties 的 5 個屬性均已填入。</li>
+      <li>手動執行 <code>fetchAliceSubtasks()</code>，Logger 顯示寫入筆數。</li>
+      <li>試算表中出現對應子任務，status 欄位為 <code>pending</code>。</li>
+      <li>重複執行不產生重複列。</li>
+    </ol>
+
+    <h3>Part 3 — 排程觸發</h3>
+    <ol class="steps">
+      <li>GAS Script Properties 的 5 個 GitHub 相關屬性均已填入。</li>
+      <li>手動執行 <code>dispatchToGitHub()</code>，Logger 顯示每筆 ✓ dispatched。</li>
+      <li>GitHub Actions 頁面出現對應數量的 workflow run，狀態為 running 或 success。</li>
+      <li>試算表中 status 欄位更新為 <code>dispatched</code>，<code>dispatched_at</code> 有值。</li>
+      <li>手動執行 <code>setupTrigger()</code>，在 GAS「觸發條件」頁面確認排程存在。</li>
+    </ol>
+
+    <h3>Part 4 — GitHub Actions</h3>
+    <ol class="steps">
+      <li>GitHub Secrets 的 4 個屬性均已填入（含 <code>ALLOWED_GITHUB_ACTOR</code>）。</li>
+      <li>workflow 檔案已 push 到 <code>main</code> branch。</li>
+      <li>在 Actions 頁面手動觸發一次，傳入一個真實的 Jira Issue Key 測試。</li>
+      <li>第一個 step「Verify caller identity」顯示 <code>✓ Identity verified: {你的帳號}</code>，沒有 exit 1。</li>
+      <li>GitHub Issues 頁面出現新 Issue，title 格式為 <code>[VIPOP-XXXX] {summary}</code>，body 包含 Jira 連結與描述。</li>
+      <li>Issue 帶有 <code>from-jira</code> label。</li>
+      <li>用其他帳號或直接改 <code>ALLOWED_GITHUB_ACTOR</code> 為不存在的值，確認 workflow 第一步會 fail 並中止。</li>
+    </ol>
+
+    <div class="callout success">
+      <strong>全部通過後</strong>：整套流程完整驗收。
+      後續每日凌晨 4:00 GAS 排程將自動觸發，
+      直到系統正式方案完成接手為止。
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // Scroll-spy sidebar
+  const links = document.querySelectorAll('#sidebar nav a');
+  const targets = [...links].map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = [...links].find(l => l.getAttribute('href') === '#' + e.target.id);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  targets.forEach(t => observer.observe(t));
+</script>
+</body>
+</html>
