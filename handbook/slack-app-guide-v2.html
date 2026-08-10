@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slack App 建置指南 v2｜B Team</title>
+<style>
+  :root {
+    --bg: #faf6ee;
+    --bg-card: #fffdf8;
+    --ink: #2b2622;
+    --ink-soft: #5c534a;
+    --red: #84212f;
+    --red-soft: #a83a48;
+    --line: #e4dccb;
+    --code-bg: #2b2622;
+    --code-ink: #f4ede0;
+    --accent: #c9962f;
+    --ok: #3f7a4f;
+    --warn: #b5651d;
+    --grey: #8a7f70;
+    --sidebar-w: 250px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans TC", -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.72;
+    font-size: 15.5px;
+  }
+  .layout { display: flex; align-items: flex-start; }
+
+  aside {
+    width: var(--sidebar-w);
+    flex: 0 0 var(--sidebar-w);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2rem 1.2rem;
+    border-right: 1px solid var(--line);
+    background: linear-gradient(180deg, #f6f0e4 0%, #faf6ee 100%);
+  }
+  aside .brand {
+    font-family: Georgia, "Songti TC", serif;
+    color: var(--red);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: .04em;
+    margin-bottom: 1.4rem;
+    line-height: 1.4;
+  }
+  aside .brand small {
+    display: block;
+    font-family: inherit;
+    color: var(--ink-soft);
+    font-size: .7rem;
+    letter-spacing: .18em;
+    font-weight: 400;
+    margin-top: .3rem;
+  }
+  nav a {
+    display: block;
+    padding: .38rem .7rem;
+    margin: .1rem 0;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: .84rem;
+    border-radius: 5px;
+    border-left: 2px solid transparent;
+    transition: all .15s;
+  }
+  nav a:hover { background: #f0e8d8; color: var(--ink); }
+  nav a.active {
+    color: var(--red);
+    border-left-color: var(--red);
+    background: #f3e9d9;
+    font-weight: 600;
+  }
+  nav .grp {
+    font-size: .68rem;
+    letter-spacing: .16em;
+    color: #b0a690;
+    text-transform: uppercase;
+    margin: 1.3rem 0 .35rem .7rem;
+  }
+
+  main {
+    flex: 1 1 auto;
+    max-width: 800px;
+    padding: 2.6rem 3rem 5rem;
+    min-width: 0;
+  }
+
+  .eyebrow {
+    font-size: .74rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--red-soft);
+    font-weight: 600;
+  }
+  h1 {
+    font-family: Georgia, "Songti TC", serif;
+    color: var(--red);
+    font-size: 2.2rem;
+    line-height: 1.2;
+    margin: .4rem 0 .5rem;
+    font-weight: 700;
+  }
+  .lede {
+    font-size: 1rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+  }
+  .subhead {
+    color: var(--ink-soft);
+    font-size: .9rem;
+    margin: .8rem 0 1.6rem;
+    padding: .7rem 1rem;
+    background: var(--bg-card);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+  }
+
+  h2 {
+    font-family: Georgia, "Songti TC", serif;
+    color: var(--red);
+    font-size: 1.55rem;
+    margin: 3rem 0 .3rem;
+    padding-top: .3rem;
+    border-bottom: 2px solid var(--line);
+    padding-bottom: .45rem;
+    scroll-margin-top: 1rem;
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+  }
+  h2 .num {
+    font-family: Georgia, serif;
+    color: var(--accent);
+    font-size: 1rem;
+  }
+  h3 {
+    color: var(--ink);
+    font-size: 1.08rem;
+    margin: 1.8rem 0 .4rem;
+    font-weight: 700;
+  }
+  p { margin: .55rem 0; }
+  a { color: var(--red); }
+
+  ul, ol { padding-left: 1.3rem; }
+  li { margin: .25rem 0; }
+
+  code {
+    font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+    background: #f0e8d8;
+    color: var(--red);
+    padding: .1rem .38rem;
+    border-radius: 4px;
+    font-size: .86em;
+  }
+
+  /* 步驟區塊 */
+  .step {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1.1rem 1.3rem;
+    margin: 1.1rem 0;
+    position: relative;
+  }
+  .step-head {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: .5rem;
+  }
+  .step-num {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--red);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Georgia, serif;
+    font-weight: 700;
+    font-size: .85rem;
+  }
+  .step-title {
+    flex: 1;
+    font-weight: 700;
+    font-size: 1.02rem;
+  }
+  .step-badge {
+    flex: 0 0 auto;
+    font-size: .68rem;
+    padding: .15rem .55rem;
+    border-radius: 12px;
+    letter-spacing: .06em;
+    font-weight: 700;
+  }
+  .step-badge.must { background: #f6dede; color: #a02638; }
+  .step-badge.opt  { background: #fbedd6; color: #8a5b12; }
+  .step-badge.skip { background: #e8e4dc; color: #6d6459; }
+
+  .step-body { font-size: .94rem; }
+  .step-body .where {
+    display: block;
+    font-size: .78rem;
+    color: var(--ink-soft);
+    margin: .3rem 0 .5rem;
+    padding: .3rem .6rem;
+    background: #f0e8d8;
+    border-radius: 4px;
+    font-family: "JetBrains Mono", monospace;
+  }
+  .step-body .fill {
+    background: #eef5ee;
+    border: 1px solid #cfe0cf;
+    border-radius: 6px;
+    padding: .5rem .8rem;
+    margin: .5rem 0;
+    font-size: .88rem;
+  }
+  .step-body .fill strong { color: var(--ok); }
+
+  /* 為什麼 */
+  .why {
+    background: #f9efd7;
+    border-left: 3px solid var(--accent);
+    padding: .5rem .8rem;
+    margin: .5rem 0;
+    font-size: .84rem;
+    border-radius: 0 6px 6px 0;
+    color: #5a4b28;
+  }
+  .why strong { color: var(--warn); }
+
+  /* 圖示解說 */
+  .desc {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: .8rem 1rem;
+    margin: 1rem 0;
+    font-size: .9rem;
+  }
+  .desc .k {
+    display: block;
+    font-weight: 700;
+    color: var(--red);
+    font-size: .78rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: .3rem;
+  }
+
+  /* 提示框 */
+  .box {
+    border-radius: 8px;
+    padding: .7rem 1rem;
+    margin: .9rem 0;
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    font-size: .9rem;
+  }
+  .box .bt {
+    font-weight: 700;
+    font-size: .78rem;
+    letter-spacing: .04em;
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .box.warn { border-left: 4px solid var(--warn); }
+  .box.warn .bt { color: var(--warn); }
+  .box.tip { border-left: 4px solid var(--ok); }
+  .box.tip .bt { color: var(--ok); }
+  .box.trap { border-left: 4px solid #b53838; background: #fef5f5; }
+  .box.trap .bt { color: #b53838; }
+
+  /* 檢查表 */
+  .check {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 1.2rem 0;
+  }
+  .check li {
+    list-style: none;
+    padding: .3rem 0 .3rem 1.6rem;
+    position: relative;
+  }
+  .check li::before {
+    content: "☐";
+    position: absolute;
+    left: 0;
+    color: var(--red-soft);
+    font-size: 1.1rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: .8rem 0;
+    font-size: .86rem;
+  }
+  th, td {
+    text-align: left;
+    padding: .5rem .7rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  th {
+    background: #f0e8d8;
+    color: var(--red);
+    font-weight: 700;
+    font-size: .76rem;
+  }
+
+  .legend {
+    display: flex;
+    gap: .8rem;
+    flex-wrap: wrap;
+    margin: 1rem 0 2rem;
+    font-size: .8rem;
+  }
+  .legend span {
+    padding: .2rem .7rem;
+    border-radius: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+  }
+  .legend .must { background: #f6dede; color: #a02638; }
+  .legend .opt  { background: #fbedd6; color: #8a5b12; }
+  .legend .skip { background: #e8e4dc; color: #6d6459; }
+
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-size: .78rem;
+  }
+
+  @media (max-width: 860px) {
+    aside { display: none; }
+    main { padding: 1.6rem 1.2rem 3rem; }
+    h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brand">B&nbsp;Team<small>SLACK APP GUIDE v2</small></div>
+    <nav id="nav">
+      <div class="grp">起手式</div>
+      <a href="#overview">整體概念</a>
+      <a href="#legend">標示說明</a>
+      <div class="grp">建立 App</div>
+      <a href="#stage1">階段 1 · 建立 App</a>
+      <a href="#stage2">階段 2 · 加權限</a>
+      <a href="#stage3">階段 3 · 設 Bot</a>
+      <a href="#stage4">階段 4 · 安裝到 Workspace</a>
+      <div class="grp">收尾與檢查</div>
+      <a href="#tokens">取得 Token</a>
+      <a href="#verify">驗證 Bot 能被 @</a>
+      <a href="#checklist">完成檢查表</a>
+      <div class="grp">參考</div>
+      <a href="#glossary">名詞速查</a>
+      <a href="#skip-what">哪些設定不用碰</a>
+      <a href="#troubleshoot">常見問題</a>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="eyebrow">B TEAM · SLACK APP GUIDE · v2</div>
+    <h1>Slack App 建置指南</h1>
+    <p class="lede">給第一次建 Slack App 的前端工程師。全程照著跑不需思考,每個設定會告訴你「必做/選做/跳過」以及為什麼。目標:拿到 <code>xoxb-...</code> token,並確認頻道裡 @ 得到你的 bot。</p>
+
+    <div class="subhead">
+      這份指南<strong>只涵蓋 Slack 這一側</strong>。之後你會需要一個 endpoint(如 GAS Web App)來接收事件,那部分不在這裡。這裡的終點是「Bot 已安裝、能被 @、拿到 token,隨時可以接 endpoint」。
+    </div>
+
+    <!-- OVERVIEW -->
+    <h2 id="overview"><span class="num">A</span>整體概念(30 秒)</h2>
+    <p>Slack 沒有真正的「機器人」物件。你建的是一個 <strong>Slack App</strong>(容器),它附帶一個 <strong>Bot User</strong>(頻道裡被 @ 的那個化身)。你要幫這個 Bot 貼上<strong>權限標籤(Scopes)</strong>,再把整個 App 安裝到 workspace,就會得到一組 <code>xoxb-</code> 開頭的 token——這就是 Bot 之後和 Slack API 對話用的通行證。</p>
+
+    <div class="desc">
+      <span class="k">整套流程</span>
+      建 App(容器)→ 加 Scope(貼權限貼紙)→ 設 Bot User(定名字)→ Install(安裝)→ 拿到 token → 邀請進頻道
+    </div>
+
+    <!-- LEGEND -->
+    <h2 id="legend"><span class="num">B</span>標示說明</h2>
+    <p>每個設定會標上以下三種之一:</p>
+    <div class="legend">
+      <span class="must">必做</span>
+      <span class="opt">選做</span>
+      <span class="skip">跳過</span>
+    </div>
+    <ul>
+      <li><span class="step-badge must">必做</span> — 不做 Bot 就跑不起來</li>
+      <li><span class="step-badge opt">選做</span> — 依情境決定,通常先不做也 OK</li>
+      <li><span class="step-badge skip">跳過</span> — 這次用不到,不用管它是什麼</li>
+    </ul>
+
+    <!-- STAGE 1 -->
+    <h2 id="stage1"><span class="num">1</span>階段 1 · 建立 App</h2>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <div class="step-title">前往 Slack API 主控台</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        <span class="where">網址:api.slack.com/apps</span>
+        用你的公司 Slack 帳號登入。如果它問你 workspace 網址,填公司的(例如 <code>104corp.slack.com</code>)。
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div class="step-title">點綠色「Create an App」</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        跳出對話框後,四個選項選 <strong>「Blank app」</strong>(右下角)。
+        <div class="why"><strong>為什麼:</strong>其他三個(AI agent、Starter app、From a manifest)都預裝了 Bolt 框架,假設你要自架 Node/Python 伺服器。Blank app 是空殼,完全自由。</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div class="step-title">填 App name 和 Workspace</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        <div class="fill">
+          <strong>App name:</strong>你的 bot 名字(例如 <code>Alice</code>)。之後可以改。<br>
+          <strong>Workspace:</strong>下拉選公司那個。
+        </div>
+        <div class="box trap">
+          <span class="bt">陷阱</span>
+          Workspace <strong>選了不能改</strong>。選對再按 Create。個人測試 workspace 和公司 workspace 別搞混。
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">4</div>
+        <div class="step-title">按 Create App,進管理頁</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        建好會自動進 <strong>Basic Information</strong> 頁,左側一長排選單就是設定清單。
+      </div>
+    </div>
+
+    <!-- STAGE 2 -->
+    <h2 id="stage2"><span class="num">2</span>階段 2 · 加權限(Scopes)</h2>
+    <div class="box warn">
+      <span class="bt">為什麼先做這步?</span>
+      新版介面下,<strong>沒加 scope,App Home 的 bot user 設定會被鎖住</strong>。指南把加 scope 放前面,順序上比較不會卡。
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <div class="step-title">左側點 OAuth &amp; Permissions</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        <span class="where">左側 Features → OAuth &amp; Permissions</span>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div class="step-title">往下捲到「Scopes / 權限範圍」</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        會看到兩塊:<strong>Bot Token Scopes(機器人權杖權限範圍)</strong>和 <strong>User Token Scopes(使用者權杖權限範圍)</strong>。
+        <div class="box trap">
+          <span class="bt">別加錯地方</span>
+          只加在<strong>上面那塊 Bot Token Scopes</strong>。下面 User Token Scopes 是「以某個真人使用者身分」操作 API 用的,你不需要。
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div class="step-title">加兩個必要 scope</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        點 <strong>Add an OAuth Scope</strong>,搜尋並選這兩個:
+        <div class="fill">
+          <strong>app_mentions:read</strong> · 讓 Bot 收到「有人 @ 它」的事件<br>
+          <strong>chat:write</strong> · 讓 Bot 能發訊息到頻道
+        </div>
+        <div class="why"><strong>為什麼只加這兩個:</strong>你的第一版功能就是「被 @ → 收事件 → 回訊息」,這兩個 scope 剛好覆蓋。之後想加功能(讀私訊、加 emoji 反應等)再回來加對應 scope。</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">4</div>
+        <div class="step-title">Restrict API Token Usage</div>
+        <div class="step-badge skip">跳過</div>
+      </div>
+      <div class="step-body">
+        同頁再往下有個 IP 白名單設定,<strong>不要碰</strong>。
+        <div class="why"><strong>為什麼跳過:</strong>如果你用 GAS 當 endpoint,GAS 出口 IP 是浮動的,一旦設了白名單 GAS 呼叫 Slack API 會全部被擋。有固定 IP 的伺服器才適合設。</div>
+      </div>
+    </div>
+
+    <!-- STAGE 3 -->
+    <h2 id="stage3"><span class="num">3</span>階段 3 · 設定 Bot User</h2>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <div class="step-title">左側點 App Home</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        <span class="where">左側 Features → App Home</span>
+        加了 scope 後,原本被鎖住的區塊現在會開啟。
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div class="step-title">找到「App Display Name」→ Edit</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        會跳出兩個欄位:
+        <div class="fill">
+          <strong>Display Name:</strong>Bot 發訊息時顯示的名字,可含大小寫、空白、中文(例:<code>Alice</code>、<code>Alice 小助手</code>)<br>
+          <strong>Default Username:</strong>被 @ 時實際打的 handle,必須<strong>全小寫、無空白</strong>(例:<code>alice</code>)
+        </div>
+        <div class="why"><strong>為什麼分兩個名字:</strong>跟真人一樣。你在 Slack 顯示「蔡振華」,但可能 @ 打 <code>@ocean</code>。Bot 沿用同一套邏輯。</div>
+        <div class="box trap">
+          <span class="bt">撞名會被加編號</span>
+          如果 workspace 已有人 handle 是 <code>alice</code>,系統會自動幫你變成 <code>alice2</code>。若真的撞名,建議命名 <code>alice-bot</code> 或 <code>f2e-alice</code> 這種明顯不像人名的。
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div class="step-title">開啟 Always Show My Bot as Online</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        頭像旁那顆綠點的開關。
+        <div class="why"><strong>為什麼開:</strong>不開的話 Bot 永遠顯示灰色離線,使用者以為壞掉不敢用。開啟後永遠綠點,符合實情(你的 Bot 本來就 24/7 待命)。</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">4</div>
+        <div class="step-title">Show Tabs → Messages Tab</div>
+        <div class="step-badge opt">選做</div>
+      </div>
+      <div class="step-body">
+        Messages Tab 是 Bot 的「一對一私聊視窗」。<strong>目前開不開都行</strong>,但別勾底下的「Allow users to send Slash commands and messages...」。
+        <div class="why"><strong>為什麼不勾:</strong>那個勾選會讓私聊視窗開放輸入,但你目前只訂了頻道 @ 事件、沒訂私訊事件——使用者打字 Bot 不會回,體驗更差。之後若要開放私訊,要另外加 <code>im:history</code> scope 並訂 <code>message.im</code> 事件才對。</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">5</div>
+        <div class="step-title">Home Tab</div>
+        <div class="step-badge skip">跳過</div>
+      </div>
+      <div class="step-body">
+        Home Tab 是 Bot 專屬的一頁 UI 畫面,要用 Block Kit 寫。第一版純文字對答用不到。
+      </div>
+    </div>
+
+    <!-- STAGE 4 -->
+    <h2 id="stage4"><span class="num">4</span>階段 4 · 安裝到 Workspace</h2>
+    <div class="subhead">
+      這步之後才會產生真正的 <code>xoxb-</code> token。<strong>安裝前確認 Scope 已加完</strong>——安裝後若再加 scope,還要再點一次 Reinstall。
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <div class="step-title">左側點 Install App</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        <span class="where">左側 Settings → Install App</span>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div class="step-title">按 Install to Workspace</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        會跳到授權頁,顯示這個 App 要拿哪些權限(就是你剛才加的 scopes)。
+        <div class="box warn">
+          <span class="bt">組織可能需要管理員核准</span>
+          若公司開了 App 核准機制,按下去可能不會直接裝好,而是變成「送出申請」等 admin 批准。找你們的 Slack 管理員(通常是 IT)加速。
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div class="step-title">按 Allow 完成授權</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        授權後會跳回 Install App 頁,這時上面會出現 <strong>Bot User OAuth Token</strong>,格式 <code>xoxb-...</code>。
+      </div>
+    </div>
+
+    <!-- TOKENS -->
+    <h2 id="tokens"><span class="num">5</span>取得並保管 Token</h2>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <div class="step-title">複製 Bot User OAuth Token</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        <span class="where">Install App 頁 → Bot User OAuth Token → Copy</span>
+        貼到<strong>暫時安全的地方</strong>(不是 slack 訊息!用密碼管理器或本機記事本)。
+        <div class="box trap">
+          <span class="bt">Token 保管三原則</span>
+          1. 不要貼進 Slack / Line / 任何聊天室(等於公開)<br>
+          2. 不要 commit 進 Git,不要寫進程式碼<br>
+          3. 之後放進 GAS 的 Script Properties,或環境變數
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div class="step-title">複製 Signing Secret 和 Verification Token</div>
+        <div class="step-badge opt">選做</div>
+      </div>
+      <div class="step-body">
+        <span class="where">Basic Information 頁 → App Credentials 區塊</span>
+        <div class="fill">
+          <strong>Signing Secret:</strong>用來驗證請求真的來自 Slack(HMAC 簽章)<br>
+          <strong>Verification Token:</strong>舊版驗證方式,payload 內會帶
+        </div>
+        <div class="why"><strong>為什麼「選做」:</strong>如果 endpoint 是 GAS,GAS 拿不到 request header,標準 HMAC 驗簽章做不了,只能退而用 Verification Token 比對 payload。等你接 endpoint 時再回來拿。</div>
+      </div>
+    </div>
+
+    <!-- VERIFY -->
+    <h2 id="verify"><span class="num">6</span>驗證 Bot 能被 @</h2>
+    <div class="subhead">
+      此時 Bot 已安裝、有 token,但頻道裡還 @ 不到——因為<strong>還沒被邀請進頻道</strong>。
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <div class="step-title">在 Slack 找一個測試頻道</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        建議先建一個 <code>#alice-test</code> 之類的頻道自己測,別直接丟到有很多人的正式頻道。
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div class="step-title">邀請 Bot 進頻道</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        頻道輸入框打:
+        <div class="fill">
+          <code>/invite @alice</code>
+        </div>
+        <code>alice</code> 換成你剛才設定的 Default Username。
+        <div class="box tip">
+          <span class="bt">或用視覺化方式</span>
+          頻道右上角「頻道詳細資料」→「整合」→「App」→「Add an App」,搜尋你的 App 名稱後 Add。
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div class="step-title">試著 @ 它</div>
+        <div class="step-badge must">必做</div>
+      </div>
+      <div class="step-body">
+        頻道打 <code>@alice hello</code>。目前 Bot <strong>不會回應</strong>(因為還沒接 endpoint),但重點是:
+        <div class="fill">
+          ✅ 打 <code>@ali</code> 時應該會出現 Alice 的自動完成建議<br>
+          ✅ 送出後,<code>@alice</code> 應顯示為<strong>可點擊的 mention</strong>(藍字),不是純文字
+        </div>
+        看到這兩個,代表 Slack 這側完全正確,可以進入「接 endpoint」階段。
+      </div>
+    </div>
+
+    <!-- CHECKLIST -->
+    <h2 id="checklist"><span class="num">7</span>完成檢查表</h2>
+    <div class="check">
+      <ul>
+        <li>App 已建立(Blank app,workspace 選對)</li>
+        <li>Bot Token Scopes 加了 <code>app_mentions:read</code>、<code>chat:write</code></li>
+        <li>App Home 的 Display Name / Default Username 設定完成</li>
+        <li>Always Show My Bot as Online 已開啟</li>
+        <li>Install to Workspace 已完成、Allow 已按</li>
+        <li>已拿到 <code>xoxb-</code> token 並安全保管</li>
+        <li>Bot 已被 <code>/invite</code> 進測試頻道</li>
+        <li>頻道內 @ 提及能看到藍字 mention</li>
+      </ul>
+    </div>
+    <p>八項都打勾,Slack 這側完成。接下來可以進入「接 GAS Web App endpoint」階段。</p>
+
+    <!-- GLOSSARY -->
+    <h2 id="glossary"><span class="num">8</span>名詞速查</h2>
+    <table>
+      <tr><th>名詞</th><th>白話解釋</th></tr>
+      <tr><td>App</td><td>裝著 Bot、權限、事件訂閱等設定的容器</td></tr>
+      <tr><td>Bot User</td><td>App 附帶的化身,頻道裡被 @ 的那個</td></tr>
+      <tr><td>Scope</td><td>權限標籤,決定 Bot 能做什麼</td></tr>
+      <tr><td>Token(<code>xoxb-</code>)</td><td>Bot 呼叫 Slack API 時的通行證</td></tr>
+      <tr><td>Workspace</td><td>整個 Slack 組織空間(例如 104 Corp)</td></tr>
+      <tr><td>Channel</td><td>Workspace 裡的頻道</td></tr>
+      <tr><td>Event</td><td>Slack 主動推給你的通知(有人 @ 了、加入頻道了)</td></tr>
+      <tr><td>Endpoint</td><td>你這邊接收事件的 URL(之後會是 GAS Web App 網址)</td></tr>
+      <tr><td>Mention</td><td>@ 提及。<code>@alice</code> 就是一則 mention</td></tr>
+    </table>
+
+    <!-- SKIP WHAT -->
+    <h2 id="skip-what"><span class="num">9</span>哪些設定不用碰</h2>
+    <p>左側選單很長,以下這些第一次建 App 完全可以無視:</p>
+    <table>
+      <tr><th>選項</th><th>是什麼</th><th>為何跳過</th></tr>
+      <tr><td>Collaborators</td><td>App 的共同開發者</td><td>一個人做就用不到</td></tr>
+      <tr><td>Socket Mode</td><td>用 WebSocket 收事件,不用公開 endpoint</td><td>你有 GAS Web App URL,走 HTTP 就好</td></tr>
+      <tr><td>Agents</td><td>Slack 官方 AI agent 框架</td><td>綁 Bolt/CLI,跟你架構不合</td></tr>
+      <tr><td>Work Object Previews</td><td>訊息裡連結的預覽卡片</td><td>純內部工具用不到</td></tr>
+      <tr><td>Workflow Steps</td><td>Slack Workflow Builder 的自訂步驟</td><td>你不用 Slack Workflow</td></tr>
+      <tr><td>Org Level Apps</td><td>Enterprise Grid 的組織級部署</td><td>只有 Enterprise 方案才有</td></tr>
+      <tr><td>Incoming Webhooks</td><td>單向推訊息的簡化方式</td><td>你要雙向,走 Events API 更完整</td></tr>
+      <tr><td>Interactivity &amp; Shortcuts</td><td>按鈕/表單/modal 的事件</td><td>沒做互動 UI 不用</td></tr>
+      <tr><td>Slash Commands</td><td>自訂 <code>/alice</code> 指令</td><td>之後想做再開,目前用 @ 就夠</td></tr>
+      <tr><td>MCP Servers (New)</td><td>對外提供 MCP server 給 AI 呼叫</td><td>方向相反的新功能,現在不用</td></tr>
+      <tr><td>App Manifest</td><td>用 YAML/JSON 一次帶完所有設定</td><td>手動點清楚就好,重複建才用得到</td></tr>
+      <tr><td>Manage Distribution</td><td>把 App 公開發佈到 Marketplace</td><td>內部工具不用公開</td></tr>
+      <tr><td>Submit to Slack Marketplace</td><td>同上</td><td>同上</td></tr>
+    </table>
+
+    <!-- TROUBLESHOOT -->
+    <h2 id="troubleshoot"><span class="num">10</span>常見問題</h2>
+
+    <h3>App Home 看不到 Bot 名字設定?</h3>
+    <p>Scope 沒加。回階段 2 加完 <code>app_mentions:read</code> 和 <code>chat:write</code>,再回 App Home 就會解鎖。</p>
+
+    <h3>Install to Workspace 按了說要 admin 核准?</h3>
+    <p>公司開了 App 核准機制。送出申請後找 Slack 管理員批准,不是你的問題。</p>
+
+    <h3>Workspace 下拉選單裡看不到公司?</h3>
+    <p>你的 Slack 帳號沒登入到那個 workspace。到 Slack 客戶端切到公司 workspace 一次,再回 api.slack.com。</p>
+
+    <h3>@ Bot 沒反應?</h3>
+    <p>三種可能:(1) Bot 沒被 <code>/invite</code> 進頻道;(2) 還沒接 endpoint(這個指南範圍內是正常的);(3) 打錯 username。</p>
+
+    <h3>加了新 scope 之後?</h3>
+    <p>頁面頂端會出現黃色提示「You've changed permission scopes...」,按 <strong>reinstall your app</strong>。已經拿到的 <code>xoxb-</code> token 通常不變。</p>
+
+    <h3>介面中英混雜?</h3>
+    <p>Slack 中文化沒做完整,忽略就好,不影響操作。</p>
+
+    <h3>不小心點到「Delete App」?</h3>
+    <p>已建立的 App 刪除後不可復原,只能重建。刪除按鈕在 Basic Information 頁最底部,誤點會有二次確認。</p>
+
+    <footer>
+      B Team · Slack App 建置指南 v2 · 前端工程師版<br>
+      Slack API 介面 2026 有多次改版,實作時以 api.slack.com 官方文件為準。若後續 Slack 更新導致本指南某步驟位置變動,回報以便更新。
+    </footer>
+  </main>
+</div>
+
+<script>
+  const links = [...document.querySelectorAll('#nav a')];
+  const map = {};
+  links.forEach(a => { const id = a.getAttribute('href').slice(1); map[id] = a; });
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const a = map[en.target.id];
+        if (a) a.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-10% 0px -75% 0px', threshold: 0 });
+  document.querySelectorAll('main h2[id]').forEach(h => observer.observe(h));
+</script>
+</body>
+</html>
