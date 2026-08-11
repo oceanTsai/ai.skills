@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Slack App 建置指南 v3｜B Team</title>
+<title>Slack App 建置指南｜B Team</title>
 <style>
   :root {
     --bg: #faf6ee; --bg-card: #fffdf8; --ink: #2b2622; --ink-soft: #5c534a;
@@ -162,7 +162,7 @@
 <body>
 <div class="layout">
   <aside>
-    <div class="brand">B&nbsp;Team<small>SLACK APP GUIDE v3</small></div>
+    <div class="brand">B&nbsp;Team<small>SLACK APP GUIDE</small></div>
     <nav id="nav">
       <div class="grp">開始前</div>
       <a href="#precheck">環境前置檢查</a>
@@ -186,7 +186,7 @@
   </aside>
 
   <main>
-    <div class="eyebrow">B TEAM · SLACK APP GUIDE · v3</div>
+    <div class="eyebrow">B TEAM · SLACK APP GUIDE</div>
     <h1>Slack App 建置指南</h1>
     <p class="lede">第三版。補完前版缺的 <strong>Install 安裝步驟</strong>(這是最容易卡死的一步),並把實際踩過的坑寫成警告。目標:建好 Alice、成功安裝、拿到 <code>xoxb-</code> token、確認頻道 @ 得到。</p>
 
@@ -230,23 +230,66 @@
       <div class="step-body"><span class="where">api.slack.com/apps</span></div>
     </div>
 
+    <div class="box trap">
+      <span class="bt">先搞懂:舊 App 不會自動搬到新 workspace</span>
+      如果你之前已經在別的 workspace(例如公司的)建過一個 Alice,<strong>那個 App 是綁死在原 workspace 的,沒辦法搬</strong>。要在新 workspace 用,得<strong>重新登入新 workspace、重建一個新的 Alice</strong>。舊的那個放著不管或之後刪掉都行。下面的步驟就是重建流程。
+    </div>
+
     <div class="step">
       <div class="step-head"><div class="step-num">2</div><div class="step-title">切換到正確的 Workspace</div><div class="step-badge must">必做</div></div>
       <div class="step-body">
-        <span class="where">畫面左上角的 workspace 下拉選單</span>
-        建 App 前先點左上下拉,<strong>切到你要裝的那個 workspace</strong>。
+        <div class="see">
+          <strong>這時畫面應該是:</strong>「Your Apps」列表,列出你現有的 App(每列顯示 App Name / Workspace / App ID)。
+        </div>
+        <span class="where">找畫面最底部的藍字：Sign in to another workspace</span>
         <div class="box trap">
-          <span class="bt">最容易錯的地方</span>
-          如果你有多個 workspace(例如舊的公司 workspace + 新開的測試 workspace),很容易在下一步選錯。先在這裡切對,心裡有數。
+          <span class="bt">位置別找錯</span>
+          切 workspace 的入口<strong>不是</strong>左上角(那個下拉是進到某個 App 內部後才有)。在 Your Apps 列表頁,入口是<strong>整個列表最下方的藍字「Sign in to another workspace」</strong>。點它 → 登入你新開的 workspace。
+        </div>
+        <div class="see">
+          <strong>怎麼確認切對了:</strong>切換後,之後 Create App 對話框的 Workspace 下拉裡,要出現你新開的 workspace 名字可選。
         </div>
       </div>
     </div>
 
     <div class="step">
-      <div class="step-head"><div class="step-num">3</div><div class="step-title">Create New App → From scratch</div><div class="step-badge must">必做</div></div>
+      <div class="step-head"><div class="step-num">3</div><div class="step-title">Create New App → 選 Blank app</div><div class="step-badge must">必做</div></div>
       <div class="step-body">
-        點 <strong>Create New App</strong> → 選 <strong>From scratch</strong>(新版介面叫 <strong>Blank app</strong>,選右下那個空殼的)。
-        <div class="why"><strong>為什麼不選 AI agent / Starter app:</strong>那些預裝 Bolt 框架,假設你自架伺服器。空殼最自由。</div>
+        <span class="where">Your Apps 頁右上角的綠色按鈕：Create New App</span>
+        <div class="see">
+          <strong>點下去會跳出對話框「Create new app」,有四個選項</strong>(Slack 改版後從「兩選項」變成「四選項」,別被嚇到)。逐一說明如下,<strong>你要選 Blank app</strong>。
+        </div>
+
+        <table>
+          <tr><th>選項</th><th>是什麼</th><th>該不該選</th></tr>
+          <tr>
+            <td><strong>AI agent</strong></td>
+            <td>Slack 官方的 AI 助理範本,預先接好 Bolt 框架 + 某個 agent SDK(Claude/OpenAI),假設你要自架 Node/Python 伺服器跑 AI agent</td>
+            <td>❌ 不選。它綁一整套框架,跟你「GAS 收事件」的路線不合,選了要拆</td>
+          </tr>
+          <tr>
+            <td><strong>Starter app</strong></td>
+            <td>用 Bolt 搭的最小範本,含 App Home、私訊、@mention 幾個進入點的範例程式碼</td>
+            <td>❌ 不選。雖然含 @mention 聽起來對,但一樣綁 Bolt 框架,不走 GAS</td>
+          </tr>
+          <tr>
+            <td><strong>From a manifest</strong></td>
+            <td>用一份 YAML/JSON 設定檔,一次把 scopes、events、bot 名字全帶完</td>
+            <td>△ 進階。手動點清楚就好,重複建很多個或要版控設定時才用得上</td>
+          </tr>
+          <tr>
+            <td><strong>Blank app</strong></td>
+            <td>空殼,什麼都沒預裝。所有設定(scope、event、名字)你自己手動加</td>
+            <td>✅ <strong>選這個</strong>。跟 GAS 路線相容,也是舊版「From scratch」的等價物</td>
+          </tr>
+        </table>
+
+        <div class="box tip">
+          <span class="bt">對話框底部還有一行「Prefer using the terminal? Slack CLI」</span>
+          那是叫你用命令列工具建 App,一樣綁 Bolt/CLI 框架,<strong>忽略它</strong>。你走網頁點選 + GAS 就好。
+        </div>
+
+        <div class="why"><strong>一句話:</strong>前三個都預設「你有自己的伺服器」,只有 Blank app 讓你自由接 GAS Web App。選 <strong>Blank app</strong> → Continue / Next。</div>
       </div>
     </div>
 
@@ -260,6 +303,9 @@
         <div class="box trap">
           <span class="bt">Workspace 選了不能改</span>
           這個綁定終身,選錯只能刪 App 重建。看清楚再按 Create。
+        </div>
+        <div class="see">
+          <strong>建完怎麼確認選對:</strong>回到 Your Apps 列表,會看到<strong>兩個 Alice</strong>——一個 Workspace 是舊的、一個是新開的。認明 Workspace 欄位是新 workspace 的那個,才是要用的。
         </div>
       </div>
     </div>
@@ -277,23 +323,41 @@
     </div>
 
     <div class="step">
-      <div class="step-head"><div class="step-num">2</div><div class="step-title">找 Bot Token Scopes,加兩個</div><div class="step-badge must">必做</div></div>
+      <div class="step-head"><div class="step-num">2</div><div class="step-title">找到 Scopes 區塊</div><div class="step-badge must">必做</div></div>
       <div class="step-body">
-        <span class="where">往下捲到 Scopes → Bot Token Scopes(機器人權杖權限範圍)</span>
-        點 <strong>Add an OAuth Scope</strong>,加:
-        <div class="fill">
-          <strong>app_mentions:read</strong> · 收到「有人 @ 它」的事件<br>
-          <strong>chat:write</strong> · 讓 Bot 發訊息
+        <span class="where">在 OAuth &amp; Permissions 頁往下捲(要捲一段，會經過 Redirect URLs 等區塊)</span>
+        <div class="see">
+          <strong>捲到標題「Scopes」就對了。</strong>底下分上下兩塊：
+          <table style="margin-top:.5rem">
+            <tr><th>區塊</th><th>用途</th><th>你要用嗎</th></tr>
+            <tr><td><strong>Bot Token Scopes</strong><br>(機器人權杖權限範圍)</td><td>Bot 自己的權限</td><td>✅ 加在這裡</td></tr>
+            <tr><td>User Token Scopes<br>(使用者權杖權限範圍)</td><td>以真人身分操作 API</td><td>❌ 不要碰</td></tr>
+          </table>
         </div>
         <div class="box trap">
-          <span class="bt">別加錯區塊</span>
-          只加在<strong>上面的 Bot Token Scopes</strong>。下面的 User Token Scopes 是「以真人身分操作」用的,你不需要。
+          <span class="bt">兩塊長很像,別加錯</span>
+          一定加在<strong>上面那塊 Bot Token Scopes</strong>。加到下面的 User Token Scopes 是無效的。
         </div>
       </div>
     </div>
 
     <div class="step">
-      <div class="step-head"><div class="step-num">3</div><div class="step-title">Restrict API Token Usage(IP 白名單)</div><div class="step-badge skip">跳過</div></div>
+      <div class="step-head"><div class="step-num">3</div><div class="step-title">加這兩個 Scope</div><div class="step-badge must">必做</div></div>
+      <div class="step-body">
+        在 Bot Token Scopes 那塊,點 <strong>Add an OAuth Scope</strong>,搜尋並加入這兩個:
+        <table style="margin-top:.5rem">
+          <tr><th>Scope</th><th>作用</th></tr>
+          <tr><td><code>app_mentions:read</code></td><td>收到「有人 @ 它」的事件</td></tr>
+          <tr><td><code>chat:write</code></td><td>讓 Bot 能發訊息</td></tr>
+        </table>
+        <div class="see">
+          <strong>加好的樣子:</strong>兩個 scope 會列在 Bot Token Scopes 底下,各自一行。加了即時生效,不用按儲存。
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><div class="step-num">4</div><div class="step-title">Restrict API Token Usage(IP 白名單)</div><div class="step-badge skip">跳過</div></div>
       <div class="step-body">
         同頁下方的 IP 限制,<strong>不要碰</strong>。
         <div class="why"><strong>為什麼:</strong>GAS 出口 IP 浮動,設了白名單會讓 GAS 呼叫 Slack 全被擋。</div>
@@ -307,22 +371,25 @@
       <div class="step-head"><div class="step-num">1</div><div class="step-title">進 App Home</div><div class="step-badge must">必做</div></div>
       <div class="step-body">
         <span class="where">左側 Features → App Home</span>
-        加了 scope 後,原本鎖住的區塊現在解開了。
+        <div class="see">
+          <strong>已加好 scope →</strong> 看到「Your App's Presence in Slack」區塊,可以設名字了,往下做。<br>
+          <strong>還沒加 scope →</strong> 看到綠色按鈕「Review Scopes to Add」、Show Tabs 開關是灰的。點綠按鈕去加 scope(回階段 2),加完回來就解開。
+        </div>
       </div>
     </div>
 
     <div class="step">
-      <div class="step-head"><div class="step-num">2</div><div class="step-title">App Display Name → Edit</div><div class="step-badge must">必做</div></div>
+      <div class="step-head"><div class="step-num">2</div><div class="step-title">設 Bot 名字(App Display Name → Edit)</div><div class="step-badge must">必做</div></div>
       <div class="step-body">
-        <span class="where">Your App's Presence in Slack → App Display Name → Edit</span>
-        <div class="fill">
-          <strong>Display Name:</strong> Bot 顯示的名字,可含大小寫/中文(例:<code>Alice</code>)<br>
-          <strong>Default Name (Username):</strong> 被 @ 時的 handle,全小寫無空白(例:<code>alice</code> 或 <code>f2e-alice</code>)
-        </div>
-        <div class="why"><strong>兩個名字的差別:</strong>Display Name 是「看到的名字」,Default Name 是「@ 打的 handle」。跟真人一樣(顯示中文名、@ 打英文 handle)。</div>
+        <span class="where">Your App's Presence in Slack 區塊 → App Display Name 右邊 Edit</span>
+        <table style="margin-top:.3rem">
+          <tr><th>欄位</th><th>填什麼</th><th>規則</th></tr>
+          <tr><td><strong>Display Name</strong><br>顯示的名字</td><td><code>Alice</code></td><td>可含大小寫、中文</td></tr>
+          <tr><td><strong>Default Name</strong><br>@ 打的 handle</td><td><code>f2e-alice</code></td><td>全小寫、無空白</td></tr>
+        </table>
         <div class="box trap">
           <span class="bt">撞名會加編號</span>
-          若 workspace 已有 <code>alice</code>,系統自動變 <code>alice2</code>。想明確是 bot 就取 <code>f2e-alice</code> 這種。
+          若已有人用 <code>alice</code>,系統自動變 <code>alice2</code>。想明確是 bot 就取 <code>f2e-alice</code>。
         </div>
       </div>
     </div>
@@ -343,15 +410,16 @@
     </div>
 
     <!-- STAGE 4 - INSTALL (THE KEY MISSING STEP) -->
-    <h2 id="stage4"><span class="num">4</span>Install 安裝(前版缺這步 · 最關鍵)</h2>
+    <h2 id="stage4"><span class="num">4</span>Install 安裝(最關鍵)</h2>
     <div class="bigwarn">
-      <span class="bt">⚠ 這是整個流程的關鍵開關</span>
-      前面設定再完整,<strong>沒按 Install 這步,Bot 就不存在於 workspace</strong> —— @ 不到、invite 不了、沒有 token。你上次就是卡在這裡。
-    </div>
-
-    <div class="box trap">
-      <span class="bt">陷阱:「Bot Token Added」不等於「已安裝」</span>
-      App Home 頁可能顯示「Bot Token Added」字樣,<strong>這會誤導你以為裝好了</strong>。實際上要到 Install App 頁按下安裝按鈕、看到真正的 <code>xoxb-</code> token,才算完成。判斷是否真的裝好,看 Basic Information 頁的「authed users」數字 —— <strong>0 authed users = 還沒裝</strong>。
+      <span class="bt">⚠ 這步是整個流程的關鍵開關</span>
+      前面設定再完整,<strong>沒按 Install,Bot 就不存在於 workspace</strong>——@ 不到、invite 不了、沒有 token。上次就卡在這。
+      <div style="margin-top:.6rem;padding-top:.5rem;border-top:1px dashed #d88;font-size:.85rem">
+        <strong>怎麼判斷「還沒裝」:</strong>看這兩個訊號其中一個就是還沒裝——<br>
+        · Install App 頁是<strong>綠色 Install 按鈕</strong>(不是 token)<br>
+        · Basic Information 頁顯示 <strong>0 authed users</strong><br>
+        （注意:App Home 的「Bot Token Added」字樣會誤導,那<strong>不代表</strong>已安裝）
+      </div>
     </div>
 
     <div class="step">
@@ -372,16 +440,22 @@
     </div>
 
     <div class="step">
-      <div class="step-head"><div class="step-num">3</div><div class="step-title">授權頁按 Allow</div><div class="step-badge must">必做</div></div>
+      <div class="step-head"><div class="step-num">3</div><div class="step-title">授權頁按「允許」</div><div class="step-badge must">必做</div></div>
       <div class="step-body">
-        跳到授權頁,列出 Alice 要的權限(app_mentions:read、chat:write)。按 <strong>Allow</strong>。
-        <div class="box warn">
-          <span class="bt">可能遇到:額度滿</span>
-          若跳出「無法新增更多應用程式 / 已達 10 個上限」→ 這個 workspace App 滿了。換到有空額的 workspace,或移除一個舊 App。(新開的空 workspace 不會遇到)
+        <div class="see">
+          <strong>這時畫面應該是:</strong>標題「允許 F2E-Alice 應用程式存取 Slack」的授權頁。逐項確認:
         </div>
+        <table style="margin-top:.3rem">
+          <tr><th>畫面欄位</th><th>要確認什麼</th></tr>
+          <tr><td><strong>Workspace</strong></td><td>顯示<strong>正確的 workspace 名</strong>(例如 104 F2E,不是舊的 104 Corp)</td></tr>
+          <tr><td><strong>可以採取的動作</strong><br>「在頻道與對話中執行動作」</td><td>這對應你加的 <code>chat:write</code>,正常。這就是 Bot 能發訊息的權限</td></tr>
+          <tr><td>右上「管理權限」</td><td>不用點。那是給你細調權限用的,預設就對</td></tr>
+        </table>
+        確認 workspace 對 → 按綠色 <strong>允許</strong>。
         <div class="box warn">
-          <span class="bt">可能遇到:要 admin 核准</span>
-          企業 workspace 若開了核准機制,按下去會變成「送出申請」,要找 admin 批准。
+          <span class="bt">可能遇到的兩種攔阻</span>
+          <strong>① 額度滿:</strong>跳「無法新增更多應用程式 / 已達 10 個上限」→ 這 workspace App 滿了,換 workspace 或砍舊 App。(新開的空 workspace 不會遇到)<br><br>
+          <strong>② 要 admin 核准:</strong>企業 workspace 若開核准機制,按下去變「送出申請」,要找 admin 批准。
         </div>
       </div>
     </div>
@@ -426,21 +500,18 @@
     <div class="step">
       <div class="step-head"><div class="step-num">2</div><div class="step-title">用自動完成邀請(關鍵技巧)</div><div class="step-badge must">必做</div></div>
       <div class="step-body">
-        在頻道輸入框:
+        在頻道輸入框,照順序做:
         <div class="fill">
-          1. 打 <code>/invite </code>(含空格)<br>
-          2. 打 <code>@</code>,<strong>慢慢輸入</strong> bot 的 Display Name(例如打 <code>alice</code> 不是 <code>f2e</code>)<br>
-          3. 浮出建議清單,找<strong>帶「應用程式 / App」標籤 + 綠點</strong>的那個<br>
-          4. <strong>用滑鼠點它</strong>,讓 @alice 變成<strong>藍色 mention 物件</strong><br>
-          5. 送出
+          <strong>1.</strong> 打 <code>/invite </code>(含空格)<br>
+          <strong>2.</strong> 打 <code>@</code>,慢慢輸入 <code>alice</code>(打顯示名,不是 f2e)<br>
+          <strong>3.</strong> 浮出清單,找<strong>帶「應用程式 / App」標籤 + 綠點</strong>那個<br>
+          <strong>4.</strong> <strong>滑鼠點它</strong>,讓 @alice 變<strong>藍色</strong>(這步最重要)<br>
+          <strong>5.</strong> 送出
         </div>
         <div class="box trap">
-          <span class="bt">為什麼你上次 invite 失敗</span>
-          直接手打 <code>@f2e-alice</code> 送出,它是<strong>純文字</strong>不是 mention 物件,Slack 認不得,回「需要有效的成員名稱」。<strong>一定要從自動完成清單點選</strong>,變藍色才有效。
-        </div>
-        <div class="box trap">
-          <span class="bt">自動完成用 Display Name 過濾,不是 handle</span>
-          清單是用<strong>顯示名稱</strong>(Alice)過濾,不是用 handle(f2e-alice)。所以打 <code>@alice</code> 找得到,打 <code>@f2e</code> 可能過濾不出來。
+          <span class="bt">兩個一定要知道的雷</span>
+          <strong>① 一定要從清單點選,不能手打。</strong>手打的 <code>@f2e-alice</code> 是純文字,Slack 不認,會回「需要有效的成員名稱」。從清單點選才會變藍色 mention。<br><br>
+          <strong>② 打顯示名不是 handle。</strong>清單用 Display Name(<code>alice</code>)過濾,不是 handle(<code>f2e-alice</code>)。所以打 <code>@alice</code> 找得到,打 <code>@f2e</code> 可能找不到。
         </div>
       </div>
     </div>
@@ -528,7 +599,7 @@
     <p>Slack 中文化沒做完,忽略即可,不影響操作。</p>
 
     <footer>
-      B Team · Slack App 建置指南 v3 · 補完 Install 步驟 + 踩坑整理<br>
+      B Team · Slack App 建置指南 · v8（2026-08-11 更新：補授權頁逐項確認說明、全篇密集文字表格化）<br>
       Slack API 介面 2026 多次改版,實作以 api.slack.com 官方為準。位置有變請回報更新。
     </footer>
   </main>
