@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 串接 · 斷點決策追蹤表</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#f5f0e6; --cream-2:#efe7d7; --red:#84212f; --red-soft:#a8434f;
+    --ink:#2b2622; --gold:#b8894a; --line:#dcd2be; --paper:#fbf8f1;
+    --green:#4a7c4e; --blue:#3a5a78; --amber:#c8862f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--cream); color:var(--ink); font-family:"Noto Sans TC",sans-serif; line-height:1.8; font-size:16px;}
+  .wrap{display:grid; grid-template-columns:236px 1fr; max-width:1360px; margin:0 auto;}
+
+  aside{position:sticky; top:0; align-self:start; height:100vh; padding:38px 18px 38px 30px; border-right:1px solid var(--line); overflow-y:auto;}
+  aside .brand{font-family:"Noto Serif TC",serif; font-weight:900; color:var(--red); font-size:18px; line-height:1.4;}
+  aside .brand small{display:block; font-family:"Noto Sans TC"; font-weight:400; color:var(--gold); font-size:11.5px; letter-spacing:1px; margin-top:4px;}
+  aside nav{margin-top:26px;}
+  aside nav a{display:block; color:var(--ink); text-decoration:none; font-size:13.5px; padding:7px 12px; border-radius:6px; margin-bottom:2px; opacity:.72; border-left:2px solid transparent; transition:all .18s;}
+  aside nav a:hover{opacity:1; background:var(--paper);}
+  aside nav a.active{opacity:1; color:var(--red); font-weight:700; border-left-color:var(--red); background:var(--paper);}
+  aside nav .grp{font-size:11px; letter-spacing:1.5px; color:var(--gold); margin:18px 0 6px 12px; font-weight:700;}
+
+  main{padding:52px 56px 120px; max-width:100%;}
+  .eyebrow{font-size:12px; letter-spacing:3px; color:var(--gold); font-weight:700; text-transform:uppercase;}
+  h1{font-family:"Noto Serif TC",serif; font-weight:900; color:var(--red); font-size:38px; line-height:1.25; margin:10px 0 8px;}
+  .lede{font-size:16.5px; color:#5b524a; margin-bottom:14px; max-width:720px;}
+  h2{font-family:"Noto Serif TC",serif; font-weight:700; color:var(--red); font-size:25px; margin:48px 0 6px; padding-bottom:10px; border-bottom:2px solid var(--line);}
+  h2 .badge{font-family:"Noto Sans TC"; font-size:12px; font-weight:500; color:#fff; background:var(--red-soft); padding:3px 12px; border-radius:20px; vertical-align:middle; margin-left:12px;}
+  p{margin:10px 0;} strong{color:var(--red);}
+  section{scroll-margin-top:20px;}
+
+  /* status legend */
+  .legend{display:flex; gap:18px; flex-wrap:wrap; margin:14px 0 8px; font-size:13px;}
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .dot{width:11px; height:11px; border-radius:50%; display:inline-block;}
+  .d-open{background:var(--red);} .d-prog{background:var(--amber);} .d-done{background:var(--green);}
+
+  table{width:100%; border-collapse:collapse; margin:14px 0 8px; font-size:13.5px; background:var(--paper); border-radius:8px; overflow:hidden; box-shadow:0 1px 0 var(--line);}
+  th{background:var(--red); color:#fff; text-align:left; padding:11px 12px; font-weight:500; font-size:12.5px; white-space:nowrap;}
+  td{padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td.q{font-weight:700; color:var(--red); min-width:170px;}
+  td.raw{color:#8a7d6e; font-size:12px; font-style:italic;}
+  .fill{color:#b0a693;} /* 待填欄位提示色 */
+
+  .st{display:inline-block; font-size:11px; font-weight:600; padding:2px 9px; border-radius:20px; white-space:nowrap;}
+  .st-open{background:#f3d9dc; color:var(--red);}
+  .st-prog{background:#f6e4c4; color:#8a5a10;}
+  .st-done{background:#d7e6d8; color:#2f5a33;}
+
+  .key{background:var(--paper); border:1px solid var(--gold); border-radius:8px; padding:15px 20px; margin:18px 0;}
+  .key .t{color:var(--gold); font-weight:700; letter-spacing:1px; font-size:13px; margin-bottom:6px;}
+
+  .slice{display:flex; align-items:center; gap:12px; margin:10px 0 2px;}
+  .slice .tag{font-size:12px; font-weight:700; color:#fff; padding:4px 12px; border-radius:6px;}
+  .tag-a{background:var(--red);} .tag-b{background:var(--amber);} .tag-c{background:var(--green);}
+  .slice small{color:#8a7d6e; font-size:13px;}
+
+  code{font-family:"JetBrains Mono",monospace; background:var(--cream-2); padding:1px 6px; border-radius:4px; font-size:12.5px; color:var(--red);}
+  .note{font-size:13px; color:#8a7d6e; margin-top:4px;}
+  footer{margin-top:56px; padding-top:22px; border-top:1px solid var(--line); color:#8a7d6e; font-size:13px;}
+
+  @media(max-width:980px){ .wrap{grid-template-columns:1fr;} aside{display:none;} main{padding:30px 18px 80px;} table{font-size:12px;} h1{font-size:28px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside>
+    <div class="brand">斷點決策追蹤表<small>ALICE AI 自動化 · 風暴大綱</small></div>
+    <nav>
+      <a href="#how">怎麼用這張表</a>
+      <div class="grp">依流程段落</div>
+      <a href="#entry">入口 · 進 RA</a>
+      <a href="#ra-sa">RA → SA</a>
+      <a href="#sa-cod">SA → Coding</a>
+      <a href="#cod-rev">Coding → Review</a>
+      <a href="#rev-close">Review → Close</a>
+      <div class="grp">收斂</div>
+      <a href="#terms">術語待定義</a>
+      <a href="#slices">切片與下一步</a>
+    </nav>
+  </aside>
+
+  <main>
+    <section id="top">
+      <div class="eyebrow">Post-Brainstorm · Decision Tracker</div>
+      <h1>斷點決策追蹤表</h1>
+      <p class="lede">第一次風暴會議把整條線的事件流攤開了。這張表把看板上的每個<strong>紅色斷點</strong>固化成一列，套上「四問」欄位（交接 / 觸發 / 守門 / 通知）。第二次會直接對著這張表<strong>逐列收斂</strong>，不會又從零開始。</p>
+      <div class="legend">
+        <span><i class="dot d-open"></i> 待決策</span>
+        <span><i class="dot d-prog"></i> 討論中 / 部分定案</span>
+        <span><i class="dot d-done"></i> 已定案</span>
+      </div>
+      <p class="note">※ 斷點文字由第一次會議看板辨識而來，字句若有出入請直接改；欄位內 <span class="fill">灰字</span>是待你們填的空格。</p>
+    </section>
+
+    <section id="how">
+      <h2>怎麼用這張表</h2>
+      <div class="key">
+        <div class="t">第二次會議的開法（對著這張表）</div>
+        一列一列往下走。每一列問固定四題 →<strong>①交接</strong>：上一個吐的下一個吃得下嗎？<strong>②觸發</strong>：何時啟動？<strong>③守門</strong>：要人卡關嗎？誰有權限？<strong>④通知</strong>：完成/失敗通知誰？填得出來就填、當場拍板；填不出的指定負責人與日期，狀態留「待決策」。
+      </div>
+    </section>
+
+    <!-- ENTRY -->
+    <section id="entry">
+      <h2>入口 · 怎麼進 RA <span class="badge">問號最密 · 優先收斂</span></h2>
+      <table>
+        <thead><tr><th>斷點（看板原文）</th><th>①交接</th><th>②觸發</th><th>③守門/權限</th><th>④通知</th><th>負責人 / 期限</th><th>狀態</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="q">從 Jira 單觸發？一定要有 Jira 單嗎？</td>
+            <td class="fill">來源格式？</td>
+            <td class="fill">開單自動 / 手動</td>
+            <td class="fill">誰能開單</td>
+            <td>—</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+          <tr>
+            <td class="q">最一開始，從 Jira 單開始；需要 Jira 單作為 Scope？</td>
+            <td class="fill">Jira 單 = RA 的 Scope 輸入？</td>
+            <td class="fill">—</td>
+            <td class="fill">—</td>
+            <td>—</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+          <tr>
+            <td class="q">Alice 在哪個環境執行這段流程？</td>
+            <td class="fill">—</td>
+            <td class="fill">—</td>
+            <td class="fill">執行環境 / 權限</td>
+            <td>—</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+          <tr>
+            <td class="q">從哪裡觸發 RA？（由人觸發 / 主題型 augma 開 branch）</td>
+            <td class="fill">—</td>
+            <td class="fill">人觸發 / augma branch</td>
+            <td class="fill">誰能觸發</td>
+            <td class="fill">Slack / Teams</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+          <tr>
+            <td class="q">一定要用 Jira 單作為 Scope？還沒有單時，怎麼先做分析？</td>
+            <td class="fill">無單時 Scope 從哪來（用資料夾分 Scope？）</td>
+            <td class="fill">—</td>
+            <td class="fill">—</td>
+            <td>—</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- RA -> SA -->
+    <section id="ra-sa">
+      <h2>RA → SA</h2>
+      <table>
+        <thead><tr><th>斷點（看板原文）</th><th>①交接</th><th>②觸發</th><th>③守門/權限</th><th>④通知</th><th>負責人 / 期限</th><th>狀態</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="q">怎麼做自動化拆問（拆需求）？</td>
+            <td class="fill">拆解後輸出格式</td>
+            <td class="fill">自動 / 手動</td>
+            <td class="fill">—</td>
+            <td class="fill">＿＿</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+          <tr>
+            <td class="q">SA 怎麼吃 RA 的產出？從 Slack 觸發 RA，SA 會知道 RA 產出的文件位置嗎？</td>
+            <td class="fill"><strong>關鍵斷點</strong>：RA 輸出檔案的位置怎麼傳給 SA</td>
+            <td class="fill">RA 完成後自動接？</td>
+            <td class="fill">要人先確認 RA 結果嗎</td>
+            <td class="fill">＿＿</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+          <tr>
+            <td class="q">RA 迭代要更改 Jira 單作為橋接？</td>
+            <td class="fill">Jira 單作為 RA↔SA 的中介？</td>
+            <td class="fill">—</td>
+            <td class="fill">—</td>
+            <td class="fill">＿＿</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- SA -> Coding -->
+    <section id="sa-cod">
+      <h2>SA → Coding</h2>
+      <table>
+        <thead><tr><th>斷點（看板原文）</th><th>①交接</th><th>②觸發</th><th>③守門/權限</th><th>④通知</th><th>負責人 / 期限</th><th>狀態</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="q">怎麼觸發 SA？</td>
+            <td class="fill">SA 輸入 = RA 輸出？</td>
+            <td class="fill">自動 / 手動</td>
+            <td class="fill">誰能觸發</td>
+            <td class="fill">＿＿</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+          <tr>
+            <td class="q">已產出 SA 後的文件 → 怎麼派發？</td>
+            <td class="fill">SA 文件 → 派發給 Alice 的格式</td>
+            <td class="fill">SA 完成自動派發？</td>
+            <td class="fill">—</td>
+            <td class="fill">＿＿</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+          <tr>
+            <td class="q">假設 SA 有問題，要怎麼退代（退回迭代）？</td>
+            <td class="fill">退回退到哪一關（RA / 改 Jira 單）</td>
+            <td class="fill">—</td>
+            <td class="fill">誰判斷 SA 有問題</td>
+            <td class="fill">＿＿</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+          <tr>
+            <td class="q">流程：已 Poker 完成 → 已派發任務給 Alice → 已開 Issue → 已觸發 GitHub Action → 已開始開發</td>
+            <td colspan="4" class="note" style="font-style:normal;">這段事件流已相對成熟（橘色連貫），主要確認 Poker 完成後「派發給 Alice」的觸發與 <code>GitHub Action</code> 串接。</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-prog">討論中</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Coding -> Review -->
+    <section id="cod-rev">
+      <h2>Coding → Review → Merge <span class="badge">最成熟 · 可先實作</span></h2>
+      <table>
+        <thead><tr><th>斷點 / 事件（看板原文）</th><th>①交接</th><th>②觸發</th><th>③守門/權限</th><th>④通知</th><th>負責人 / 期限</th><th>狀態</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="q">已完成開發 → 已發 PR → Code Review</td>
+            <td class="fill">PR 觸發 Review 的條件</td>
+            <td class="fill">PR 開好自動觸發？</td>
+            <td class="fill">—</td>
+            <td class="fill">＿＿</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-prog">討論中</span></td>
+          </tr>
+          <tr>
+            <td class="q">自動 tag review 人員？</td>
+            <td class="fill">—</td>
+            <td class="fill">PR 開好自動 tag</td>
+            <td class="fill">tag 誰（依規則？）</td>
+            <td class="fill">＿＿</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+          <tr>
+            <td class="q">已修正 Code Review → 已 Merge 開發分支 → 已 Close Task</td>
+            <td colspan="4" class="note" style="font-style:normal;">收尾事件流已完整，確認 Merge 後自動 Close Task 的觸發即可。</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-prog">討論中</span></td>
+          </tr>
+          <tr>
+            <td class="q">已更新知識庫 → 更新知識庫的時間點？</td>
+            <td class="fill">哪些內容進知識庫</td>
+            <td class="fill"><strong>時間點待定</strong>：Merge 後？Close 後？</td>
+            <td class="fill">—</td>
+            <td class="fill">＿＿</td>
+            <td class="fill">＿＿</td>
+            <td><span class="st st-open">待決策</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 術語 -->
+    <section id="terms">
+      <h2>術語待定義 <span class="badge">最快解 · 先對齊</span></h2>
+      <p>看板上這種「名詞問號」不是流程問題，是<strong>團隊對術語沒共識</strong>。不先講清楚，後面每個人講的是不同東西。第二次會一開場先用三分鐘定義掉：</p>
+      <table>
+        <thead><tr><th>術語</th><th>定義（當場填一句話）</th><th>誰來定義</th><th>狀態</th></tr></thead>
+        <tbody>
+          <tr><td class="q">V Terminal 是什麼？</td><td class="fill">＿＿＿＿＿＿＿＿＿＿</td><td class="fill">＿＿</td><td><span class="st st-open">待定義</span></td></tr>
+          <tr><td class="q">augma（主題型 augma 開 branch 的角色）</td><td class="fill">＿＿＿＿＿＿＿＿＿＿</td><td class="fill">＿＿</td><td><span class="st st-open">待定義</span></td></tr>
+          <tr><td class="q">Alice 在此流程中的角色邊界</td><td class="fill">＿＿＿＿＿＿＿＿＿＿</td><td class="fill">＿＿</td><td><span class="st st-open">待定義</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 切片 -->
+    <section id="slices">
+      <h2>切片與下一步</h2>
+      <p>紅點太多，不要全解。依看板的成熟度，切成三段並行處理：</p>
+
+      <div class="slice"><span class="tag tag-a">切片 1</span><small>問號最密 · <strong>先收斂決策，暫不實作</strong></small></div>
+      <p style="margin-top:4px;">入口 + RA→SA。核心未解斷點是「RA 產出的文件位置怎麼讓 SA 知道」——這是整條線最關鍵的交接。第二次會先把這段的四問全部拍板。</p>
+
+      <div class="slice"><span class="tag tag-b">切片 2</span><small>事件流成熟 · <strong>確認觸發細節</strong></small></div>
+      <p style="margin-top:4px;">Poker → 派發 Alice → Issue → GitHub Action → 開發。橘色貼紙連貫，主要缺「派發給 Alice」的觸發與權限。</p>
+
+      <div class="slice"><span class="tag tag-c">切片 3</span><small>最成熟 · <strong>可先動手實作串通</strong></small></div>
+      <p style="margin-top:4px;">開發完 → PR → Review → Merge → Close。問號最少（只剩 auto-tag reviewer、知識庫時間點）。建議這段<strong>先實作驗證整套「觸發→通知→退回」機制</strong>，跑通後前面兩段套用同一套模式。</p>
+
+      <div class="key">
+        <div class="t">第二次會議的成功標準</div>
+        <strong>切片 3</strong> 定義出「跑通」長怎樣、指定負責人與日期；<strong>切片 1</strong> 的「RA→SA 檔案交接」斷點當場拍板；三個術語定義掉。做到這三件，第二次會就成功。
+      </div>
+    </section>
+
+    <footer>
+      Alice AI 自動化 · 斷點決策追蹤表 ｜ 由第一次風暴會議看板固化而來<br>
+      用法：第二次會對著本表逐列收斂 → 狀態改為「已定案」→ 未定案者指派負責人與期限
+    </footer>
+  </main>
+</div>
+<script>
+  const links=[...document.querySelectorAll('aside nav a')];
+  const secs=links.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const obs=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){const id='#'+e.target.id; links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')===id));}});},{rootMargin:'-12% 0px -75% 0px'});
+  secs.forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>
